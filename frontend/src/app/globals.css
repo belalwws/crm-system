@@ -1,0 +1,651 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Dark mode only */
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+html.dark {
+  color-scheme: dark;
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a3a3a3;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #404040;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #525252;
+}
+
+/* Selection */
+::selection {
+  background: #171717;
+  color: #ffffff;
+}
+
+html.dark ::selection {
+  background: #ffffff;
+  color: #171717;
+}
+
+/* Focus */
+:focus-visible {
+  outline: 2px solid #171717;
+  outline-offset: 2px;
+}
+
+html.dark :focus-visible {
+  outline: 2px solid #ffffff;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+/* Staggered animations for lists */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+
+/* Skeleton loading shimmer */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+/* Hover transitions */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(23, 23, 23, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #a3a3a3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Number counter animation */
+.number-animate {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================
+   CLERK STYLES - Clean & Visible
+   ============================================ */
+
+/* Hide Clerk branding */
+.cl-footer > div > span,
+.cl-footer > span,
+.cl-poweredBy,
+.cl-footerAction__clerk,
+[class*="cl-poweredBy"],
+[class*="developedBy"] {
+  display: none !important;
+}
+
+/* Root container */
+.cl-rootBox {
+  width: 100%;
+}
+
+/* Card container */
+.cl-card,
+.cl-signIn-start,
+.cl-signUp-start,
+.cl-signIn-password,
+.cl-signUp-continue,
+.cl-signIn-verifications,
+.cl-signUp-verifications {
+  background: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  width: 100% !important;
+  max-width: 400px !important;
+  margin: 0 auto !important;
+}
+
+html.dark .cl-card,
+html.dark .cl-signIn-start,
+html.dark .cl-signUp-start,
+html.dark .cl-signIn-password,
+html.dark .cl-signUp-continue,
+html.dark .cl-signIn-verifications,
+html.dark .cl-signUp-verifications {
+  background: #262626 !important;
+  border-color: #404040 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Header */
+.cl-header {
+  background: transparent !important;
+  padding: 0 0 1rem 0 !important;
+}
+
+.cl-headerTitle {
+  color: #111827 !important;
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+html.dark .cl-headerTitle {
+  color: #ffffff !important;
+}
+
+.cl-headerSubtitle {
+  color: #6b7280 !important;
+  font-size: 0.875rem !important;
+}
+
+html.dark .cl-headerSubtitle {
+  color: #9ca3af !important;
+}
+
+/* Form elements */
+.cl-main {
+  gap: 1rem !important;
+}
+
+.cl-form {
+  gap: 1rem !important;
+}
+
+/* Input fields */
+.cl-formField {
+  margin-bottom: 1rem !important;
+}
+
+.cl-formFieldLabel {
+  color: #374151 !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.375rem !important;
+  display: block !important;
+}
+
+html.dark .cl-formFieldLabel {
+  color: #e5e5e5 !important;
+}
+
+.cl-formFieldInput {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  color: #111827 !important;
+  padding: 0.625rem 0.875rem !important;
+  font-size: 0.875rem !important;
+  width: 100% !important;
+  transition: all 0.2s !important;
+}
+
+.cl-formFieldInput:hover {
+  border-color: #9ca3af !important;
+}
+
+.cl-formFieldInput:focus {
+  border-color: #171717 !important;
+  box-shadow: 0 0 0 3px rgba(23, 23, 23, 0.1) !important;
+  outline: none !important;
+}
+
+html.dark .cl-formFieldInput {
+  background: #171717 !important;
+  border-color: #525252 !important;
+  color: #ffffff !important;
+}
+
+html.dark .cl-formFieldInput:hover {
+  border-color: #737373 !important;
+}
+
+html.dark .cl-formFieldInput:focus {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Primary Button */
+.cl-formButtonPrimary {
+  background: #171717 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.625rem 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  width: 100% !important;
+  margin-top: 0.5rem !important;
+  transition: all 0.2s !important;
+  cursor: pointer !important;
+}
+
+.cl-formButtonPrimary:hover {
+  background: #374151 !important;
+}
+
+.cl-formButtonPrimary:active {
+  background: #111827 !important;
+}
+
+html.dark .cl-formButtonPrimary {
+  background: #ffffff !important;
+  color: #171717 !important;
+}
+
+html.dark .cl-formButtonPrimary:hover {
+  background: #e5e5e5 !important;
+}
+
+/* Secondary/Alternative buttons */
+.cl-alternativeMethodsBlockButton,
+.cl-socialButtonsBlockButton {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  color: #374151 !important;
+  padding: 0.625rem 1rem !important;
+  transition: all 0.2s !important;
+  width: 100% !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.cl-alternativeMethodsBlockButton:hover,
+.cl-socialButtonsBlockButton:hover {
+  background: #f9fafb !important;
+  border-color: #9ca3af !important;
+}
+
+html.dark .cl-alternativeMethodsBlockButton,
+html.dark .cl-socialButtonsBlockButton {
+  background: #171717 !important;
+  border-color: #525252 !important;
+  color: #ffffff !important;
+}
+
+html.dark .cl-alternativeMethodsBlockButton:hover,
+html.dark .cl-socialButtonsBlockButton:hover {
+  background: #262626 !important;
+  border-color: #737373 !important;
+}
+
+/* Social button text */
+.cl-socialButtonsBlockButtonText {
+  color: #374151 !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+html.dark .cl-socialButtonsBlockButtonText {
+  color: #ffffff !important;
+}
+
+/* Social button icon */
+.cl-socialButtonsBlockButtonImage {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Divider */
+.cl-dividerRow {
+  margin: 1.5rem 0 !important;
+}
+
+.cl-dividerLine {
+  background: #e5e5e5 !important;
+  height: 1px !important;
+}
+
+html.dark .cl-dividerLine {
+  background: #404040 !important;
+}
+
+.cl-dividerText {
+  color: #6b7280 !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  background: #ffffff !important;
+  padding: 0 0.75rem !important;
+}
+
+html.dark .cl-dividerText {
+  color: #9ca3af !important;
+  background: #262626 !important;
+}
+
+/* Footer */
+.cl-footer {
+  background: transparent !important;
+  border-top: 1px solid #f3f4f6 !important;
+  margin-top: 1.5rem !important;
+  padding-top: 1.5rem !important;
+}
+
+html.dark .cl-footer {
+  border-color: #404040 !important;
+}
+
+.cl-footerAction {
+  text-align: center !important;
+}
+
+.cl-footerActionText {
+  color: #6b7280 !important;
+  font-size: 0.875rem !important;
+}
+
+html.dark .cl-footerActionText {
+  color: #9ca3af !important;
+}
+
+.cl-footerActionLink {
+  color: #171717 !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  margin-left: 0.25rem !important;
+}
+
+.cl-footerActionLink:hover {
+  text-decoration: underline !important;
+}
+
+html.dark .cl-footerActionLink {
+  color: #ffffff !important;
+}
+
+/* OTP Code Input */
+.cl-otpCodeField {
+  gap: 0.5rem !important;
+  justify-content: center !important;
+}
+
+.cl-otpCodeFieldInput {
+  background: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  color: #111827 !important;
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  text-align: center !important;
+  transition: all 0.2s !important;
+}
+
+.cl-otpCodeFieldInput:focus {
+  border-color: #171717 !important;
+  box-shadow: 0 0 0 3px rgba(23, 23, 23, 0.1) !important;
+  outline: none !important;
+}
+
+html.dark .cl-otpCodeFieldInput {
+  background: #171717 !important;
+  border-color: #525252 !important;
+  color: #ffffff !important;
+}
+
+html.dark .cl-otpCodeFieldInput:focus {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Identity Preview */
+.cl-identityPreview {
+  background: #f3f4f6 !important;
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+html.dark .cl-identityPreview {
+  background: #171717 !important;
+  border-color: #404040 !important;
+}
+
+.cl-identityPreviewText {
+  color: #111827 !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+html.dark .cl-identityPreviewText {
+  color: #ffffff !important;
+}
+
+.cl-identityPreviewEditButton {
+  color: #6b7280 !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 4px !important;
+  transition: all 0.2s !important;
+}
+
+.cl-identityPreviewEditButton:hover {
+  color: #171717 !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+html.dark .cl-identityPreviewEditButton {
+  color: #9ca3af !important;
+}
+
+html.dark .cl-identityPreviewEditButton:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Alert/Error Messages */
+.cl-alert {
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 8px !important;
+  color: #dc2626 !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  margin-bottom: 1rem !important;
+}
+
+html.dark .cl-alert {
+  background: rgba(220, 38, 38, 0.15) !important;
+  border-color: rgba(220, 38, 38, 0.3) !important;
+  color: #fca5a5 !important;
+}
+
+/* Error text */
+.cl-formFieldErrorText {
+  color: #dc2626 !important;
+  font-size: 0.75rem !important;
+  margin-top: 0.25rem !important;
+  display: block !important;
+}
+
+html.dark .cl-formFieldErrorText {
+  color: #fca5a5 !important;
+}
+
+/* Loading spinner */
+.cl-loading {
+  color: #171717 !important;
+}
+
+html.dark .cl-loading {
+  color: #ffffff !important;
+}
+
+/* Back button */
+.cl-navbarBackButton {
+  color: #6b7280 !important;
+  padding: 0.5rem !important;
+  border-radius: 8px !important;
+  transition: all 0.2s !important;
+}
+
+.cl-navbarBackButton:hover {
+  color: #171717 !important;
+  background: #f3f4f6 !important;
+}
+
+html.dark .cl-navbarBackButton {
+  color: #9ca3af !important;
+}
+
+html.dark .cl-navbarBackButton:hover {
+  color: #ffffff !important;
+  background: #262626 !important;
+}
+
+/* Resend code link */
+.cl-formResendCodeLink {
+  color: #171717 !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  text-decoration: none !important;
+}
+
+.cl-formResendCodeLink:hover {
+  text-decoration: underline !important;
+}
+
+html.dark .cl-formResendCodeLink {
+  color: #ffffff !important;
+}
+
+/* Sign up/in links */
+.cl-signUpLink,
+.cl-signInLink {
+  color: #171717 !important;
+  font-weight: 600 !important;
+}
+
+html.dark .cl-signUpLink,
+html.dark .cl-signInLink {
+  color: #ffffff !important;
+}
+
+/* Sign in action text */
+.cl-signIn-password,
+.cl-signIn-verifications {
+  color: #111827 !important;
+}
+
+html.dark .cl-signIn-password,
+html.dark .cl-signIn-verifications {
+  color: #ffffff !important;
+}

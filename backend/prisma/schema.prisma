@@ -1,0 +1,174 @@
+// Prisma Schema for CRM Application
+// Multi-tenant architecture - each user sees only their data
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// User Model - المستخدمين
+// =============================================
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  company   String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations - العلاقات
+  customers     Customer[]     // العملاء التابعين للمستخدم
+  deals         Deal[]         // الصفقات التابعة للمستخدم
+  tasksAssigned Task[]         @relation("AssignedTasks") // المهام المسندة للمستخدم
+  tasksCreated  Task[]         @relation("CreatedTasks")  // المهام التي أنشأها المستخدم
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+// =============================================
+// Customer Model - العملاء
+// =============================================
+model Customer {
+  id        String         @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  address   String?
+  status    CustomerStatus @default(LEAD)
+  tags      String[]       @default([])
+  notes     String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  // Multi-tenant: كل عميل تابع لمستخدم واحد
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Relations
+  deals Deal[]
+  tasks Task[]
+
+  @@index([ownerId])
+  @@index([email])
+  @@map("customers")
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+  LEAD
+}
+
+// =============================================
+// Deal Model - الصفقات
+// =============================================
+model Deal {
+  id                String    @id @default(cuid())
+  title             String
+  description       String?
+  value             Float     @default(0)
+  stage             DealStage @default(LEAD)
+  probability       Int       @default(10) // 0-100
+  expectedCloseDate DateTime?
+  closedDate        DateTime?
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Multi-tenant: كل صفقة تابعة لمستخدم واحد
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Relation to Customer
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Relations
+  tasks Task[]
+
+  @@index([ownerId])
+  @@index([customerId])
+  @@index([stage])
+  @@map("deals")
+}
+
+enum DealStage {
+  LEAD
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+// =============================================
+// Task Model - المهام
+// =============================================
+model Task {
+  id            String       @id @default(cuid())
+  title         String
+  description   String?
+  type          TaskType     @default(OTHER)
+  priority      Priority     @default(MEDIUM)
+  status        TaskStatus   @default(PENDING)
+  dueDate       DateTime?
+  completedDate DateTime?
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // Multi-tenant: المهام المسندة للمستخدم
+  assignedToId String
+  assignedTo   User   @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: Cascade)
+
+  // من أنشأ المهمة
+  createdById String
+  createdBy   User   @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Cascade)
+
+  // Optional relations
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  dealId String?
+  deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([assignedToId])
+  @@index([createdById])
+  @@index([status])
+  @@index([dueDate])
+  @@map("tasks")
+}
+
+enum TaskType {
+  CALL
+  EMAIL
+  MEETING
+  FOLLOW_UP
+  OTHER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}

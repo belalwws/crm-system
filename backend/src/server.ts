@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import connectDB from './config/database';
+import prisma from './lib/prisma';
 
 // Import routes
 import authRoutes from './routes/authRoutes';
@@ -16,9 +16,6 @@ dotenv.config();
 // Initialize express app
 const app = express();
 
-// Connect to MongoDB
-connectDB();
-
 // Middleware
 app.use(cors()); // Enable CORS for all origins
 app.use(express.json()); // Parse JSON request bodies
@@ -30,6 +27,7 @@ app.get('/', (req: Request, res: Response) => {
     success: true,
     message: 'CRM API is running',
     version: '1.0.0',
+    database: 'PostgreSQL',
   });
 });
 
@@ -51,12 +49,28 @@ app.use((req: Request, res: Response) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log('=================================');
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 API URL: http://localhost:${PORT}`);
-  console.log('=================================');
+// Test database connection and start server
+prisma.$connect()
+  .then(() => {
+    console.log('✅ PostgreSQL Connected Successfully');
+    app.listen(PORT, () => {
+      console.log('=================================');
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🌐 API URL: http://localhost:${PORT}`);
+      console.log(`🗄️  Database: PostgreSQL (Neon)`);
+      console.log('=================================');
+    });
+  })
+  .catch((error) => {
+    console.error('❌ PostgreSQL Connection Error:', error);
+    process.exit(1);
+  });
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
 });
 
 export default app;
