@@ -7,6 +7,8 @@ interface CardProps {
   className?: string;
   hover?: boolean;
   padding?: "none" | "sm" | "md" | "lg";
+  style?: React.CSSProperties;
+  onClick?: () => void;
 }
 
 const paddingClasses = {
@@ -16,7 +18,7 @@ const paddingClasses = {
   lg: "p-8",
 };
 
-export function Card({ children, className = "", hover = false, padding = "md" }: CardProps) {
+export function Card({ children, className = "", hover = false, padding = "md", style, onClick }: CardProps) {
   return (
     <div
       className={`
@@ -25,6 +27,8 @@ export function Card({ children, className = "", hover = false, padding = "md" }
         ${paddingClasses[padding]}
         ${className}
       `}
+      style={style}
+      onClick={onClick}
     >
       {children}
     </div>

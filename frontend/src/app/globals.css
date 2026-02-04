@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
+  --background: #f5f5f5;
+  --foreground: #171717;
 }
 
 @theme inline {
@@ -12,12 +12,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Dark mode only */
+/* Light mode by default */
 html {
-  color-scheme: dark;
+  color-scheme: light dark;
   scroll-behavior: smooth;
 }
 
+/* Dark mode */
 html.dark {
   color-scheme: dark;
   --background: #0a0a0a;

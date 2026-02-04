@@ -64,13 +64,15 @@ interface TableRowProps {
   children: ReactNode;
   onClick?: () => void;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-export function TableRow({ children, onClick, className = "" }: TableRowProps) {
+export function TableRow({ children, onClick, className = "", style }: TableRowProps) {
   return (
     <tr
       className={`hover:bg-neutral-800/50 transition-colors ${onClick ? "cursor-pointer" : ""} ${className}`}
       onClick={onClick}
+      style={style}
     >
       {children}
     </tr>
