@@ -33,6 +33,11 @@ export const getDashboardStats = async (
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
     // Get counts in parallel
     const [
@@ -44,6 +49,16 @@ export const getDashboardStats = async (
       dealAggregates,
       dealsByStage,
       recentTasks,
+      // New customers this month
+      newCustomersThisMonth,
+      newCustomersLastMonth,
+      // Deals this month vs last month
+      dealsThisMonth,
+      dealsLastMonth,
+      wonDealsThisMonth,
+      wonDealsLastMonth,
+      // Monthly deal data for chart
+      monthlyDeals,
     ] = await Promise.all([
       prisma.customer.count({ where: { ownerId: userId } }),
       prisma.customer.count({ where: { ownerId: userId, status: 'ACTIVE' } }),
@@ -72,9 +87,46 @@ export const getDashboardStats = async (
           deal: { select: { id: true, title: true } },
         },
       }),
+      // New customers this month
+      prisma.customer.count({
+        where: { ownerId: userId, createdAt: { gte: startOfMonth } },
+      }),
+      // New customers last month
+      prisma.customer.count({
+        where: { ownerId: userId, createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
+      }),
+      // Deals value this month
+      prisma.deal.aggregate({
+        where: { ownerId: userId, createdAt: { gte: startOfMonth } },
+        _sum: { value: true },
+        _count: { id: true },
+      }),
+      // Deals value last month
+      prisma.deal.aggregate({
+        where: { ownerId: userId, createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
+        _sum: { value: true },
+        _count: { id: true },
+      }),
+      // Won deals this month
+      prisma.deal.aggregate({
+        where: { ownerId: userId, stage: 'CLOSED_WON', updatedAt: { gte: startOfMonth } },
+        _sum: { value: true },
+        _count: { id: true },
+      }),
+      // Won deals last month
+      prisma.deal.aggregate({
+        where: { ownerId: userId, stage: 'CLOSED_WON', updatedAt: { gte: startOfLastMonth, lte: endOfLastMonth } },
+        _sum: { value: true },
+        _count: { id: true },
+      }),
+      // Get all deals from start of year for monthly chart
+      prisma.deal.findMany({
+        where: { ownerId: userId, createdAt: { gte: startOfYear } },
+        select: { createdAt: true, value: true, stage: true },
+      }),
     ]);
 
-    // Get won deals stats
+    // Get won deals stats (total)
     const wonDealsStats = await prisma.deal.aggregate({
       where: { ownerId: userId, stage: 'CLOSED_WON' },
       _count: { id: true },
@@ -88,6 +140,35 @@ export const getDashboardStats = async (
       value: s._sum.value || 0,
     }));
 
+    // Calculate monthly data for chart
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyData = months.map((month, index) => {
+      const monthDeals = monthlyDeals.filter(d => d.createdAt.getMonth() === index);
+      const totalValue = monthDeals.reduce((sum, d) => sum + (d.value || 0), 0);
+      return {
+        month,
+        value: totalValue,
+        count: monthDeals.length,
+      };
+    });
+
+    // Calculate percentage changes
+    const earningsChangePercent = wonDealsLastMonth._sum.value 
+      ? Math.round(((wonDealsThisMonth._sum.value || 0) - (wonDealsLastMonth._sum.value || 0)) / (wonDealsLastMonth._sum.value || 1) * 100)
+      : (wonDealsThisMonth._sum.value || 0) > 0 ? 100 : 0;
+
+    const pipelineChangePercent = dealsLastMonth._sum.value
+      ? Math.round(((dealsThisMonth._sum.value || 0) - (dealsLastMonth._sum.value || 0)) / (dealsLastMonth._sum.value || 1) * 100)
+      : (dealsThisMonth._sum.value || 0) > 0 ? 100 : 0;
+
+    const customersChangePercent = newCustomersLastMonth
+      ? Math.round((newCustomersThisMonth - newCustomersLastMonth) / newCustomersLastMonth * 100)
+      : newCustomersThisMonth > 0 ? 100 : 0;
+
+    const newCustomersPercent = totalCustomers > 0 
+      ? Math.round((newCustomersThisMonth / totalCustomers) * 100)
+      : 0;
+
     res.status(200).json({
       success: true,
       data: {
@@ -100,9 +181,19 @@ export const getDashboardStats = async (
           totalDealValue: dealAggregates._sum.value || 0,
           wonDeals: wonDealsStats._count.id || 0,
           wonValue: wonDealsStats._sum.value || 0,
+          // New fields for dashboard
+          earningsThisMonth: wonDealsThisMonth._sum.value || 0,
+          earningsChangePercent,
+          pipelineThisMonth: dealsThisMonth._sum.value || 0,
+          pipelineChangePercent,
+          dealsThisMonth: dealsThisMonth._count.id || 0,
+          customersChangePercent,
+          newCustomersThisMonth,
+          newCustomersPercent,
         },
         dealsByStage: formattedDealsByStage,
         recentTasks: recentTasks.map(formatTask),
+        monthlyData,
       },
     });
   } catch (error: any) {

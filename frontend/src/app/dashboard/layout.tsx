@@ -62,8 +62,8 @@ export default function DashboardLayout({
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-5 border-b border-neutral-200 dark:border-neutral-800">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/25">
-              <span className="text-white font-bold text-sm">N</span>
+            <div className="w-9 h-9 bg-neutral-900 dark:bg-white rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white dark:text-neutral-900 font-bold text-sm">N</span>
             </div>
             <span className="text-lg font-bold text-neutral-900 dark:text-white">Dashboard</span>
           </Link>
@@ -86,7 +86,7 @@ export default function DashboardLayout({
                 onClick={() => setSidebarOpen(false)}
                 className={`group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? "bg-violet-600 text-white shadow-lg shadow-violet-600/30"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-lg"
                     : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 }`}
               >
@@ -117,16 +117,16 @@ export default function DashboardLayout({
 
         {/* Upgrade Card */}
         <div className="p-4">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-violet-600 to-indigo-700 p-5 text-white">
-            <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
-            <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
+          <div className="relative overflow-hidden rounded-2xl bg-neutral-900 dark:bg-white p-5 text-white dark:text-neutral-900">
+            <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 dark:bg-black/10 rounded-full blur-2xl" />
+            <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-white/10 dark:bg-black/10 rounded-full blur-2xl" />
             <div className="relative">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3">
+              <div className="w-10 h-10 bg-white/20 dark:bg-black/10 rounded-xl flex items-center justify-center mb-3">
                 <Sparkles className="w-5 h-5" />
               </div>
               <p className="text-sm font-medium mb-1">Upgrade to PRO</p>
-              <p className="text-xs text-white/70 mb-4">to get access all Features!</p>
-              <button className="w-full py-2.5 bg-white text-violet-600 font-semibold text-sm rounded-xl hover:bg-white/90 transition-colors shadow-lg">
+              <p className="text-xs text-white/70 dark:text-neutral-600 mb-4">to get access all Features!</p>
+              <button className="w-full py-2.5 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white font-semibold text-sm rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors shadow-lg">
                 Get Pro Now!
               </button>
             </div>

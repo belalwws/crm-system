@@ -4,17 +4,15 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import {
-  Users,
   Briefcase,
-  CheckSquare,
   DollarSign,
   TrendingUp,
-  TrendingDown,
   Search,
   ChevronDown,
   MoreVertical,
   ArrowUpRight,
   ArrowDownRight,
+  Users,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/hooks";
 
@@ -27,12 +25,20 @@ interface DashboardStats {
   totalDealValue: number;
   wonDeals: number;
   wonValue: number;
+  earningsThisMonth: number;
+  earningsChangePercent: number;
+  pipelineThisMonth: number;
+  pipelineChangePercent: number;
+  dealsThisMonth: number;
+  customersChangePercent: number;
+  newCustomersThisMonth: number;
+  newCustomersPercent: number;
 }
 
-interface DealByStage {
-  _id: string;
-  count: number;
+interface MonthlyData {
+  month: string;
   value: number;
+  count: number;
 }
 
 interface RecentDeal {
@@ -44,11 +50,10 @@ interface RecentDeal {
   customer?: { id: string; name: string; company?: string };
 }
 
-// Stat Card matching the design
+// Stat Card with neutral theme
 function StatCardNew({
   icon,
   iconBg,
-  iconColor,
   label,
   value,
   change,
@@ -57,18 +62,17 @@ function StatCardNew({
 }: {
   icon: React.ReactNode;
   iconBg: string;
-  iconColor: string;
   label: string;
   value: string;
   change: string;
-  changeType: "up" | "down";
+  changeType: "up" | "down" | "neutral";
   changeLabel: string;
 }) {
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center gap-4">
         <div className={`w-14 h-14 ${iconBg} rounded-full flex items-center justify-center shadow-lg`}>
-          <div className={iconColor}>{icon}</div>
+          {icon}
         </div>
         <div className="flex-1">
           <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium uppercase tracking-wide">{label}</p>
@@ -76,9 +80,10 @@ function StatCardNew({
             <span className="text-2xl font-bold text-neutral-900 dark:text-white">{value}</span>
           </div>
           <span className={`text-xs font-medium flex items-center gap-0.5 mt-1 ${
-            changeType === "up" ? "text-emerald-600" : "text-red-500"
+            changeType === "up" ? "text-emerald-600" : changeType === "down" ? "text-red-500" : "text-neutral-500"
           }`}>
-            {changeType === "up" ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+            {changeType === "up" && <ArrowUpRight className="w-3 h-3" />}
+            {changeType === "down" && <ArrowDownRight className="w-3 h-3" />}
             {change} {changeLabel}
           </span>
         </div>
@@ -87,47 +92,68 @@ function StatCardNew({
   );
 }
 
-// Bar Chart Component
-function OverviewChart({ data }: { data: { month: string; value: number }[] }) {
+// Bar Chart Component with neutral theme
+function OverviewChart({ data, loading }: { data: MonthlyData[]; loading: boolean }) {
   const maxValue = Math.max(...data.map(d => d.value), 1);
+  const currentMonth = new Date().toLocaleString('en-US', { month: 'short' });
+  
+  if (loading) {
+    return (
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm h-full">
+        <div className="animate-pulse">
+          <div className="h-6 w-32 bg-neutral-200 dark:bg-neutral-800 rounded mb-2" />
+          <div className="h-4 w-24 bg-neutral-200 dark:bg-neutral-800 rounded mb-6" />
+          <div className="flex items-end justify-between gap-2 h-48">
+            {[1,2,3,4,5,6,7,8,9,10,11,12].map(i => (
+              <div key={i} className="flex-1 bg-neutral-200 dark:bg-neutral-800 rounded-t-lg" style={{ height: `${Math.random() * 80 + 20}%` }} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm h-full">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">Overview</h3>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">Monthly Earning</p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">Monthly Deal Value</p>
         </div>
         <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors">
-          Quarterly
+          This Year
           <ChevronDown className="w-4 h-4" />
         </button>
       </div>
       
       <div className="flex items-end justify-between gap-2 h-48">
-        {data.map((item, index) => {
-          const height = (item.value / maxValue) * 100;
-          const isHighlighted = item.month === "Aug";
+        {data.map((item) => {
+          const height = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
+          const isCurrentMonth = item.month === currentMonth;
+          const hasValue = item.value > 0;
+          
           return (
             <div key={item.month} className="flex-1 flex flex-col items-center gap-2">
               <div className="relative w-full flex justify-center">
-                {isHighlighted && (
-                  <div className="absolute -top-8 bg-violet-600 text-white text-xs font-medium px-2 py-1 rounded-md whitespace-nowrap">
-                    📈 35%
+                {isCurrentMonth && hasValue && (
+                  <div className="absolute -top-8 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-xs font-medium px-2 py-1 rounded-md whitespace-nowrap">
+                    {formatCurrency(item.value)}
                   </div>
                 )}
                 <div
                   className={`w-6 sm:w-8 rounded-t-lg transition-all duration-500 ${
-                    isHighlighted 
-                      ? "bg-gradient-to-t from-violet-600 to-violet-400" 
-                      : "bg-gradient-to-t from-violet-200 to-violet-100 dark:from-violet-900/40 dark:to-violet-800/30"
+                    isCurrentMonth 
+                      ? "bg-neutral-900 dark:bg-white" 
+                      : hasValue 
+                        ? "bg-neutral-300 dark:bg-neutral-700" 
+                        : "bg-neutral-200 dark:bg-neutral-800"
                   }`}
-                  style={{ height: `${height}%`, minHeight: "16px" }}
+                  style={{ height: `${Math.max(height, 8)}%`, minHeight: "8px" }}
                 />
               </div>
               <span className={`text-xs ${
-                isHighlighted 
-                  ? "font-medium text-violet-600 dark:text-violet-400 bg-violet-100 dark:bg-violet-900/30 px-1.5 py-0.5 rounded-md" 
+                isCurrentMonth 
+                  ? "font-medium text-neutral-900 dark:text-white bg-neutral-200 dark:bg-neutral-800 px-1.5 py-0.5 rounded-md" 
                   : "text-neutral-500"
               }`}>
                 {item.month}
@@ -140,16 +166,40 @@ function OverviewChart({ data }: { data: { month: string; value: number }[] }) {
   );
 }
 
-// Donut Chart Component
-function CustomersDonutChart({ newCustomersPercent }: { newCustomersPercent: number }) {
+// Donut Chart Component with neutral theme
+function CustomersDonutChart({ 
+  newCustomersPercent, 
+  totalCustomers, 
+  activeCustomers,
+  loading 
+}: { 
+  newCustomersPercent: number; 
+  totalCustomers: number;
+  activeCustomers: number;
+  loading: boolean;
+}) {
   const circumference = 2 * Math.PI * 45;
   const strokeDashoffset = circumference - (newCustomersPercent / 100) * circumference;
+  
+  if (loading) {
+    return (
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm h-full flex flex-col">
+        <div className="animate-pulse">
+          <div className="h-6 w-32 bg-neutral-200 dark:bg-neutral-800 rounded mb-2" />
+          <div className="h-4 w-48 bg-neutral-200 dark:bg-neutral-800 rounded mb-6" />
+          <div className="flex justify-center">
+            <div className="w-44 h-44 rounded-full bg-neutral-200 dark:bg-neutral-800" />
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-800 shadow-sm h-full flex flex-col">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">Customers</h3>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">Customers that buy products</p>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">Active vs Total Customers</p>
       </div>
       
       <div className="flex-1 flex items-center justify-center">
@@ -163,7 +213,7 @@ function CustomersDonutChart({ newCustomersPercent }: { newCustomersPercent: num
               fill="none"
               stroke="currentColor"
               strokeWidth="10"
-              className="text-cyan-200 dark:text-cyan-900/50"
+              className="text-neutral-200 dark:text-neutral-800"
             />
             {/* Progress circle */}
             <circle
@@ -171,23 +221,17 @@ function CustomersDonutChart({ newCustomersPercent }: { newCustomersPercent: num
               cy="50"
               r="45"
               fill="none"
-              stroke="url(#gradient)"
+              stroke="currentColor"
               strokeWidth="10"
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
-              className="transition-all duration-1000"
+              className="text-neutral-900 dark:text-white transition-all duration-1000"
             />
-            <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#06b6d4" />
-                <stop offset="100%" stopColor="#ec4899" />
-              </linearGradient>
-            </defs>
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-bold text-neutral-900 dark:text-white">{newCustomersPercent}%</span>
-            <span className="text-xs text-neutral-500 text-center">Total New<br/>Customers</span>
+            <span className="text-3xl font-bold text-neutral-900 dark:text-white">{activeCustomers}</span>
+            <span className="text-xs text-neutral-500 text-center">Active<br/>Customers</span>
           </div>
         </div>
       </div>
@@ -195,12 +239,12 @@ function CustomersDonutChart({ newCustomersPercent }: { newCustomersPercent: num
       {/* Legend */}
       <div className="mt-4 flex justify-center gap-6">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-cyan-400 to-pink-400" />
-          <span className="text-xs text-neutral-600 dark:text-neutral-400">New Customers</span>
+          <div className="w-3 h-3 rounded-full bg-neutral-900 dark:bg-white" />
+          <span className="text-xs text-neutral-600 dark:text-neutral-400">Active ({activeCustomers})</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-cyan-200 dark:bg-cyan-900/50" />
-          <span className="text-xs text-neutral-600 dark:text-neutral-400">Returning</span>
+          <div className="w-3 h-3 rounded-full bg-neutral-200 dark:bg-neutral-800" />
+          <span className="text-xs text-neutral-600 dark:text-neutral-400">Total ({totalCustomers})</span>
         </div>
       </div>
     </div>
@@ -208,12 +252,12 @@ function CustomersDonutChart({ newCustomersPercent }: { newCustomersPercent: num
 }
 
 // Deals Table Component
-function DealsTable({ deals }: { deals: RecentDeal[] }) {
+function DealsTable({ deals, loading }: { deals: RecentDeal[]; loading: boolean }) {
   const [search, setSearch] = useState("");
   
   const filteredDeals = deals.filter(deal => 
     deal.title.toLowerCase().includes(search.toLowerCase()) ||
-    deal.customer?.name.toLowerCase().includes(search.toLowerCase())
+    deal.customer?.name?.toLowerCase().includes(search.toLowerCase())
   );
   
   const getStageColor = (stage: string) => {
@@ -228,6 +272,27 @@ function DealsTable({ deals }: { deals: RecentDeal[] }) {
     return colors[stage] || colors.lead;
   };
 
+  if (loading) {
+    return (
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden">
+        <div className="p-6 animate-pulse">
+          <div className="h-6 w-32 bg-neutral-200 dark:bg-neutral-800 rounded mb-4" />
+          <div className="space-y-4">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-neutral-200 dark:bg-neutral-800" />
+                <div className="flex-1">
+                  <div className="h-4 w-48 bg-neutral-200 dark:bg-neutral-800 rounded mb-2" />
+                  <div className="h-3 w-32 bg-neutral-200 dark:bg-neutral-800 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-sm overflow-hidden">
       <div className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800">
@@ -240,13 +305,9 @@ function DealsTable({ deals }: { deals: RecentDeal[] }) {
               placeholder="Search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg w-full sm:w-48 focus:ring-2 focus:ring-violet-500 text-neutral-900 dark:text-white placeholder:text-neutral-500"
+              className="pl-9 pr-4 py-2 text-sm bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg w-full sm:w-48 focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white text-neutral-900 dark:text-white placeholder:text-neutral-500"
             />
           </div>
-          <button className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors whitespace-nowrap">
-            Last 30 days
-            <ChevronDown className="w-4 h-4" />
-          </button>
         </div>
       </div>
       
@@ -268,7 +329,7 @@ function DealsTable({ deals }: { deals: RecentDeal[] }) {
               className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 px-6 py-4 items-center hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
             >
               <div className="sm:col-span-5 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-neutral-900 dark:bg-white flex items-center justify-center text-white dark:text-neutral-900 font-semibold text-sm flex-shrink-0">
                   {deal.title.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -300,7 +361,7 @@ function DealsTable({ deals }: { deals: RecentDeal[] }) {
           <div className="px-6 py-12 text-center text-neutral-500">
             <Briefcase className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p>No deals found</p>
-            <Link href="/dashboard/deals" className="text-sm text-violet-600 dark:text-violet-400 hover:underline mt-2 inline-block">
+            <Link href="/dashboard/deals" className="text-sm text-neutral-900 dark:text-white hover:underline mt-2 inline-block">
               Create your first deal →
             </Link>
           </div>
@@ -311,7 +372,7 @@ function DealsTable({ deals }: { deals: RecentDeal[] }) {
         <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 text-center">
           <Link
             href="/dashboard/deals"
-            className="text-sm font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
+            className="text-sm font-medium text-neutral-900 dark:text-white hover:underline"
           >
             View all {deals.length} deals →
           </Link>
@@ -325,25 +386,9 @@ export default function DashboardPage() {
   const { getToken } = useAuth();
   const { user } = useUser();
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [dealsByStage, setDealsByStage] = useState<DealByStage[]>([]);
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [recentDeals, setRecentDeals] = useState<RecentDeal[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Monthly data for chart (mock data - would come from API)
-  const monthlyData = [
-    { month: "Jan", value: 35 },
-    { month: "Feb", value: 45 },
-    { month: "Mar", value: 38 },
-    { month: "Apr", value: 55 },
-    { month: "May", value: 48 },
-    { month: "Jun", value: 62 },
-    { month: "Jul", value: 58 },
-    { month: "Aug", value: 85 },
-    { month: "Sep", value: 72 },
-    { month: "Oct", value: 68 },
-    { month: "Nov", value: 75 },
-    { month: "Dec", value: 45 },
-  ];
 
   const fetchStats = useCallback(async () => {
     try {
@@ -362,7 +407,7 @@ export default function DashboardPage() {
       
       if (statsData.success) {
         setStats(statsData.data.summary);
-        setDealsByStage(statsData.data.dealsByStage || []);
+        setMonthlyData(statsData.data.monthlyData || []);
       }
       
       if (dealsData.success) {
@@ -379,27 +424,10 @@ export default function DashboardPage() {
     fetchStats();
   }, [fetchStats]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-10 w-64 bg-neutral-200 dark:bg-neutral-800 rounded-lg" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-neutral-200 dark:bg-neutral-800 rounded-2xl" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-72 bg-neutral-200 dark:bg-neutral-800 rounded-2xl" />
-          <div className="h-72 bg-neutral-200 dark:bg-neutral-800 rounded-2xl" />
-        </div>
-      </div>
-    );
-  }
-
   const firstName = user?.firstName || "User";
-  const newCustomersPercent = stats?.totalCustomers 
+  const activePercent = stats?.totalCustomers 
     ? Math.round((stats.activeCustomers / stats.totalCustomers) * 100) 
-    : 65;
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -413,7 +441,7 @@ export default function DashboardPage() {
           <input
             type="text"
             placeholder="Search..."
-            className="pl-9 pr-4 py-2 text-sm bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg w-64 focus:ring-2 focus:ring-violet-500 focus:border-transparent text-neutral-900 dark:text-white placeholder:text-neutral-500"
+            className="pl-9 pr-4 py-2 text-sm bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg w-64 focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:border-transparent text-neutral-900 dark:text-white placeholder:text-neutral-500"
           />
         </div>
       </div>
@@ -421,49 +449,51 @@ export default function DashboardPage() {
       {/* Stat Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCardNew
-          icon={<DollarSign className="w-6 h-6" />}
-          iconBg="bg-gradient-to-br from-emerald-400 to-cyan-400"
-          iconColor="text-white"
-          label="Earning"
-          value={formatCurrency(stats?.wonValue || 198000)}
-          change="37.8%"
-          changeType="up"
+          icon={<DollarSign className="w-6 h-6 text-white" />}
+          iconBg="bg-neutral-900 dark:bg-white dark:text-neutral-900"
+          label="Earnings"
+          value={formatCurrency(stats?.earningsThisMonth || stats?.wonValue || 0)}
+          change={`${Math.abs(stats?.earningsChangePercent || 0)}%`}
+          changeType={stats?.earningsChangePercent && stats.earningsChangePercent >= 0 ? "up" : stats?.earningsChangePercent && stats.earningsChangePercent < 0 ? "down" : "neutral"}
           changeLabel="this month"
         />
         <StatCardNew
-          icon={<Briefcase className="w-6 h-6" />}
-          iconBg="bg-gradient-to-br from-pink-400 to-rose-400"
-          iconColor="text-white"
+          icon={<Briefcase className="w-6 h-6 text-white dark:text-neutral-900" />}
+          iconBg="bg-neutral-700 dark:bg-neutral-300"
           label="Pipeline Value"
-          value={formatCurrency(stats?.totalDealValue || 2400)}
-          change="2%"
-          changeType="down"
+          value={formatCurrency(stats?.totalDealValue || 0)}
+          change={`${Math.abs(stats?.pipelineChangePercent || 0)}%`}
+          changeType={stats?.pipelineChangePercent && stats.pipelineChangePercent >= 0 ? "up" : stats?.pipelineChangePercent && stats.pipelineChangePercent < 0 ? "down" : "neutral"}
           changeLabel="this month"
         />
         <StatCardNew
-          icon={<TrendingUp className="w-6 h-6" />}
-          iconBg="bg-gradient-to-br from-green-400 to-emerald-500"
-          iconColor="text-white"
+          icon={<TrendingUp className="w-6 h-6 text-white dark:text-neutral-900" />}
+          iconBg="bg-neutral-500 dark:bg-neutral-400"
           label="Total Deals"
-          value={`${stats?.totalDeals || 89}`}
-          change="11%"
-          changeType="up"
-          changeLabel="this week"
+          value={`${stats?.totalDeals || 0}`}
+          change={`${stats?.dealsThisMonth || 0} new`}
+          changeType="neutral"
+          changeLabel="this month"
         />
       </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <OverviewChart data={monthlyData} />
+          <OverviewChart data={monthlyData} loading={loading} />
         </div>
         <div>
-          <CustomersDonutChart newCustomersPercent={newCustomersPercent} />
+          <CustomersDonutChart 
+            newCustomersPercent={activePercent} 
+            totalCustomers={stats?.totalCustomers || 0}
+            activeCustomers={stats?.activeCustomers || 0}
+            loading={loading}
+          />
         </div>
       </div>
 
       {/* Deals Table */}
-      <DealsTable deals={recentDeals} />
+      <DealsTable deals={recentDeals} loading={loading} />
     </div>
   );
 }
