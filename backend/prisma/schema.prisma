@@ -24,10 +24,17 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations - العلاقات
-  customers     Customer[]     // العملاء التابعين للمستخدم
-  deals         Deal[]         // الصفقات التابعة للمستخدم
-  tasksAssigned Task[]         @relation("AssignedTasks") // المهام المسندة للمستخدم
-  tasksCreated  Task[]         @relation("CreatedTasks")  // المهام التي أنشأها المستخدم
+  customers      Customer[]      // العملاء التابعين للمستخدم
+  deals          Deal[]          // الصفقات التابعة للمستخدم
+  tasksAssigned  Task[]          @relation("AssignedTasks") // المهام المسندة للمستخدم
+  tasksCreated   Task[]          @relation("CreatedTasks")  // المهام التي أنشأها المستخدم
+  notifications  Notification[]  // الإشعارات
+  emailTemplates EmailTemplate[] // قوالب البريد
+  emailLogs      EmailLog[]      // سجل البريد
+  documents      Document[]      // المستندات
+  activities     Activity[]      // سجل النشاط
+  notes          Note[]          // الملاحظات
+  meetings       Meeting[]       // الاجتماعات
 
   @@map("users")
 }
@@ -49,7 +56,7 @@ model Customer {
   address   String?
   status    CustomerStatus @default(LEAD)
   tags      String[]       @default([])
-  notes     String?
+  notesText String?        @map("notes")
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
@@ -58,8 +65,12 @@ model Customer {
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   // Relations
-  deals Deal[]
-  tasks Task[]
+  deals     Deal[]
+  tasks     Task[]
+  emailLogs EmailLog[]
+  documents Document[]
+  notes     Note[]
+  meetings  Meeting[]
 
   @@index([ownerId])
   @@index([email])
@@ -84,7 +95,7 @@ model Deal {
   probability       Int       @default(10) // 0-100
   expectedCloseDate DateTime?
   closedDate        DateTime?
-  notes             String?
+  notesText         String?   @map("notes")
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -97,7 +108,11 @@ model Deal {
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   // Relations
-  tasks Task[]
+  tasks     Task[]
+  emailLogs EmailLog[]
+  documents Document[]
+  notes     Note[]
+  meetings  Meeting[]
 
   @@index([ownerId])
   @@index([customerId])
@@ -126,7 +141,7 @@ model Task {
   status        TaskStatus   @default(PENDING)
   dueDate       DateTime?
   completedDate DateTime?
-  notes         String?
+  notesText     String?      @map("notes")
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -144,6 +159,9 @@ model Task {
 
   dealId String?
   deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  // Notes relation
+  notes Note[]
 
   @@index([assignedToId])
   @@index([createdById])
@@ -171,4 +189,182 @@ enum TaskStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+// =============================================
+// Notification Model - الإشعارات
+// =============================================
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  TASK_DUE
+  TASK_ASSIGNED
+  DEAL_WON
+  DEAL_LOST
+  DEAL_STAGE_CHANGED
+  NEW_CUSTOMER
+  REMINDER
+  SYSTEM
+}
+
+// =============================================
+// Email Template Model - قوالب البريد
+// =============================================
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name      String
+  subject   String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@map("email_templates")
+}
+
+// =============================================
+// Email Log Model - سجل البريد المرسل
+// =============================================
+model EmailLog {
+  id         String      @id @default(cuid())
+  ownerId    String
+  owner      User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer   Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  dealId     String?
+  deal       Deal?       @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  to         String
+  subject    String
+  body       String
+  status     EmailStatus @default(SENT)
+  sentAt     DateTime    @default(now())
+
+  @@index([ownerId])
+  @@index([customerId])
+  @@map("email_logs")
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+  BOUNCED
+}
+
+// =============================================
+// Document Model - المستندات والملفات
+// =============================================
+model Document {
+  id         String    @id @default(cuid())
+  ownerId    String
+  owner      User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  dealId     String?
+  deal       Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  name       String
+  type       String
+  size       Int
+  url        String
+  createdAt  DateTime  @default(now())
+
+  @@index([ownerId])
+  @@index([customerId])
+  @@index([dealId])
+  @@map("documents")
+}
+
+// =============================================
+// Activity Model - سجل النشاط
+// =============================================
+model Activity {
+  id         String       @id @default(cuid())
+  ownerId    String
+  owner      User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  type       ActivityType
+  entityType String
+  entityId   String
+  title      String
+  details    Json?
+  createdAt  DateTime     @default(now())
+
+  @@index([ownerId])
+  @@index([entityType, entityId])
+  @@map("activities")
+}
+
+enum ActivityType {
+  CREATED
+  UPDATED
+  DELETED
+  STATUS_CHANGED
+  STAGE_CHANGED
+  EMAIL_SENT
+  NOTE_ADDED
+  FILE_UPLOADED
+  TASK_COMPLETED
+}
+
+// =============================================
+// Note Model - الملاحظات
+// =============================================
+model Note {
+  id         String    @id @default(cuid())
+  ownerId    String
+  owner      User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  dealId     String?
+  deal       Deal?     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  taskId     String?
+  task       Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  content    String
+  pinned     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([ownerId])
+  @@index([customerId])
+  @@index([dealId])
+  @@map("notes")
+}
+
+// =============================================
+// Meeting Model - الاجتماعات
+// =============================================
+model Meeting {
+  id          String    @id @default(cuid())
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  dealId      String?
+  deal        Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  title       String
+  description String?
+  location    String?
+  startTime   DateTime
+  endTime     DateTime
+  reminder    Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([ownerId])
+  @@index([startTime])
+  @@map("meetings")
 }

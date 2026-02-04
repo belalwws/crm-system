@@ -13,17 +13,27 @@ import {
   Home,
   BarChart3,
   Settings,
+  Calendar,
+  Bell,
+  FileText,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 import { ToastProvider } from "@/components/ui/toast";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { GlobalSearch } from "@/components/search/global-search";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Deals", href: "/dashboard/deals", icon: Briefcase },
   { name: "Customers", href: "/dashboard/customers", icon: Users },
   { name: "Tasks", href: "/dashboard/tasks", icon: CheckSquare },
+  { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
+  { name: "Documents", href: "/dashboard/documents", icon: FileText },
+  { name: "Email Templates", href: "/dashboard/emails/templates", icon: Mail },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 export default function DashboardLayout({
@@ -132,10 +142,13 @@ export default function DashboardLayout({
           </div>
 
           {/* Spacer */}
-          <div className="hidden lg:block" />
+          <div className="hidden lg:block flex-1">
+            <GlobalSearch />
+          </div>
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <ThemeToggle />
             <Link
               href="/"

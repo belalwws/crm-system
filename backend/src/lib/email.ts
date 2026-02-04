@@ -93,4 +93,46 @@ export const sendNotificationEmail = async (
   }
 };
 
+/**
+ * Send a custom email (for email templates)
+ * إرسال إيميل مخصص
+ */
+export const sendEmail = async (
+  to: string,
+  subject: string,
+  body: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    await resend.emails.send({
+      from: 'CRM System <mail@resend.dev>',
+      to,
+      subject,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f9fafb;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+            <div style="background-color: white; padding: 40px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+              ${body}
+            </div>
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 20px;">
+              Sent via CRM System
+            </p>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    console.log(`✉️ Email sent to ${to}: ${subject}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to send email:', error);
+    return { success: false, error: String(error) };
+  }
+};
+
 export default resend;

@@ -121,7 +121,7 @@ export const createCustomer = async (
         address,
         status: mapStatus(status),
         tags: tags || [],
-        notes,
+        notesText: notes,
         ownerId: req.user?.id as string, // Multi-tenant: assign to current user
       },
       include: {
@@ -182,7 +182,7 @@ export const updateCustomer = async (
         ...(address !== undefined && { address }),
         ...(status && { status: mapStatus(status) }),
         ...(tags && { tags }),
-        ...(notes !== undefined && { notes }),
+        ...(notes !== undefined && { notesText: notes }),
       },
       include: {
         owner: {
