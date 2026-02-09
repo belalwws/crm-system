@@ -2,6 +2,8 @@ import { Response } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../types';
 import { TaskType, Priority, TaskStatus } from '@prisma/client';
+import { createAuditLog, createTimelineEvent } from '../lib/auditLog';
+import { fireWebhooks } from '../lib/workflowEngine';
 
 /**
  * Helper: Map frontend type to Prisma enum
@@ -12,6 +14,7 @@ const mapType = (type?: string): TaskType => {
     email: 'EMAIL',
     meeting: 'MEETING',
     'follow-up': 'FOLLOW_UP',
+    whatsapp: 'WHATSAPP',
     other: 'OTHER',
   };
   return typeMap[type?.toLowerCase() || 'other'] || 'OTHER';
@@ -25,6 +28,7 @@ const mapPriority = (priority?: string): Priority => {
     low: 'LOW',
     medium: 'MEDIUM',
     high: 'HIGH',
+    urgent: 'URGENT',
   };
   return priorityMap[priority?.toLowerCase() || 'medium'] || 'MEDIUM';
 };
@@ -67,28 +71,58 @@ export const getTasks = async (
   res: Response
 ): Promise<void> => {
   try {
-    const tasks = await prisma.task.findMany({
-      where: { assignedToId: req.user?.id },
-      orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }],
-      include: {
-        customer: {
-          select: { id: true, name: true, email: true },
+    const {
+      search, status, priority, type, customerId, dealId,
+      overdue, sortBy = 'dueDate', sortOrder = 'asc',
+      page = '1', limit = '50', includeDeleted,
+    } = req.query as Record<string, string>;
+
+    const where: any = {
+      assignedToId: req.user?.id,
+      ...(includeDeleted !== 'true' && { deletedAt: null }),
+    };
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (status) where.status = mapStatus(status);
+    if (priority) where.priority = mapPriority(priority);
+    if (type) where.type = mapType(type);
+    if (customerId) where.customerId = customerId;
+    if (dealId) where.dealId = dealId;
+    if (overdue === 'true') {
+      where.dueDate = { lt: new Date() };
+      where.status = { notIn: ['COMPLETED', 'CANCELLED'] };
+    }
+
+    const pageNum = Math.max(1, parseInt(page));
+    const pageSize = Math.min(100, Math.max(1, parseInt(limit)));
+
+    const [tasks, total] = await Promise.all([
+      prisma.task.findMany({
+        where,
+        orderBy: { [sortBy]: sortOrder === 'desc' ? 'desc' : 'asc' },
+        skip: (pageNum - 1) * pageSize,
+        take: pageSize,
+        include: {
+          customer: { select: { id: true, name: true, email: true } },
+          deal: { select: { id: true, title: true, value: true } },
+          assignedTo: { select: { id: true, name: true, email: true } },
+          createdBy: { select: { id: true, name: true, email: true } },
         },
-        deal: {
-          select: { id: true, title: true, value: true },
-        },
-        assignedTo: {
-          select: { id: true, name: true, email: true },
-        },
-        createdBy: {
-          select: { id: true, name: true, email: true },
-        },
-      },
-    });
+      }),
+      prisma.task.count({ where }),
+    ]);
 
     res.status(200).json({
       success: true,
       count: tasks.length,
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / pageSize),
       data: tasks.map(formatTask),
     });
   } catch (error: any) {
@@ -113,6 +147,7 @@ export const getTask = async (
       where: {
         id: req.params.id,
         assignedToId: req.user?.id,
+        deletedAt: null,
       },
       include: {
         customer: {
@@ -204,27 +239,40 @@ export const createTask = async (
         priority: mapPriority(priority),
         status: mapStatus(status),
         dueDate: dueDate ? new Date(dueDate) : null,
-        notes,
+        notesText: notes,
         assignedToId: req.user?.id as string,
         createdById: req.user?.id as string,
         customerId: customerId || customer || null,
         dealId: dealId || deal || null,
       },
       include: {
-        customer: {
-          select: { id: true, name: true, email: true },
-        },
-        deal: {
-          select: { id: true, title: true, value: true },
-        },
-        assignedTo: {
-          select: { id: true, name: true, email: true },
-        },
-        createdBy: {
-          select: { id: true, name: true, email: true },
-        },
+        customer: { select: { id: true, name: true, email: true } },
+        deal: { select: { id: true, title: true, value: true } },
+        assignedTo: { select: { id: true, name: true, email: true } },
+        createdBy: { select: { id: true, name: true, email: true } },
       },
     });
+
+    await createAuditLog({
+      userId: req.user?.id as string,
+      action: 'CREATE',
+      entityType: 'Task',
+      entityId: task.id,
+      entityName: task.title,
+      newValues: { title, type: task.type, priority: task.priority, dueDate },
+    });
+
+    // Timeline event if linked to customer
+    if (task.customerId) {
+      await createTimelineEvent({
+        ownerId: req.user?.id as string,
+        type: 'TASK_CREATED',
+        title: `Task "${title}" created`,
+        metadata: { type: task.type, priority: task.priority },
+        customerId: task.customerId,
+        dealId: task.dealId || undefined,
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -328,6 +376,7 @@ export const deleteTask = async (
       where: {
         id: req.params.id,
         assignedToId: req.user?.id,
+        deletedAt: null,
       },
     });
 
@@ -339,8 +388,17 @@ export const deleteTask = async (
       return;
     }
 
-    await prisma.task.delete({
+    await prisma.task.update({
       where: { id: req.params.id },
+      data: { deletedAt: new Date(), deletedById: req.user?.id },
+    });
+
+    await createAuditLog({
+      userId: req.user?.id as string,
+      action: 'DELETE',
+      entityType: 'Task',
+      entityId: existing.id,
+      entityName: existing.title,
     });
 
     res.status(200).json({
@@ -353,5 +411,39 @@ export const deleteTask = async (
       success: false,
       message: error.message || 'Error deleting task',
     });
+  }
+};
+
+/**
+ * @desc    Restore soft-deleted task
+ * @route   POST /api/tasks/:id/restore
+ * @access  Private
+ */
+export const restoreTask = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const existing = await prisma.task.findFirst({
+      where: { id: req.params.id, assignedToId: req.user?.id, deletedAt: { not: null } },
+    });
+    if (!existing) {
+      res.status(404).json({ success: false, message: 'Deleted task not found' });
+      return;
+    }
+    const task = await prisma.task.update({
+      where: { id: req.params.id },
+      data: { deletedAt: null, deletedById: null },
+      include: {
+        customer: { select: { id: true, name: true, email: true } },
+        deal: { select: { id: true, title: true, value: true } },
+        assignedTo: { select: { id: true, name: true, email: true } },
+        createdBy: { select: { id: true, name: true, email: true } },
+      },
+    });
+    await createAuditLog({ userId: req.user?.id as string, action: 'RESTORE', entityType: 'Task', entityId: task.id, entityName: task.title });
+    res.status(200).json({ success: true, data: formatTask(task), message: 'Task restored' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message || 'Error restoring task' });
   }
 };

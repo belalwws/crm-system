@@ -5,23 +5,21 @@ import {
   createCustomer,
   updateCustomer,
   deleteCustomer,
+  restoreCustomer,
+  checkDuplicates,
+  mergeCustomers,
 } from '../controllers/customerController';
 import { protect } from '../middleware/auth';
 
 const router = express.Router();
 
-/**
- * Customer Routes
- * All routes are protected (require authentication)
- */
 router.use(protect);
 
 router.route('/').get(getCustomers).post(createCustomer);
+router.post('/check-duplicates', checkDuplicates);
+router.post('/merge', mergeCustomers);
 
-router
-  .route('/:id')
-  .get(getCustomer)
-  .put(updateCustomer)
-  .delete(deleteCustomer);
+router.route('/:id').get(getCustomer).put(updateCustomer).delete(deleteCustomer);
+router.post('/:id/restore', restoreCustomer);
 
 export default router;

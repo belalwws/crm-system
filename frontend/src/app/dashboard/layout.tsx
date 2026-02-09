@@ -17,12 +17,18 @@ import {
   Bell,
   FileText,
   Mail,
+  Sparkles,
+  TrendingUp,
+  GitBranch,
+  Globe,
+  Shield,
 } from "lucide-react";
 import { useState } from "react";
 import { ToastProvider } from "@/components/ui/toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { GlobalSearch } from "@/components/search/global-search";
+import { AIChatButton } from "@/components/ai/ai-chat";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -32,6 +38,11 @@ const navigation = [
   { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
   { name: "Documents", href: "/dashboard/documents", icon: FileText },
   { name: "Email Templates", href: "/dashboard/emails/templates", icon: Mail },
+  { name: "Nexus AI", href: "/dashboard/ai", icon: Sparkles },
+  { name: "Reports", href: "/dashboard/reports", icon: TrendingUp },
+  { name: "Workflows", href: "/dashboard/workflows", icon: GitBranch },
+  { name: "Webhooks", href: "/dashboard/webhooks", icon: Globe },
+  { name: "Audit Logs", href: "/dashboard/audit-logs", icon: Shield },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
@@ -92,8 +103,15 @@ export default function DashboardLayout({
                     : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white"
                 }`}
               >
-                <item.icon className="w-4 h-4" />
-                {item.name}
+                <item.icon className={`w-4 h-4 ${item.name === 'Nexus AI' ? 'text-violet-500' : ''}`} />
+                <span className={item.name === 'Nexus AI' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent font-semibold' : ''}>
+                  {item.name}
+                </span>
+                {item.name === 'Nexus AI' && (
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-medium">
+                    AI
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -167,6 +185,9 @@ export default function DashboardLayout({
           </ToastProvider>
         </main>
       </div>
+
+      {/* Floating AI Chat Button */}
+      <AIChatButton />
     </div>
   );
 }

@@ -25,6 +25,7 @@ import NotesList from '@/components/notes/notes-list';
 import FileUpload from '@/components/documents/file-upload';
 import { ActivityFeed } from '@/components/activity/activity-timeline';
 import EmailComposer from '@/components/email/email-composer';
+import { AIDealAnalysis } from '@/components/ai/ai-insights';
 
 interface Deal {
   id: string;
@@ -70,7 +71,7 @@ export default function DealDetailPage() {
   const [deal, setDeal] = useState<Deal | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'notes' | 'documents' | 'activity'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notes' | 'documents' | 'activity' | 'ai'>('overview');
   const [showEmailComposer, setShowEmailComposer] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -227,6 +228,7 @@ export default function DealDetailPage() {
     { id: 'notes', label: 'Notes', icon: StickyNote },
     { id: 'documents', label: 'Documents', icon: FileText },
     { id: 'activity', label: 'Activity', icon: Activity },
+    { id: 'ai', label: 'AI Analysis', icon: Activity },
   ];
 
   return (
@@ -535,6 +537,12 @@ export default function DealDetailPage() {
       {activeTab === 'activity' && (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <ActivityFeed entityType="DEAL" entityId={dealId} />
+        </div>
+      )}
+
+      {activeTab === 'ai' && (
+        <div className="space-y-6">
+          <AIDealAnalysis dealId={dealId} dealTitle={deal.title} />
         </div>
       )}
 

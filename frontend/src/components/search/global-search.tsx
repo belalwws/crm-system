@@ -58,7 +58,7 @@ export function GlobalSearch() {
     }
   }, [isOpen]);
 
-  // Search with debounce
+  // Search with debounce - uses server-side global search API
   const search = useCallback(async (searchQuery: string) => {
     if (searchQuery.length < 2) {
       setResults([]);
@@ -68,35 +68,19 @@ export function GlobalSearch() {
     try {
       setLoading(true);
       const token = await getToken();
-      
-      // Parallel fetch all entities
-      const [customersRes, dealsRes, tasksRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/customers`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/deals`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/tasks`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
 
-      const [customers, deals, tasks] = await Promise.all([
-        customersRes.ok ? customersRes.json() : [],
-        dealsRes.ok ? dealsRes.json() : [],
-        tasksRes.ok ? tasksRes.json() : [],
-      ]);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/search?q=${encodeURIComponent(searchQuery)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      const searchLower = searchQuery.toLowerCase();
+      if (!res.ok) throw new Error('Search failed');
+      const data = await res.json();
+      const searchResults = data.data || {};
       const allResults: SearchResult[] = [];
 
-      // Search customers
-      customers.filter((c: any) => 
-        c.name.toLowerCase().includes(searchLower) ||
-        c.email?.toLowerCase().includes(searchLower) ||
-        c.company?.toLowerCase().includes(searchLower)
-      ).slice(0, 5).forEach((c: any) => {
+      // Map customers
+      (searchResults.customers || []).forEach((c: any) => {
         allResults.push({
           id: c.id,
           type: 'customer',
@@ -105,22 +89,18 @@ export function GlobalSearch() {
         });
       });
 
-      // Search deals
-      deals.filter((d: any) => 
-        d.title.toLowerCase().includes(searchLower)
-      ).slice(0, 5).forEach((d: any) => {
+      // Map deals
+      (searchResults.deals || []).forEach((d: any) => {
         allResults.push({
           id: d.id,
           type: 'deal',
           title: d.title,
-          subtitle: `$${d.value.toLocaleString()} · ${d.stage}`,
+          subtitle: `$${d.value?.toLocaleString() || 0} · ${d.stage}`,
         });
       });
 
-      // Search tasks
-      tasks.filter((t: any) => 
-        t.title.toLowerCase().includes(searchLower)
-      ).slice(0, 5).forEach((t: any) => {
+      // Map tasks
+      (searchResults.tasks || []).forEach((t: any) => {
         allResults.push({
           id: t.id,
           type: 'task',

@@ -18,6 +18,13 @@ import emailRoutes from './routes/emailRoutes';
 import documentRoutes from './routes/documentRoutes';
 import noteRoutes from './routes/noteRoutes';
 import meetingRoutes from './routes/meetingRoutes';
+import aiRoutes from './routes/aiRoutes';
+import timelineRoutes from './routes/timelineRoutes';
+import searchRoutes from './routes/searchRoutes';
+import reportRoutes from './routes/reportRoutes';
+import workflowRoutes from './routes/workflowRoutes';
+import auditLogRoutes from './routes/auditLogRoutes';
+import webhookRoutes from './routes/webhookRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -40,6 +47,16 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Separate rate limiter for AI endpoints (lower limit)
+const aiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 20, // 20 AI requests per minute
+  message: { success: false, message: 'Too many AI requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/ai/', aiLimiter);
+
 // CORS configuration
 const corsOptions = {
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -61,7 +78,7 @@ app.get('/', (req: Request, res: Response) => {
   res.json({
     success: true,
     message: 'CRM API is running',
-    version: '1.0.0',
+    version: '2.0.0',
     database: 'PostgreSQL',
   });
 });
@@ -78,6 +95,13 @@ app.use('/api/emails', emailRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/timeline', timelineRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/workflows', workflowRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 // 404 Error handler
 app.use((req: Request, res: Response) => {

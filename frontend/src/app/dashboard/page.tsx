@@ -12,8 +12,10 @@ import {
   CheckSquare,
   ArrowRight,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import { formatCurrency, formatRelativeTime } from "@/lib/hooks";
+import { AIDashboardInsights } from "@/components/ai/ai-insights";
 
 interface DashboardStats {
   totalCustomers: number;
@@ -111,8 +113,8 @@ function MonthlyChart({ data, loading }: { data: MonthlyData[]; loading: boolean
         <div className="animate-pulse">
           <div className="h-5 w-24 bg-neutral-200 dark:bg-neutral-800 rounded mb-6" />
           <div className="flex items-end gap-1 h-40">
-            {Array(12).fill(0).map((_, i) => (
-              <div key={i} className="flex-1 bg-neutral-200 dark:bg-neutral-800 rounded-sm" style={{ height: `${20 + Math.random() * 60}%` }} />
+            {[45, 62, 38, 55, 70, 30, 50, 65, 42, 58, 35, 48].map((h, i) => (
+              <div key={i} className="flex-1 bg-neutral-200 dark:bg-neutral-800 rounded-sm" style={{ height: `${h}%` }} />
             ))}
           </div>
         </div>
@@ -437,6 +439,16 @@ export default function DashboardPage() {
 
       {/* Recent Deals */}
       <RecentDeals deals={recentDeals} loading={loading} />
+
+      {/* AI Insights Section */}
+      <div className="mt-2">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="w-5 h-5 text-violet-600" />
+          <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">AI Insights</h2>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-medium">Beta</span>
+        </div>
+        <AIDashboardInsights />
+      </div>
     </div>
   );
 }

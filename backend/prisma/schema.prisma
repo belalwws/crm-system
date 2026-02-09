@@ -1,4 +1,5 @@
-// Prisma Schema for CRM Application
+// Prisma Schema for CRM Application v2.0
+// Enterprise-grade CRM with AI, Workflows, Audit Logs, Soft Delete
 // Multi-tenant architecture - each user sees only their data
 
 generator client {
@@ -20,27 +21,37 @@ model User {
   password  String
   company   String?
   role      Role     @default(USER)
+  avatar    String?
+  phone     String?
+  timezone  String?  @default("UTC")
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations - العلاقات
-  customers      Customer[]      // العملاء التابعين للمستخدم
-  deals          Deal[]          // الصفقات التابعة للمستخدم
-  tasksAssigned  Task[]          @relation("AssignedTasks") // المهام المسندة للمستخدم
-  tasksCreated   Task[]          @relation("CreatedTasks")  // المهام التي أنشأها المستخدم
-  notifications  Notification[]  // الإشعارات
-  emailTemplates EmailTemplate[] // قوالب البريد
-  emailLogs      EmailLog[]      // سجل البريد
-  documents      Document[]      // المستندات
-  activities     Activity[]      // سجل النشاط
-  notes          Note[]          // الملاحظات
-  meetings       Meeting[]       // الاجتماعات
+  // Relations
+  customers          Customer[]
+  deals              Deal[]
+  tasksAssigned      Task[]           @relation("AssignedTasks")
+  tasksCreated       Task[]           @relation("CreatedTasks")
+  notifications      Notification[]
+  emailTemplates     EmailTemplate[]
+  emailLogs          EmailLog[]
+  documents          Document[]
+  activities         Activity[]
+  notes              Note[]
+  meetings           Meeting[]
+  savedViews         SavedView[]
+  auditLogs          AuditLog[]       @relation("AuditUser")
+  workflowsCreated   WorkflowRule[]
+  webhooks           Webhook[]
+  assignmentRules    AssignmentRule[]
 
   @@map("users")
 }
 
 enum Role {
   ADMIN
+  MANAGER
   USER
 }
 
@@ -48,32 +59,44 @@ enum Role {
 // Customer Model - العملاء
 // =============================================
 model Customer {
-  id        String         @id @default(cuid())
-  name      String
-  email     String
-  phone     String?
-  company   String?
-  address   String?
-  status    CustomerStatus @default(LEAD)
-  tags      String[]       @default([])
-  notesText String?        @map("notes")
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id          String         @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  company     String?
+  address     String?
+  status      CustomerStatus @default(LEAD)
+  source      LeadSource?
+  industry    String?
+  website     String?
+  tags        String[]       @default([])
+  notesText   String?        @map("notes")
+  // Soft Delete
+  deletedAt   DateTime?
+  deletedById String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  // Multi-tenant: كل عميل تابع لمستخدم واحد
+  // Multi-tenant
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   // Relations
-  deals     Deal[]
-  tasks     Task[]
-  emailLogs EmailLog[]
-  documents Document[]
-  notes     Note[]
-  meetings  Meeting[]
+  deals           Deal[]
+  tasks           Task[]
+  emailLogs       EmailLog[]
+  documents       Document[]
+  notes           Note[]
+  meetings        Meeting[]
+  timelineEvents  TimelineEvent[]
 
   @@index([ownerId])
   @@index([email])
+  @@index([phone])
+  @@index([name])
+  @@index([status])
+  @@index([deletedAt])
+  @@index([createdAt])
   @@map("customers")
 }
 
@@ -81,6 +104,17 @@ enum CustomerStatus {
   ACTIVE
   INACTIVE
   LEAD
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  SOCIAL_MEDIA
+  COLD_CALL
+  EMAIL_CAMPAIGN
+  TRADE_SHOW
+  PARTNER
+  OTHER
 }
 
 // =============================================
@@ -92,31 +126,37 @@ model Deal {
   description       String?
   value             Float     @default(0)
   stage             DealStage @default(LEAD)
-  probability       Int       @default(10) // 0-100
+  probability       Int       @default(10)
   expectedCloseDate DateTime?
   closedDate        DateTime?
+  lostReason        String?
   notesText         String?   @map("notes")
+  // Soft Delete
+  deletedAt         DateTime?
+  deletedById       String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  // Multi-tenant: كل صفقة تابعة لمستخدم واحد
-  ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-
-  // Relation to Customer
+  // Multi-tenant
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   // Relations
-  tasks     Task[]
-  emailLogs EmailLog[]
-  documents Document[]
-  notes     Note[]
-  meetings  Meeting[]
+  tasks           Task[]
+  emailLogs       EmailLog[]
+  documents       Document[]
+  notes           Note[]
+  meetings        Meeting[]
+  timelineEvents  TimelineEvent[]
 
   @@index([ownerId])
   @@index([customerId])
   @@index([stage])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@index([expectedCloseDate])
   @@map("deals")
 }
 
@@ -133,32 +173,32 @@ enum DealStage {
 // Task Model - المهام
 // =============================================
 model Task {
-  id            String       @id @default(cuid())
+  id            String     @id @default(cuid())
   title         String
   description   String?
-  type          TaskType     @default(OTHER)
-  priority      Priority     @default(MEDIUM)
-  status        TaskStatus   @default(PENDING)
+  type          TaskType   @default(OTHER)
+  priority      Priority   @default(MEDIUM)
+  status        TaskStatus @default(PENDING)
   dueDate       DateTime?
   completedDate DateTime?
-  notesText     String?      @map("notes")
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  notesText     String?    @map("notes")
+  // Soft Delete
+  deletedAt     DateTime?
+  deletedById   String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
-  // Multi-tenant: المهام المسندة للمستخدم
+  // Multi-tenant
   assignedToId String
   assignedTo   User   @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: Cascade)
-
-  // من أنشأ المهمة
-  createdById String
-  createdBy   User   @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Cascade)
+  createdById  String
+  createdBy    User   @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Cascade)
 
   // Optional relations
   customerId String?
   customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-
-  dealId String?
-  deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  dealId     String?
+  deal       Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
 
   // Notes relation
   notes Note[]
@@ -167,6 +207,7 @@ model Task {
   @@index([createdById])
   @@index([status])
   @@index([dueDate])
+  @@index([deletedAt])
   @@map("tasks")
 }
 
@@ -175,6 +216,7 @@ enum TaskType {
   EMAIL
   MEETING
   FOLLOW_UP
+  WHATSAPP
   OTHER
 }
 
@@ -182,6 +224,7 @@ enum Priority {
   LOW
   MEDIUM
   HIGH
+  URGENT
 }
 
 enum TaskStatus {
@@ -203,20 +246,25 @@ model Notification {
   message   String
   read      Boolean          @default(false)
   link      String?
+  metadata  Json?
   createdAt DateTime         @default(now())
 
   @@index([userId])
   @@index([read])
+  @@index([createdAt])
   @@map("notifications")
 }
 
 enum NotificationType {
   TASK_DUE
   TASK_ASSIGNED
+  TASK_OVERDUE
   DEAL_WON
   DEAL_LOST
   DEAL_STAGE_CHANGED
   NEW_CUSTOMER
+  DUPLICATE_DETECTED
+  WORKFLOW_TRIGGERED
   REMINDER
   SYSTEM
 }
@@ -231,6 +279,7 @@ model EmailTemplate {
   name      String
   subject   String
   body      String
+  category  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -253,6 +302,8 @@ model EmailLog {
   subject    String
   body       String
   status     EmailStatus @default(SENT)
+  openedAt   DateTime?
+  repliedAt  DateTime?
   sentAt     DateTime    @default(now())
 
   @@index([ownerId])
@@ -264,6 +315,8 @@ enum EmailStatus {
   SENT
   FAILED
   BOUNCED
+  OPENED
+  REPLIED
 }
 
 // =============================================
@@ -281,6 +334,7 @@ model Document {
   type       String
   size       Int
   url        String
+  category   String?
   createdAt  DateTime  @default(now())
 
   @@index([ownerId])
@@ -312,12 +366,15 @@ enum ActivityType {
   CREATED
   UPDATED
   DELETED
+  RESTORED
   STATUS_CHANGED
   STAGE_CHANGED
   EMAIL_SENT
   NOTE_ADDED
   FILE_UPLOADED
   TASK_COMPLETED
+  MERGED
+  WORKFLOW_TRIGGERED
 }
 
 // =============================================
@@ -335,6 +392,7 @@ model Note {
   task       Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   content    String
   pinned     Boolean   @default(false)
+  mentions   String[]  @default([])
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -361,10 +419,214 @@ model Meeting {
   startTime   DateTime
   endTime     DateTime
   reminder    Int?
+  outcome     String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([ownerId])
   @@index([startTime])
   @@map("meetings")
+}
+
+// =============================================
+// Timeline Event Model - الأحداث الزمنية الموحدة
+// =============================================
+model TimelineEvent {
+  id          String            @id @default(cuid())
+  ownerId     String
+  type        TimelineEventType
+  title       String
+  description String?
+  metadata    Json?
+  // Polymorphic relations
+  customerId  String?
+  customer    Customer?         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  dealId      String?
+  deal        Deal?             @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+
+  @@index([customerId])
+  @@index([dealId])
+  @@index([ownerId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("timeline_events")
+}
+
+enum TimelineEventType {
+  NOTE
+  CALL
+  EMAIL_SENT
+  EMAIL_RECEIVED
+  MEETING
+  WHATSAPP
+  STAGE_CHANGED
+  STATUS_CHANGED
+  TASK_CREATED
+  TASK_COMPLETED
+  FILE_UPLOADED
+  DEAL_CREATED
+  DEAL_WON
+  DEAL_LOST
+  MENTION
+  SYSTEM
+}
+
+// =============================================
+// Saved View Model - العروض المحفوظة
+// =============================================
+model SavedView {
+  id         String   @id @default(cuid())
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name       String
+  entity     String   // 'customers' | 'deals' | 'tasks'
+  filters    Json     // { status: 'LEAD', tags: ['hot'], dateRange: {...} }
+  sorting    Json?    // { field: 'createdAt', order: 'desc' }
+  columns    Json?    // which columns to show
+  isDefault  Boolean  @default(false)
+  color      String?
+  icon       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([entity])
+  @@map("saved_views")
+}
+
+// =============================================
+// Audit Log Model - سجل التدقيق
+// =============================================
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation("AuditUser", fields: [userId], references: [id], onDelete: Cascade)
+  action     String   // CREATE, UPDATE, DELETE, RESTORE, MERGE, STAGE_CHANGE
+  entityType String   // 'Customer', 'Deal', 'Task', etc.
+  entityId   String
+  entityName String?  // human-readable name at time of action
+  oldValues  Json?    // previous values (for updates)
+  newValues  Json?    // new values (for updates)
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// =============================================
+// Workflow Rule Model - قواعد الأتمتة
+// =============================================
+model WorkflowRule {
+  id              String          @id @default(cuid())
+  ownerId         String
+  owner           User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  trigger         WorkflowTrigger
+  conditions      Json            // { field: 'stage', operator: 'equals', value: 'PROPOSAL' }
+  actions         Json            // [{ type: 'CREATE_TASK', params: {...} }]
+  isActive        Boolean         @default(true)
+  executionCount  Int             @default(0)
+  lastTriggeredAt DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  logs WorkflowLog[]
+
+  @@index([ownerId])
+  @@index([trigger])
+  @@index([isActive])
+  @@map("workflow_rules")
+}
+
+enum WorkflowTrigger {
+  DEAL_STAGE_CHANGED
+  DEAL_CREATED
+  DEAL_UPDATED
+  TASK_OVERDUE
+  CUSTOMER_STATUS_CHANGED
+  CUSTOMER_CREATED
+}
+
+model WorkflowLog {
+  id         String       @id @default(cuid())
+  ruleId     String
+  rule       WorkflowRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  entityType String
+  entityId   String
+  status     String       // 'SUCCESS' | 'FAILED'
+  details    Json?
+  createdAt  DateTime     @default(now())
+
+  @@index([ruleId])
+  @@index([createdAt])
+  @@map("workflow_logs")
+}
+
+// =============================================
+// Assignment Rule Model - قواعد التوزيع التلقائي
+// =============================================
+model AssignmentRule {
+  id                String   @id @default(cuid())
+  ownerId           String
+  owner             User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name              String
+  description       String?
+  conditions        Json     // { source: 'FACEBOOK', region: 'EMEA' }
+  assignToIds       String[] // user IDs to round-robin between
+  method            String   @default("round_robin") // 'round_robin' | 'load_balanced'
+  lastAssignedIndex Int      @default(0)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([isActive])
+  @@map("assignment_rules")
+}
+
+// =============================================
+// Webhook Model - الويب هوك
+// =============================================
+model Webhook {
+  id              String    @id @default(cuid())
+  ownerId         String
+  owner           User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name            String
+  url             String
+  events          String[]  // ['deal.created', 'deal.won', 'customer.created']
+  secret          String?   // for HMAC verification
+  isActive        Boolean   @default(true)
+  lastTriggeredAt DateTime?
+  failCount       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  logs WebhookLog[]
+
+  @@index([ownerId])
+  @@index([isActive])
+  @@map("webhooks")
+}
+
+model WebhookLog {
+  id         String   @id @default(cuid())
+  webhookId  String
+  webhook    Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  event      String
+  payload    Json
+  statusCode Int?
+  response   String?
+  success    Boolean
+  createdAt  DateTime @default(now())
+
+  @@index([webhookId])
+  @@index([createdAt])
+  @@map("webhook_logs")
 }

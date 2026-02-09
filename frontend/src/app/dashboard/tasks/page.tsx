@@ -15,6 +15,7 @@ import {
   Filter,
   ListTodo,
   CalendarDays,
+  Sparkles,
 } from "lucide-react";
 import {
   Button,
@@ -38,6 +39,7 @@ import {
   TabsContent,
 } from "@/components/ui";
 import { formatDate, formatRelativeTime } from "@/lib/hooks";
+import { AITaskPrioritization } from "@/components/ai/ai-insights";
 
 interface Task {
   id: string;
@@ -215,6 +217,7 @@ export default function TasksPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showAI, setShowAI] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -412,16 +415,36 @@ export default function TasksPage() {
             {tasks.length} total tasks • {pendingTasks.length} pending
           </p>
         </div>
-        <Button
-          icon={<Plus className="w-4 h-4" />}
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-        >
-          Add Task
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAI(!showAI)}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${
+              showAI
+                ? 'bg-violet-600 text-white'
+                : 'bg-violet-600/10 text-violet-400 hover:bg-violet-600/20 border border-violet-500/30'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            AI Prioritize
+          </button>
+          <Button
+            icon={<Plus className="w-4 h-4" />}
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+          >
+            Add Task
+          </Button>
+        </div>
       </div>
+
+      {/* AI Prioritization Panel */}
+      {showAI && (
+        <div className="animate-in slide-in-from-top-2 duration-300">
+          <AITaskPrioritization />
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-slide-up">

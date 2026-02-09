@@ -21,11 +21,113 @@ import {
   Activity,
   MoreHorizontal,
   Send,
+  Clock,
 } from 'lucide-react';
 import NotesList from '@/components/notes/notes-list';
 import FileUpload from '@/components/documents/file-upload';
 import { ActivityFeed } from '@/components/activity/activity-timeline';
 import EmailComposer from '@/components/email/email-composer';
+import { AICustomerInsights } from '@/components/ai/ai-insights';
+import { AIEmailComposer } from '@/components/ai/ai-email-composer';
+import { api } from '@/lib/api';
+
+function CustomerTimeline({ customerId }: { customerId: string }) {
+  const { getToken } = useAuth();
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = await getToken();
+        if (token) api.setToken(token);
+        const res = await api.getCustomerTimeline(customerId);
+        const resData = res.data as any;
+        setEvents(resData?.events || resData || []);
+      } catch (err) {
+        console.error('Failed to fetch timeline:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [customerId, getToken]);
+
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case 'CUSTOMER_CREATED': return { icon: Plus, color: 'text-green-500 bg-green-50 dark:bg-green-900/20' };
+      case 'STATUS_CHANGED': return { icon: Activity, color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' };
+      case 'DEAL_CREATED': return { icon: Briefcase, color: 'text-purple-500 bg-purple-50 dark:bg-purple-900/20' };
+      case 'STAGE_CHANGED': return { icon: Activity, color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' };
+      case 'DEAL_WON': return { icon: DollarSign, color: 'text-green-500 bg-green-50 dark:bg-green-900/20' };
+      case 'DEAL_LOST': return { icon: Trash2, color: 'text-red-500 bg-red-50 dark:bg-red-900/20' };
+      case 'NOTE_ADDED': return { icon: StickyNote, color: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' };
+      case 'EMAIL_SENT': return { icon: Mail, color: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' };
+      case 'MEETING_SCHEDULED': return { icon: Calendar, color: 'text-teal-500 bg-teal-50 dark:bg-teal-900/20' };
+      case 'TASK_CREATED': return { icon: Activity, color: 'text-orange-500 bg-orange-50 dark:bg-orange-900/20' };
+      case 'DOCUMENT_UPLOADED': return { icon: FileText, color: 'text-violet-500 bg-violet-50 dark:bg-violet-900/20' };
+      default: return { icon: Clock, color: 'text-gray-500 bg-gray-50 dark:bg-gray-800' };
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex gap-4 animate-pulse">
+            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-800 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-800 rounded" />
+              <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-800 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (events.length === 0) {
+    return (
+      <div className="text-center py-12 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+        <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+        <p className="text-gray-500">No timeline events yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Timeline</h3>
+      <div className="relative">
+        <div className="absolute left-5 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-700" />
+        <div className="space-y-6">
+          {events.map((event: any) => {
+            const { icon: EventIcon, color } = getEventIcon(event.type);
+            return (
+              <div key={event.id} className="relative flex gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 ${color}`}>
+                  <EventIcon className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0 pt-1">
+                  <p className="text-sm text-gray-900 dark:text-white">{event.description}</p>
+                  {event.metadata && Object.keys(event.metadata).length > 0 && (
+                    <div className="mt-1 text-xs text-gray-500">
+                      {event.metadata.from && event.metadata.to && (
+                        <span>{event.metadata.from} → {event.metadata.to}</span>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">
+                    {new Date(event.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface Customer {
   id: string;
@@ -70,7 +172,7 @@ export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'notes' | 'documents' | 'activity'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'notes' | 'documents' | 'activity' | 'timeline' | 'ai'>('overview');
   const [showEmailComposer, setShowEmailComposer] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
 
@@ -198,6 +300,8 @@ export default function CustomerDetailPage() {
     { id: 'notes', label: 'Notes', icon: StickyNote },
     { id: 'documents', label: 'Documents', icon: FileText },
     { id: 'activity', label: 'Activity', icon: Activity },
+    { id: 'timeline', label: 'Timeline', icon: Clock },
+    { id: 'ai', label: 'AI Insights', icon: Activity },
   ];
 
   return (
@@ -480,6 +584,17 @@ export default function CustomerDetailPage() {
       {activeTab === 'activity' && (
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
           <ActivityFeed entityType="CUSTOMER" entityId={customerId} />
+        </div>
+      )}
+
+      {activeTab === 'timeline' && (
+        <CustomerTimeline customerId={customerId} />
+      )}
+
+      {activeTab === 'ai' && (
+        <div className="space-y-6">
+          <AICustomerInsights customerId={customerId} customerName={customer.name} />
+          <AIEmailComposer customerId={customerId} customerName={customer.name} />
         </div>
       )}
 
