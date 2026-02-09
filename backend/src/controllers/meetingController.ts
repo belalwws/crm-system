@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthRequest } from '../types';
+import logger from '../lib/logger';
 
 // Get all meetings
 export const getMeetings = async (req: AuthRequest, res: Response) => {
@@ -28,10 +29,10 @@ export const getMeetings = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.json(meetings);
+    res.json({ success: true, data: meetings });
   } catch (error) {
-    console.error('Error fetching meetings:', error);
-    res.status(500).json({ error: 'Failed to fetch meetings' });
+    logger.error('Error fetching meetings:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch meetings' });
   }
 };
 
@@ -50,13 +51,13 @@ export const getMeeting = async (req: AuthRequest, res: Response) => {
     });
 
     if (!meeting) {
-      return res.status(404).json({ error: 'Meeting not found' });
+      return res.status(404).json({ success: false, message: 'Meeting not found' });
     }
 
-    res.json(meeting);
+    res.json({ success: true, data: meeting });
   } catch (error) {
-    console.error('Error fetching meeting:', error);
-    res.status(500).json({ error: 'Failed to fetch meeting' });
+    logger.error('Error fetching meeting:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch meeting' });
   }
 };
 
@@ -67,7 +68,7 @@ export const createMeeting = async (req: AuthRequest, res: Response) => {
     const { title, description, location, startTime, endTime, reminder, customerId, dealId } = req.body;
 
     if (!title || !startTime || !endTime) {
-      return res.status(400).json({ error: 'title, startTime, and endTime are required' });
+      return res.status(400).json({ success: false, message: 'title, startTime, and endTime are required' });
     }
 
     const meeting = await prisma.meeting.create({
@@ -90,8 +91,8 @@ export const createMeeting = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(meeting);
   } catch (error) {
-    console.error('Error creating meeting:', error);
-    res.status(500).json({ error: 'Failed to create meeting' });
+    logger.error('Error creating meeting:', error);
+    res.status(500).json({ success: false, message: 'Failed to create meeting' });
   }
 };
 
@@ -107,7 +108,7 @@ export const updateMeeting = async (req: AuthRequest, res: Response) => {
     });
 
     if (!existingMeeting) {
-      return res.status(404).json({ error: 'Meeting not found' });
+      return res.status(404).json({ success: false, message: 'Meeting not found' });
     }
 
     const meeting = await prisma.meeting.update({
@@ -128,10 +129,10 @@ export const updateMeeting = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.json(meeting);
+    res.json({ success: true, data: meeting });
   } catch (error) {
-    console.error('Error updating meeting:', error);
-    res.status(500).json({ error: 'Failed to update meeting' });
+    logger.error('Error updating meeting:', error);
+    res.status(500).json({ success: false, message: 'Failed to update meeting' });
   }
 };
 
@@ -146,13 +147,13 @@ export const deleteMeeting = async (req: AuthRequest, res: Response) => {
     });
 
     if (meeting.count === 0) {
-      return res.status(404).json({ error: 'Meeting not found' });
+      return res.status(404).json({ success: false, message: 'Meeting not found' });
     }
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting meeting:', error);
-    res.status(500).json({ error: 'Failed to delete meeting' });
+    logger.error('Error deleting meeting:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete meeting' });
   }
 };
 
@@ -163,7 +164,7 @@ export const getCalendarEvents = async (req: AuthRequest, res: Response) => {
     const { start, end } = req.query;
 
     if (!start || !end) {
-      return res.status(400).json({ error: 'start and end dates are required' });
+      return res.status(400).json({ success: false, message: 'start and end dates are required' });
     }
 
     const meetings = await prisma.meeting.findMany({
@@ -220,10 +221,10 @@ export const getCalendarEvents = async (req: AuthRequest, res: Response) => {
       })),
     ];
 
-    res.json(events);
+    res.json({ success: true, data: events });
   } catch (error) {
-    console.error('Error fetching calendar events:', error);
-    res.status(500).json({ error: 'Failed to fetch calendar events' });
+    logger.error('Error fetching calendar events:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch calendar events' });
   }
 };
 
@@ -246,9 +247,9 @@ export const getUpcomingMeetings = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.json(meetings);
+    res.json({ success: true, data: meetings });
   } catch (error) {
-    console.error('Error fetching upcoming meetings:', error);
-    res.status(500).json({ error: 'Failed to fetch upcoming meetings' });
+    logger.error('Error fetching upcoming meetings:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch upcoming meetings' });
   }
 };

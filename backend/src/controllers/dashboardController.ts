@@ -144,7 +144,7 @@ export const getDashboardStats = async (
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthlyData = months.map((month, index) => {
       const monthDeals = monthlyDeals.filter(d => d.createdAt.getMonth() === index);
-      const totalValue = monthDeals.reduce((sum, d) => sum + (d.value || 0), 0);
+      const totalValue = monthDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
       return {
         month,
         value: totalValue,
@@ -154,12 +154,12 @@ export const getDashboardStats = async (
 
     // Calculate percentage changes
     const earningsChangePercent = wonDealsLastMonth._sum.value 
-      ? Math.round(((wonDealsThisMonth._sum.value || 0) - (wonDealsLastMonth._sum.value || 0)) / (wonDealsLastMonth._sum.value || 1) * 100)
-      : (wonDealsThisMonth._sum.value || 0) > 0 ? 100 : 0;
+      ? Math.round(((Number(wonDealsThisMonth._sum.value) || 0) - (Number(wonDealsLastMonth._sum.value) || 0)) / (Number(wonDealsLastMonth._sum.value) || 1) * 100)
+      : (Number(wonDealsThisMonth._sum.value) || 0) > 0 ? 100 : 0;
 
     const pipelineChangePercent = dealsLastMonth._sum.value
-      ? Math.round(((dealsThisMonth._sum.value || 0) - (dealsLastMonth._sum.value || 0)) / (dealsLastMonth._sum.value || 1) * 100)
-      : (dealsThisMonth._sum.value || 0) > 0 ? 100 : 0;
+      ? Math.round(((Number(dealsThisMonth._sum.value) || 0) - (Number(dealsLastMonth._sum.value) || 0)) / (Number(dealsLastMonth._sum.value) || 1) * 100)
+      : (Number(dealsThisMonth._sum.value) || 0) > 0 ? 100 : 0;
 
     const customersChangePercent = newCustomersLastMonth
       ? Math.round((newCustomersThisMonth - newCustomersLastMonth) / newCustomersLastMonth * 100)

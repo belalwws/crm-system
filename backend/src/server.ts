@@ -1,10 +1,20 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
+import 'express-async-errors'; // Must be imported before routes
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import prisma from './lib/prisma';
+import logger from './lib/logger';
+import { validateEnv } from './lib/validateEnv';
+import { protect } from './middleware/auth';
+
+// Load environment variables
+dotenv.config();
+
+// Validate required environment variables
+const env = validateEnv();
 
 // Import routes
 import authRoutes from './routes/authRoutes';
@@ -25,9 +35,8 @@ import reportRoutes from './routes/reportRoutes';
 import workflowRoutes from './routes/workflowRoutes';
 import auditLogRoutes from './routes/auditLogRoutes';
 import webhookRoutes from './routes/webhookRoutes';
-
-// Load environment variables
-dotenv.config();
+import adminRoutes from './routes/adminRoutes';
+import profileRoutes from './routes/profileRoutes';
 
 // Initialize express app
 const app = express();
@@ -66,21 +75,43 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Parse request bodies
-app.use(express.json()); // Parse JSON request bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+// Body size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// Health check route
-app.get('/', (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: 'CRM API is running',
-    version: '2.0.0',
-    database: 'PostgreSQL',
+// Request logging
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (req.path !== '/' && !req.path.includes('favicon')) {
+      logger.info(`${req.method} ${req.path} ${res.statusCode} ${duration}ms`);
+    }
   });
+  next();
+});
+
+// Serve uploaded files (authenticated)
+app.use('/uploads', protect, express.static(path.join(__dirname, '../uploads')));
+
+// Health check route (includes DB check)
+app.get('/', async (req: Request, res: Response) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      success: true,
+      message: 'CRM API is running',
+      version: '3.0.0',
+      database: 'PostgreSQL (connected)',
+    });
+  } catch {
+    res.status(503).json({
+      success: true,
+      message: 'CRM API is running',
+      version: '3.0.0',
+      database: 'PostgreSQL (disconnected)',
+    });
+  }
 });
 
 // API Routes
@@ -102,6 +133,8 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/workflows', workflowRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/profile', profileRoutes);
 
 // 404 Error handler
 app.use((req: Request, res: Response) => {
@@ -111,31 +144,53 @@ app.use((req: Request, res: Response) => {
   });
 });
 
+// Global error handler (must have 4 params)
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
+  logger.error(`Unhandled error: ${err.message}`, { stack: err.stack, path: req.path, method: req.method });
+  res.status(500).json({
+    success: false,
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+  });
+});
+
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = env.PORT;
 
 // Test database connection and start server
 prisma.$connect()
   .then(() => {
-    console.log('✅ PostgreSQL Connected Successfully');
-    app.listen(PORT, () => {
-      console.log('=================================');
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🌐 API URL: http://localhost:${PORT}`);
-      console.log(`🗄️  Database: PostgreSQL (Neon)`);
-      console.log('=================================');
+    logger.info('PostgreSQL Connected Successfully');
+    const server = app.listen(PORT, () => {
+      logger.info('=================================');
+      logger.info(`Server running on port ${PORT}`);
+      logger.info(`Environment: ${env.NODE_ENV}`);
+      logger.info(`API URL: http://localhost:${PORT}`);
+      logger.info(`Database: PostgreSQL (Neon)`);
+      logger.info('=================================');
     });
+
+    // Graceful shutdown
+    const shutdown = async (signal: string) => {
+      logger.info(`${signal} received. Starting graceful shutdown...`);
+      server.close(async () => {
+        logger.info('HTTP server closed');
+        await prisma.$disconnect();
+        logger.info('Database disconnected');
+        process.exit(0);
+      });
+      // Force exit after 10s
+      setTimeout(() => {
+        logger.error('Forced exit after 10s timeout');
+        process.exit(1);
+      }, 10000);
+    };
+
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
   })
   .catch((error) => {
-    console.error('❌ PostgreSQL Connection Error:', error);
+    logger.error('PostgreSQL Connection Error:', error);
     process.exit(1);
   });
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-});
 
 export default app;

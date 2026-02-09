@@ -26,8 +26,8 @@ export const getConversionFunnel = async (
       return {
         stage: stage.toLowerCase().replace('_', '-'),
         count: stat?._count.id || 0,
-        totalValue: stat?._sum.value || 0,
-        avgValue: Math.round(stat?._avg.value || 0),
+        totalValue: Number(stat?._sum.value) || 0,
+        avgValue: Math.round(Number(stat?._avg.value) || 0),
       };
     });
 
@@ -140,7 +140,7 @@ export const getRevenueForecast = async (
     const forecasted = deals.map((deal) => ({
       ...deal,
       stage: deal.stage.toLowerCase().replace('_', '-'),
-      weightedValue: Math.round(deal.value * deal.probability / 100),
+      weightedValue: Math.round(Number(deal.value) * deal.probability / 100),
     }));
 
     // Group by month
@@ -150,12 +150,12 @@ export const getRevenueForecast = async (
         ? deal.expectedCloseDate.toISOString().slice(0, 7)
         : 'unscheduled';
       if (!byMonth[month]) byMonth[month] = { totalValue: 0, weightedValue: 0, count: 0 };
-      byMonth[month].totalValue += deal.value;
+      byMonth[month].totalValue += Number(deal.value);
       byMonth[month].weightedValue += deal.weightedValue;
       byMonth[month].count++;
     }
 
-    const totalPipeline = deals.reduce((sum, d) => sum + d.value, 0);
+    const totalPipeline = deals.reduce((sum, d) => sum + Number(d.value), 0);
     const weightedPipeline = forecasted.reduce((sum, d) => sum + d.weightedValue, 0);
 
     // Won deals this quarter

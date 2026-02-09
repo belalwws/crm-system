@@ -97,6 +97,8 @@ model Customer {
   @@index([status])
   @@index([deletedAt])
   @@index([createdAt])
+  @@index([ownerId, deletedAt])
+  @@index([ownerId, status])
   @@map("customers")
 }
 
@@ -124,7 +126,7 @@ model Deal {
   id                String    @id @default(cuid())
   title             String
   description       String?
-  value             Float     @default(0)
+  value             Decimal   @default(0) @db.Decimal(15, 2)
   stage             DealStage @default(LEAD)
   probability       Int       @default(10)
   expectedCloseDate DateTime?
@@ -157,6 +159,8 @@ model Deal {
   @@index([deletedAt])
   @@index([createdAt])
   @@index([expectedCloseDate])
+  @@index([ownerId, deletedAt])
+  @@index([ownerId, stage])
   @@map("deals")
 }
 
@@ -208,6 +212,8 @@ model Task {
   @@index([status])
   @@index([dueDate])
   @@index([deletedAt])
+  @@index([assignedToId, deletedAt])
+  @@index([assignedToId, status])
   @@map("tasks")
 }
 
@@ -308,6 +314,7 @@ model EmailLog {
 
   @@index([ownerId])
   @@index([customerId])
+  @@index([dealId])
   @@map("email_logs")
 }
 
@@ -399,6 +406,7 @@ model Note {
   @@index([ownerId])
   @@index([customerId])
   @@index([dealId])
+  @@index([taskId])
   @@map("notes")
 }
 

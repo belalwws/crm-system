@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../types';
+import logger from '../lib/logger';
 import {
   aiChat,
   aiComposeEmail,
@@ -50,7 +51,7 @@ export const chat = async (req: AuthRequest, res: Response): Promise<void> => {
       },
     });
   } catch (error: any) {
-    console.error('AI Chat Error:', error);
+    logger.error('AI Chat Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'AI service error',
@@ -111,7 +112,7 @@ export const composeEmail = async (req: AuthRequest, res: Response): Promise<voi
       },
     });
   } catch (error: any) {
-    console.error('AI Email Composer Error:', error);
+    logger.error('AI Email Composer Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'AI service error',
@@ -158,7 +159,7 @@ export const customerInsights = async (req: AuthRequest, res: Response): Promise
       status: customer.status,
       deals: customer.deals.map(d => ({
         title: d.title,
-        value: d.value,
+        value: Number(d.value),
         stage: d.stage,
       })),
       tasks: customer.tasks.map(t => ({
@@ -181,7 +182,7 @@ export const customerInsights = async (req: AuthRequest, res: Response): Promise
       },
     });
   } catch (error: any) {
-    console.error('AI Customer Insights Error:', error);
+    logger.error('AI Customer Insights Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'AI service error',
@@ -218,7 +219,7 @@ export const dealAnalysis = async (req: AuthRequest, res: Response): Promise<voi
 
     const result = await aiDealAnalysis({
       title: deal.title,
-      value: deal.value,
+      value: Number(deal.value),
       stage: deal.stage,
       probability: deal.probability,
       expectedCloseDate: deal.expectedCloseDate?.toISOString(),
@@ -237,7 +238,7 @@ export const dealAnalysis = async (req: AuthRequest, res: Response): Promise<voi
       },
     });
   } catch (error: any) {
-    console.error('AI Deal Analysis Error:', error);
+    logger.error('AI Deal Analysis Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'AI service error',
@@ -285,7 +286,7 @@ export const prioritizeTasks = async (req: AuthRequest, res: Response): Promise<
         dueDate: t.dueDate?.toISOString(),
         customerName: t.customer?.name,
         dealTitle: t.deal?.title,
-        dealValue: t.deal?.value,
+        dealValue: t.deal?.value ? Number(t.deal.value) : undefined,
       }))
     );
 
@@ -297,7 +298,7 @@ export const prioritizeTasks = async (req: AuthRequest, res: Response): Promise<
       },
     });
   } catch (error: any) {
-    console.error('AI Task Prioritization Error:', error);
+    logger.error('AI Task Prioritization Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'AI service error',
@@ -378,7 +379,7 @@ Tasks: ${deal.tasks.map(t => `${t.title} (${t.status})`).join(', ')}`;
       },
     });
   } catch (error: any) {
-    console.error('AI Summarize Error:', error);
+    logger.error('AI Summarize Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'AI service error',
@@ -435,8 +436,8 @@ export const dashboardInsights = async (req: AuthRequest, res: Response): Promis
       totalDeals,
       wonDeals,
       lostDeals,
-      totalDealValue: dealValues._sum.value || 0,
-      wonValue: wonValues._sum.value || 0,
+      totalDealValue: Number(dealValues._sum.value) || 0,
+      wonValue: Number(wonValues._sum.value) || 0,
       pendingTasks,
       overdueTasks,
     });
@@ -449,7 +450,7 @@ export const dashboardInsights = async (req: AuthRequest, res: Response): Promis
       },
     });
   } catch (error: any) {
-    console.error('AI Dashboard Insights Error:', error);
+    logger.error('AI Dashboard Insights Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'AI service error',

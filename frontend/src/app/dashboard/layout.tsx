@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser, useAuth } from "@clerk/nextjs";
 import {
   LayoutDashboard,
   Users,
@@ -22,13 +22,16 @@ import {
   GitBranch,
   Globe,
   Shield,
+  ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ToastProvider } from "@/components/ui/toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { GlobalSearch } from "@/components/search/global-search";
 import { AIChatButton } from "@/components/ai/ai-chat";
+import ErrorBoundary from "@/components/error-boundary";
+import api from "@/lib/api";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -54,7 +57,31 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  const fetchRole = useCallback(async () => {
+    try {
+      const token = await getToken();
+      api.setToken(token);
+      const res = await api.getProfile() as { success: boolean; data?: { role?: string } };
+      if (res.success && res.data?.role) {
+        setUserRole(res.data.role);
+      }
+    } catch {
+      // silently fail
+    }
+  }, [getToken]);
+
+  useEffect(() => {
+    fetchRole();
+  }, [fetchRole]);
+
+  const allNavItems = [
+    ...navigation,
+    ...(userRole === 'ADMIN' ? [{ name: "Admin Panel", href: "/dashboard/admin", icon: ShieldCheck }] : []),
+  ];
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
@@ -89,8 +116,8 @@ export default function DashboardLayout({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1">
-          {navigation.map((item) => {
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {allNavItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
@@ -103,13 +130,21 @@ export default function DashboardLayout({
                     : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white"
                 }`}
               >
-                <item.icon className={`w-4 h-4 ${item.name === 'Nexus AI' ? 'text-violet-500' : ''}`} />
-                <span className={item.name === 'Nexus AI' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent font-semibold' : ''}>
+                <item.icon className={`w-4 h-4 ${item.name === 'Nexus AI' ? 'text-violet-500' : item.name === 'Admin Panel' ? 'text-red-500' : ''}`} />
+                <span className={
+                  item.name === 'Nexus AI' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent font-semibold' :
+                  item.name === 'Admin Panel' ? 'text-red-600 dark:text-red-400 font-semibold' : ''
+                }>
                   {item.name}
                 </span>
                 {item.name === 'Nexus AI' && (
                   <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 font-medium">
                     AI
+                  </span>
+                )}
+                {item.name === 'Admin Panel' && (
+                  <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-medium">
+                    ADM
                   </span>
                 )}
               </Link>
@@ -155,7 +190,7 @@ export default function DashboardLayout({
           {/* Page Title - Mobile */}
           <div className="lg:hidden">
             <span className="font-medium text-neutral-900 dark:text-white">
-              {navigation.find((n) => n.href === pathname)?.name || "Dashboard"}
+              {allNavItems.find((n) => n.href === pathname)?.name || "Dashboard"}
             </span>
           </div>
 
@@ -181,7 +216,9 @@ export default function DashboardLayout({
         {/* Page Content */}
         <main className="p-4 lg:p-6">
           <ToastProvider>
-            <div className="max-w-6xl mx-auto">{children}</div>
+            <ErrorBoundary>
+              <div className="max-w-6xl mx-auto">{children}</div>
+            </ErrorBoundary>
           </ToastProvider>
         </main>
       </div>

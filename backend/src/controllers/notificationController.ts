@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { NotificationType } from '@prisma/client';
 import { AuthRequest } from '../types';
+import logger from '../lib/logger';
 
 // Get all notifications for the current user
 export const getNotifications = async (req: AuthRequest, res: Response) => {
@@ -25,12 +26,13 @@ export const getNotifications = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({
-      notifications,
+      success: true,
+      data: notifications,
       unreadCount,
     });
   } catch (error) {
-    console.error('Error fetching notifications:', error);
-    res.status(500).json({ error: 'Failed to fetch notifications' });
+    logger.error('Error fetching notifications:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch notifications' });
   }
 };
 
@@ -46,13 +48,13 @@ export const markAsRead = async (req: AuthRequest, res: Response) => {
     });
 
     if (notification.count === 0) {
-      return res.status(404).json({ error: 'Notification not found' });
+      return res.status(404).json({ success: false, message: 'Notification not found' });
     }
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error marking notification as read:', error);
-    res.status(500).json({ error: 'Failed to mark notification as read' });
+    logger.error('Error marking notification as read:', error);
+    res.status(500).json({ success: false, message: 'Failed to mark notification as read' });
   }
 };
 
@@ -68,8 +70,8 @@ export const markAllAsRead = async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error marking all notifications as read:', error);
-    res.status(500).json({ error: 'Failed to mark all notifications as read' });
+    logger.error('Error marking all notifications as read:', error);
+    res.status(500).json({ success: false, message: 'Failed to mark all notifications as read' });
   }
 };
 
@@ -84,13 +86,13 @@ export const deleteNotification = async (req: AuthRequest, res: Response) => {
     });
 
     if (notification.count === 0) {
-      return res.status(404).json({ error: 'Notification not found' });
+      return res.status(404).json({ success: false, message: 'Notification not found' });
     }
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting notification:', error);
-    res.status(500).json({ error: 'Failed to delete notification' });
+    logger.error('Error deleting notification:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete notification' });
   }
 };
 
@@ -105,8 +107,8 @@ export const deleteAllNotifications = async (req: AuthRequest, res: Response) =>
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting all notifications:', error);
-    res.status(500).json({ error: 'Failed to delete all notifications' });
+    logger.error('Error deleting all notifications:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete all notifications' });
   }
 };
 
@@ -130,7 +132,7 @@ export const createNotification = async (
     });
     return notification;
   } catch (error) {
-    console.error('Error creating notification:', error);
+    logger.error('Error creating notification:', error);
     return null;
   }
 };

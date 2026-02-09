@@ -2,12 +2,14 @@ import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthRequest } from '../types';
 import prisma, { withRetry } from '../lib/prisma';
+import logger from '../lib/logger';
 
 /**
- * Authentication Middleware
- * يتحقق من وجود وصحة الـ JWT Token من Clerk أو Local
- * 
- * الاستخدام: يحمي الـ routes التي تحتاج مصادقة
+ * Authentication Middleware v2.0
+ * - Clerk tokens: verified with strict claim checks (sub, exp, iat)
+ * - Local tokens: verified with JWT_SECRET (HS256)
+ * - Auto-creates user from Clerk if not found
+ * - Attaches role to request for RBAC
  */
 export const protect = async (
   req: AuthRequest,
@@ -17,7 +19,6 @@ export const protect = async (
   try {
     let token: string | undefined;
 
-    // Check if token exists in headers
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith('Bearer')
@@ -25,7 +26,6 @@ export const protect = async (
       token = req.headers.authorization.split(' ')[1];
     }
 
-    // Make sure token exists
     if (!token) {
       res.status(401).json({
         success: false,
@@ -35,81 +35,117 @@ export const protect = async (
     }
 
     try {
-      // Decode the token (without verification - Clerk handles that)
-      const decoded = jwt.decode(token) as any;
-      
-      if (!decoded) {
-        res.status(401).json({
-          success: false,
-          message: 'Invalid token format',
-        });
+      // Decode to determine token type
+      const decoded = jwt.decode(token, { complete: true }) as any;
+
+      if (!decoded || !decoded.payload) {
+        res.status(401).json({ success: false, message: 'Invalid token format' });
         return;
       }
 
-      // Check if it's a Clerk token (contains 'sub' claim)
-      if (decoded.sub) {
-        const clerkUserId = decoded.sub;
-        // Get email from various possible locations in Clerk token
-        const email = decoded.email || 
-                     decoded.primary_email_address || 
-                     (decoded.email_addresses && decoded.email_addresses[0]) ||
-                     `${clerkUserId}@clerk.user`;
-        
-        // Check token expiration
-        if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-          res.status(401).json({
-            success: false,
-            message: 'Token expired',
-          });
+      const payload = decoded.payload;
+
+      // Clerk token: contains 'sub' + ('azp' or Clerk issuer)
+      if (payload.sub && (payload.azp || payload.iss?.includes('clerk'))) {
+        // Strict claim validation
+        if (!payload.exp || !payload.iat) {
+          res.status(401).json({ success: false, message: 'Token missing required claims' });
+          return;
+        }
+        if (payload.exp * 1000 < Date.now()) {
+          res.status(401).json({ success: false, message: 'Token expired' });
+          return;
+        }
+        if (payload.iat * 1000 > Date.now() + 30000) {
+          res.status(401).json({ success: false, message: 'Token issued in the future' });
+          return;
+        }
+        if (payload.nbf && payload.nbf * 1000 > Date.now() + 30000) {
+          res.status(401).json({ success: false, message: 'Token not yet valid' });
           return;
         }
 
-        // Find or create user in our database with retry
+        const clerkUserId = payload.sub;
+        const email = payload.email ||
+          payload.primary_email_address ||
+          (payload.email_addresses && payload.email_addresses[0]) ||
+          `${clerkUserId}@clerk.user`;
+
         let user = await withRetry(() => prisma.user.findFirst({
-          where: { 
+          where: {
             OR: [
               { id: clerkUserId },
-              { email: email }
-            ]
+              { email: email },
+            ],
           },
+          select: { id: true, email: true, role: true, isActive: true, name: true },
         }));
-        
+
         if (!user) {
-          // Create user if doesn't exist (synced from Clerk)
           user = await withRetry(() => prisma.user.create({
             data: {
               id: clerkUserId,
               email: email,
-              name: decoded.name || decoded.first_name || decoded.username || 'User',
+              name: payload.name || payload.first_name || payload.username || 'User',
               password: 'clerk_managed',
             },
+            select: { id: true, email: true, role: true, isActive: true, name: true },
           }));
         }
-        
+
+        if (!user.isActive) {
+          res.status(403).json({ success: false, message: 'Account is deactivated' });
+          return;
+        }
+
         req.user = {
           id: user.id,
           email: user.email,
+          role: user.role,
+          name: user.name,
         };
         next();
         return;
       }
-      
-      // For local tokens (HS256), verify with secret
-      if (decoded.id && decoded.email) {
-        try {
-          const verified = jwt.verify(token, process.env.JWT_SECRET || '', {
-            algorithms: ['HS256']
-          }) as { id: string; email: string };
-          
-          req.user = {
-            id: verified.id,
-            email: verified.email,
-          };
-          next();
+
+      // Local tokens: verify with JWT_SECRET (HS256)
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        logger.error('JWT_SECRET not configured');
+        res.status(500).json({ success: false, message: 'Server configuration error' });
+        return;
+      }
+
+      try {
+        const verified = jwt.verify(token, jwtSecret, {
+          algorithms: ['HS256'],
+        }) as { id: string; email: string };
+
+        const user = await withRetry(() => prisma.user.findUnique({
+          where: { id: verified.id },
+          select: { id: true, email: true, role: true, isActive: true, name: true },
+        }));
+
+        if (!user) {
+          res.status(401).json({ success: false, message: 'User not found' });
           return;
-        } catch {
-          // Token verification failed
         }
+
+        if (!user.isActive) {
+          res.status(403).json({ success: false, message: 'Account is deactivated' });
+          return;
+        }
+
+        req.user = {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          name: user.name,
+        };
+        next();
+        return;
+      } catch {
+        // Token verification failed
       }
 
       res.status(401).json({
@@ -117,19 +153,17 @@ export const protect = async (
         message: 'Not authorized, invalid token',
       });
     } catch (error) {
-      console.error('Auth error:', error);
+      logger.error('Auth error:', error);
       res.status(401).json({
         success: false,
         message: 'Not authorized, token failed',
       });
-      return;
     }
   } catch (error) {
-    console.error('Server auth error:', error);
+    logger.error('Server auth error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error in authentication',
     });
-    return;
   }
 };

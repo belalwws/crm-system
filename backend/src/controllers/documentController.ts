@@ -4,13 +4,22 @@ import { logFileUploaded } from './activityController';
 import { AuthRequest } from '../types';
 import fs from 'fs';
 import path from 'path';
+import logger from '../lib/logger';
 
 // Upload directory
-const UPLOAD_DIR = path.join(__dirname, '../../uploads');
+const UPLOAD_DIR = path.resolve(__dirname, '../../uploads');
 
 // Ensure upload directory exists
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+/**
+ * Validate that a file path is within the uploads directory (prevents path traversal)
+ */
+function isPathSafe(filePath: string): boolean {
+  const resolved = path.resolve(filePath);
+  return resolved.startsWith(UPLOAD_DIR);
 }
 
 // Get documents for a customer or deal
@@ -32,10 +41,10 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.json(documents);
+    res.json({ success: true, data: documents });
   } catch (error) {
-    console.error('Error fetching documents:', error);
-    res.status(500).json({ error: 'Failed to fetch documents' });
+    logger.error('Error fetching documents:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch documents' });
   }
 };
 
@@ -50,13 +59,13 @@ export const getDocument = async (req: AuthRequest, res: Response) => {
     });
 
     if (!document) {
-      return res.status(404).json({ error: 'Document not found' });
+      return res.status(404).json({ success: false, message: 'Document not found' });
     }
 
-    res.json(document);
+    res.json({ success: true, data: document });
   } catch (error) {
-    console.error('Error fetching document:', error);
-    res.status(500).json({ error: 'Failed to fetch document' });
+    logger.error('Error fetching document:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch document' });
   }
 };
 
@@ -67,7 +76,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     const { name, type, size, url, customerId, dealId } = req.body;
 
     if (!name || !type || !url) {
-      return res.status(400).json({ error: 'name, type, and url are required' });
+      return res.status(400).json({ success: false, message: 'name, type, and url are required' });
     }
 
     const document = await prisma.document.create({
@@ -89,10 +98,10 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
       await logFileUploaded(userId, 'deal', dealId, name);
     }
 
-    res.status(201).json(document);
+    res.status(201).json({ success: true, data: document });
   } catch (error) {
-    console.error('Error uploading document:', error);
-    res.status(500).json({ error: 'Failed to upload document' });
+    logger.error('Error uploading document:', error);
+    res.status(500).json({ success: false, message: 'Failed to upload document' });
   }
 };
 
@@ -112,8 +121,8 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
 
     // Delete file from disk if it's a local file
     if (document.url.startsWith('/uploads/')) {
-      const filePath = path.join(__dirname, '../..', document.url);
-      if (fs.existsSync(filePath)) {
+      const filePath = path.resolve(UPLOAD_DIR, path.basename(document.url));
+      if (isPathSafe(filePath) && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
     }
@@ -124,8 +133,8 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting document:', error);
-    res.status(500).json({ error: 'Failed to delete document' });
+    logger.error('Error deleting document:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete document' });
   }
 };
 
@@ -137,7 +146,7 @@ export const handleFileUpload = async (req: AuthRequest, res: Response) => {
     const { customerId, dealId } = req.body;
 
     if (!file) {
-      return res.status(400).json({ error: 'No file provided' });
+      return res.status(400).json({ success: false, message: 'No file provided' });
     }
 
     const document = await prisma.document.create({
@@ -161,7 +170,7 @@ export const handleFileUpload = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(document);
   } catch (error) {
-    console.error('Error handling file upload:', error);
-    res.status(500).json({ error: 'Failed to upload file' });
+    logger.error('Error handling file upload:', error);
+    res.status(500).json({ success: false, message: 'Failed to upload file' });
   }
 };

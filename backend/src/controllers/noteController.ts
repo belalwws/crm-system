@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { logNoteAdded } from './activityController';
 import { AuthRequest } from '../types';
+import logger from '../lib/logger';
 
 // Get notes for an entity
 export const getNotes = async (req: AuthRequest, res: Response) => {
@@ -19,10 +20,10 @@ export const getNotes = async (req: AuthRequest, res: Response) => {
       orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
     });
 
-    res.json(notes);
+    res.json({ success: true, data: notes });
   } catch (error) {
-    console.error('Error fetching notes:', error);
-    res.status(500).json({ error: 'Failed to fetch notes' });
+    logger.error('Error fetching notes:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch notes' });
   }
 };
 
@@ -33,11 +34,11 @@ export const createNote = async (req: AuthRequest, res: Response) => {
     const { content, customerId, dealId, taskId, pinned } = req.body;
 
     if (!content) {
-      return res.status(400).json({ error: 'content is required' });
+      return res.status(400).json({ success: false, message: 'content is required' });
     }
 
     if (!customerId && !dealId && !taskId) {
-      return res.status(400).json({ error: 'customerId, dealId, or taskId is required' });
+      return res.status(400).json({ success: false, message: 'customerId, dealId, or taskId is required' });
     }
 
     const note = await prisma.note.create({
@@ -62,8 +63,8 @@ export const createNote = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(note);
   } catch (error) {
-    console.error('Error creating note:', error);
-    res.status(500).json({ error: 'Failed to create note' });
+    logger.error('Error creating note:', error);
+    res.status(500).json({ success: false, message: 'Failed to create note' });
   }
 };
 
@@ -84,17 +85,17 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
     });
 
     if (note.count === 0) {
-      return res.status(404).json({ error: 'Note not found' });
+      return res.status(404).json({ success: false, message: 'Note not found' });
     }
 
     const updatedNote = await prisma.note.findUnique({
       where: { id },
     });
 
-    res.json(updatedNote);
+    res.json({ success: true, data: updatedNote });
   } catch (error) {
-    console.error('Error updating note:', error);
-    res.status(500).json({ error: 'Failed to update note' });
+    logger.error('Error updating note:', error);
+    res.status(500).json({ success: false, message: 'Failed to update note' });
   }
 };
 
@@ -109,13 +110,13 @@ export const deleteNote = async (req: AuthRequest, res: Response) => {
     });
 
     if (note.count === 0) {
-      return res.status(404).json({ error: 'Note not found' });
+      return res.status(404).json({ success: false, message: 'Note not found' });
     }
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting note:', error);
-    res.status(500).json({ error: 'Failed to delete note' });
+    logger.error('Error deleting note:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete note' });
   }
 };
 
@@ -130,7 +131,7 @@ export const togglePinNote = async (req: AuthRequest, res: Response) => {
     });
 
     if (!existingNote) {
-      return res.status(404).json({ error: 'Note not found' });
+      return res.status(404).json({ success: false, message: 'Note not found' });
     }
 
     const note = await prisma.note.update({
@@ -138,9 +139,9 @@ export const togglePinNote = async (req: AuthRequest, res: Response) => {
       data: { pinned: !existingNote.pinned },
     });
 
-    res.json(note);
+    res.json({ success: true, data: note });
   } catch (error) {
-    console.error('Error toggling pin:', error);
-    res.status(500).json({ error: 'Failed to toggle pin' });
+    logger.error('Error toggling pin:', error);
+    res.status(500).json({ success: false, message: 'Failed to toggle pin' });
   }
 };

@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { ActivityType } from '@prisma/client';
 import { AuthRequest } from '../types';
+import logger from '../lib/logger';
 
 // Get all activities for the current user
 export const getActivities = async (req: AuthRequest, res: Response) => {
@@ -24,10 +25,10 @@ export const getActivities = async (req: AuthRequest, res: Response) => {
       take: parseInt(limit as string),
     });
 
-    res.json(activities);
+    res.json({ success: true, data: activities });
   } catch (error) {
-    console.error('Error fetching activities:', error);
-    res.status(500).json({ error: 'Failed to fetch activities' });
+    logger.error('Error fetching activities:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch activities' });
   }
 };
 
@@ -47,10 +48,10 @@ export const getEntityActivities = async (req: AuthRequest, res: Response) => {
       take: 50,
     });
 
-    res.json(activities);
+    res.json({ success: true, data: activities });
   } catch (error) {
-    console.error('Error fetching entity activities:', error);
-    res.status(500).json({ error: 'Failed to fetch activities' });
+    logger.error('Error fetching entity activities:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch activities' });
   }
 };
 
@@ -76,7 +77,7 @@ export const logActivity = async (
     });
     return activity;
   } catch (error) {
-    console.error('Error logging activity:', error);
+    logger.error('Error logging activity:', error);
     return null;
   }
 };

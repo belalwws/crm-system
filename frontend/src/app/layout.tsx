@@ -19,10 +19,17 @@ export const metadata: Metadata = {
   description: "A minimal CRM for modern teams. Track leads, manage deals, and grow your business without the clutter.",
 };
 
-// Script to apply dark theme immediately
+// Script to apply saved theme immediately, preventing flash of wrong theme
 const themeScript = `
   (function() {
-    document.documentElement.classList.add('dark');
+    try {
+      var theme = localStorage.getItem('theme');
+      if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch(e) {}
   })();
 `;
 

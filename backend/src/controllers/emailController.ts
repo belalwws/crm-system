@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import { sendEmail } from '../lib/email';
 import { logEmailSent } from './activityController';
 import { AuthRequest } from '../types';
+import logger from '../lib/logger';
 
 // Send an email
 export const sendEmailToCustomer = async (req: AuthRequest, res: Response) => {
@@ -11,7 +12,7 @@ export const sendEmailToCustomer = async (req: AuthRequest, res: Response) => {
     const { to, subject, body, customerId, dealId } = req.body;
 
     if (!to || !subject || !body) {
-      return res.status(400).json({ error: 'to, subject, and body are required' });
+      return res.status(400).json({ success: false, message: 'to, subject, and body are required' });
     }
 
     // Try to send the email
@@ -42,11 +43,11 @@ export const sendEmailToCustomer = async (req: AuthRequest, res: Response) => {
     if (result.success) {
       res.json({ success: true, emailLog });
     } else {
-      res.status(500).json({ error: 'Failed to send email', details: result.error });
+      res.status(500).json({ success: false, message: 'Failed to send email', details: result.error });
     }
   } catch (error) {
-    console.error('Error sending email:', error);
-    res.status(500).json({ error: 'Failed to send email' });
+    logger.error('Error sending email:', error);
+    res.status(500).json({ success: false, message: 'Failed to send email' });
   }
 };
 
@@ -72,8 +73,8 @@ export const getEmailHistory = async (req: AuthRequest, res: Response) => {
 
     res.json(emails);
   } catch (error) {
-    console.error('Error fetching email history:', error);
-    res.status(500).json({ error: 'Failed to fetch email history' });
+    logger.error('Error fetching email history:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch email history' });
   }
 };
 
@@ -89,8 +90,8 @@ export const getEmailTemplates = async (req: AuthRequest, res: Response) => {
 
     res.json(templates);
   } catch (error) {
-    console.error('Error fetching email templates:', error);
-    res.status(500).json({ error: 'Failed to fetch email templates' });
+    logger.error('Error fetching email templates:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch email templates' });
   }
 };
 
@@ -101,7 +102,7 @@ export const createEmailTemplate = async (req: AuthRequest, res: Response) => {
     const { name, subject, body } = req.body;
 
     if (!name || !subject || !body) {
-      return res.status(400).json({ error: 'name, subject, and body are required' });
+      return res.status(400).json({ success: false, message: 'name, subject, and body are required' });
     }
 
     const template = await prisma.emailTemplate.create({
@@ -115,8 +116,8 @@ export const createEmailTemplate = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(template);
   } catch (error) {
-    console.error('Error creating email template:', error);
-    res.status(500).json({ error: 'Failed to create email template' });
+    logger.error('Error creating email template:', error);
+    res.status(500).json({ success: false, message: 'Failed to create email template' });
   }
 };
 
@@ -138,7 +139,7 @@ export const updateEmailTemplate = async (req: AuthRequest, res: Response) => {
     });
 
     if (template.count === 0) {
-      return res.status(404).json({ error: 'Template not found' });
+      return res.status(404).json({ success: false, message: 'Template not found' });
     }
 
     const updatedTemplate = await prisma.emailTemplate.findUnique({
@@ -147,8 +148,8 @@ export const updateEmailTemplate = async (req: AuthRequest, res: Response) => {
 
     res.json(updatedTemplate);
   } catch (error) {
-    console.error('Error updating email template:', error);
-    res.status(500).json({ error: 'Failed to update email template' });
+    logger.error('Error updating email template:', error);
+    res.status(500).json({ success: false, message: 'Failed to update email template' });
   }
 };
 
@@ -163,12 +164,12 @@ export const deleteEmailTemplate = async (req: AuthRequest, res: Response) => {
     });
 
     if (template.count === 0) {
-      return res.status(404).json({ error: 'Template not found' });
+      return res.status(404).json({ success: false, message: 'Template not found' });
     }
 
     res.json({ success: true });
   } catch (error) {
-    console.error('Error deleting email template:', error);
-    res.status(500).json({ error: 'Failed to delete email template' });
+    logger.error('Error deleting email template:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete email template' });
   }
 };

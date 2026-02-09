@@ -420,6 +420,58 @@ class ApiClient {
   async getDealStats() {
     return this.request('/deals/stats');
   }
+
+  // ==============================
+  // Admin - User Management
+  // ==============================
+  async getUsers(params?: { search?: string; role?: string; isActive?: string; page?: number; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.search) query.set('search', params.search);
+    if (params?.role) query.set('role', params.role);
+    if (params?.isActive !== undefined) query.set('isActive', params.isActive);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    return this.request(`/admin/users?${query}`);
+  }
+
+  async getUser(id: string) {
+    return this.request(`/admin/users/${id}`);
+  }
+
+  async updateUserRole(id: string, role: string) {
+    return this.request(`/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) });
+  }
+
+  async toggleUserStatus(id: string, isActive: boolean) {
+    return this.request(`/admin/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ isActive }) });
+  }
+
+  async updateUserByAdmin(id: string, data: any) {
+    return this.request(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+
+  async deleteUserByAdmin(id: string) {
+    return this.request(`/admin/users/${id}`, { method: 'DELETE' });
+  }
+
+  async getPlatformStats() {
+    return this.request('/admin/stats');
+  }
+
+  // ==============================
+  // Profile
+  // ==============================
+  async getProfile() {
+    return this.request('/profile');
+  }
+
+  async updateProfile(data: any) {
+    return this.request('/profile', { method: 'PUT', body: JSON.stringify(data) });
+  }
+
+  async changePassword(data: { currentPassword: string; newPassword: string }) {
+    return this.request('/profile/change-password', { method: 'POST', body: JSON.stringify(data) });
+  }
 }
 
 export const api = new ApiClient();

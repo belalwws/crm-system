@@ -1,10 +1,15 @@
 import prisma from './prisma';
 import { createAuditLog, createTimelineEvent } from './auditLog';
+import logger from './logger';
 
 /**
  * Workflow Engine
  * Evaluates workflow rules when entities change and executes actions
  */
+
+// Whitelisted fields that workflow UPDATE_FIELD can modify
+const ALLOWED_DEAL_FIELDS = ['stage', 'probability', 'value', 'notesText', 'lostReason'];
+const ALLOWED_CUSTOMER_FIELDS = ['status', 'industry', 'notesText'];
 
 interface TriggerContext {
   userId: string;
@@ -71,7 +76,7 @@ export async function evaluateWorkflows(ctx: TriggerContext): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('Workflow evaluation error:', error);
+    logger.error('Workflow evaluation error:', error);
   }
 }
 
@@ -159,12 +164,21 @@ async function executeActions(rule: any, ctx: TriggerContext): Promise<void> {
         break;
 
       case 'UPDATE_FIELD':
+        // Validate field is whitelisted to prevent injection
         if (ctx.entityType === 'Deal') {
+          if (!ALLOWED_DEAL_FIELDS.includes(action.params.field)) {
+            logger.warn(`Workflow tried to update disallowed deal field: ${action.params.field}`);
+            break;
+          }
           await prisma.deal.update({
             where: { id: ctx.entityId },
             data: { [action.params.field]: action.params.value },
           });
         } else if (ctx.entityType === 'Customer') {
+          if (!ALLOWED_CUSTOMER_FIELDS.includes(action.params.field)) {
+            logger.warn(`Workflow tried to update disallowed customer field: ${action.params.field}`);
+            break;
+          }
           await prisma.customer.update({
             where: { id: ctx.entityId },
             data: { [action.params.field]: action.params.value },
@@ -211,7 +225,7 @@ async function executeActions(rule: any, ctx: TriggerContext): Promise<void> {
         break;
 
       default:
-        console.warn(`Unknown workflow action type: ${action.type}`);
+        logger.warn(`Unknown workflow action type: ${action.type}`);
     }
   }
 }
@@ -294,7 +308,7 @@ export async function fireWebhooks(
       }
     }
   } catch (error) {
-    console.error('Webhook fire error:', error);
+    logger.error('Webhook fire error:', error);
   }
 }
 

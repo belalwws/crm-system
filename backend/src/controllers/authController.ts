@@ -3,14 +3,18 @@ import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import prisma from '../lib/prisma';
 import { AuthRequest, RegisterInput, LoginInput } from '../types';
+import logger from '../lib/logger';
 
 /**
  * Generate JWT Token
  */
 const generateToken = (id: string, email: string): string => {
-  const secret: Secret = process.env.JWT_SECRET || 'default_secret';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET not configured');
+  }
   const options: SignOptions = { expiresIn: '7d' };
-  return jwt.sign({ id, email }, secret, options);
+  return jwt.sign({ id, email }, secret as Secret, options);
 };
 
 /**
@@ -67,9 +71,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       message: 'User registered successfully',
     });
   } catch (error: any) {
+    logger.error('Registration error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error registering user',
+      message: 'Error registering user',
     });
   }
 };
@@ -133,9 +138,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       message: 'Login successful',
     });
   } catch (error: any) {
+    logger.error('Login error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error logging in',
+      message: 'Error logging in',
     });
   }
 };
@@ -164,9 +170,10 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
       data: user,
     });
   } catch (error: any) {
+    logger.error('Get user error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error getting user',
+      message: 'Error getting user data',
     });
   }
 };
