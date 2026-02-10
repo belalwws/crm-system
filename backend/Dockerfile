@@ -1,8 +1,9 @@
 # Backend Dockerfile
 FROM node:20-alpine AS base
+RUN apk add --no-cache openssl
 WORKDIR /app
 
-# Install dependencies
+# Install production dependencies only
 FROM base AS deps
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
@@ -22,6 +23,9 @@ ENV NODE_ENV=production
 RUN addgroup --system app && adduser --system --ingroup app app
 
 COPY --from=deps /app/node_modules ./node_modules
+# Overwrite with generated Prisma client (includes engine binaries for linux-musl)
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./
