@@ -77,12 +77,13 @@ export const protect = async (
         }));
 
         if (!user) {
+          const randomPassword = (await import('crypto')).randomBytes(32).toString('base64');
           user = await withRetry(() => prisma.user.create({
             data: {
               id: clerkUserId,
               email: email,
               name: (verifiedPayload as any).name || (verifiedPayload as any).first_name || (verifiedPayload as any).username || 'User',
-              password: (await import('crypto')).randomBytes(32).toString('base64'),
+              password: randomPassword,
             },
             select: { id: true, email: true, role: true, isActive: true, name: true },
           }));

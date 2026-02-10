@@ -55,6 +55,7 @@ model User {
   quotes             Quote[]
   teamMemberships    TeamMember[]
   customFields       CustomField[]
+  chatSessions       ChatSession[]
 
   @@map("users")
 }
@@ -913,4 +914,42 @@ model CustomFieldValue {
   @@unique([fieldId, entityId])
   @@index([entityId])
   @@map("custom_field_values")
+}
+
+// =============================================
+// AI Chat Session Model - جلسات المحادثة مع AI
+// =============================================
+model ChatSession {
+  id        String   @id @default(cuid())
+  title     String   @default("New Chat")
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@index([userId, updatedAt])
+  @@map("chat_sessions")
+}
+
+// =============================================
+// AI Chat Message Model - رسائل المحادثة
+// =============================================
+model ChatMessage {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role        String   // "user" | "assistant" | "system"
+  content     String
+  actionType  String?  // e.g. "CREATE_CUSTOMER", "UPDATE_DEAL"
+  actionData  Json?    // The action parameters
+  actionResult Json?   // The result of the executed action
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([sessionId, createdAt])
+  @@map("chat_messages")
 }

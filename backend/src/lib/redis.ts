@@ -22,6 +22,7 @@ export const initRedis = (): Redis | null => {
         return Math.min(times * 200, 2000);
       },
       lazyConnect: true,
+      enableOfflineQueue: false,
     });
 
     redis.on('connect', () => {

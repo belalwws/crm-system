@@ -9,12 +9,29 @@ import {
   summarize,
   dashboardInsights,
 } from '../controllers/aiController';
+import {
+  listSessions,
+  createSession,
+  getSession,
+  updateSession,
+  deleteSession,
+  sendMessage,
+} from '../controllers/chatSessionController';
 
 const router = Router();
 
 // All AI routes require authentication
 router.use(protect);
 
+// ---- Chat Sessions ----
+router.get('/sessions', listSessions);
+router.post('/sessions', createSession);
+router.get('/sessions/:sessionId', getSession);
+router.put('/sessions/:sessionId', updateSession);
+router.delete('/sessions/:sessionId', deleteSession);
+router.post('/sessions/:sessionId/messages', sendMessage);
+
+// ---- Legacy AI Endpoints (still used by insight components) ----
 // General AI Chat
 router.post('/chat', chat);
 

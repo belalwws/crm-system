@@ -220,10 +220,6 @@ export const getRecentActivities = async (
       where: { ownerId: req.user?.id },
       orderBy: { createdAt: 'desc' },
       take: limit,
-      include: {
-        customer: { select: { id: true, name: true, email: true } },
-        deal: { select: { id: true, title: true, value: true } },
-      },
     });
 
     res.status(200).json({

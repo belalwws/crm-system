@@ -3,6 +3,8 @@
  * خدمة الذكاء الاصطناعي باستخدام NVIDIA NIM
  */
 
+import { buildActionSystemPrompt } from './ai-actions';
+
 const NVIDIA_API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY || '';
 const DEFAULT_MODEL = 'meta/llama-3.3-70b-instruct';
@@ -72,24 +74,7 @@ async function callNvidiaAPI(
 /**
  * CRM System Prompt
  */
-const CRM_SYSTEM_PROMPT = `You are an intelligent CRM AI assistant called "Nexus AI". You help sales teams and business professionals manage their customer relationships more effectively.
-
-Your capabilities include:
-1. Analyzing customer data and providing insights
-2. Suggesting next best actions for deals and customers
-3. Writing professional emails and follow-ups
-4. Summarizing customer interactions and history
-5. Predicting deal outcomes based on patterns
-6. Recommending task priorities
-7. Providing sales coaching and tips
-
-Guidelines:
-- Be concise and actionable in your responses
-- Focus on data-driven insights when available
-- Use a professional but friendly tone
-- Format responses with markdown for readability
-- When analyzing data, highlight key metrics and trends
-- Always provide specific, actionable recommendations`;
+const CRM_SYSTEM_PROMPT = buildActionSystemPrompt();
 
 /**
  * AI Chat - General CRM Assistant

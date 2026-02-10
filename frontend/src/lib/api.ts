@@ -163,6 +163,27 @@ class ApiClient {
   async aiDashboardInsights() { return this.request('/ai/dashboard-insights'); }
 
   // ==============================
+  // AI Chat Sessions
+  // ==============================
+  async listChatSessions() { return this.request('/ai/sessions'); }
+  async createChatSession(title?: string) {
+    return this.request('/ai/sessions', { method: 'POST', body: JSON.stringify({ title }) });
+  }
+  async getChatSession(sessionId: string) { return this.request(`/ai/sessions/${sessionId}`); }
+  async updateChatSession(sessionId: string, data: { title?: string; pinned?: boolean }) {
+    return this.request(`/ai/sessions/${sessionId}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+  async deleteChatSession(sessionId: string) {
+    return this.request(`/ai/sessions/${sessionId}`, { method: 'DELETE' });
+  }
+  async sendChatMessage(sessionId: string, message: string) {
+    return this.request(`/ai/sessions/${sessionId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+  }
+
+  // ==============================
   // Timeline
   // ==============================
   async getCustomerTimeline(customerId: string, params?: { page?: number; limit?: number; type?: string }) {

@@ -289,8 +289,8 @@ export const sendQuote = async (req: AuthRequest, res: Response): Promise<void> 
         <tbody>${itemRows}</tbody>
         <tfoot>
           <tr><td colspan="3" style="padding:8px;text-align:right;font-weight:bold;">Subtotal:</td><td style="padding:8px;text-align:right;">$${quote.subtotal.toFixed(2)}</td></tr>
-          ${quote.discount > 0 ? `<tr><td colspan="3" style="padding:8px;text-align:right;">Discount:</td><td style="padding:8px;text-align:right;">-$${(quote.subtotal - quote.total + (quote.subtotal * quote.tax / 100)).toFixed(2)}</td></tr>` : ''}
-          ${quote.tax > 0 ? `<tr><td colspan="3" style="padding:8px;text-align:right;">Tax (${quote.tax}%):</td><td style="padding:8px;text-align:right;">$${(quote.total - quote.subtotal + (quote.subtotal - quote.total + (quote.subtotal * quote.tax / 100))).toFixed(2)}</td></tr>` : ''}
+          ${Number(quote.discount) > 0 ? `<tr><td colspan="3" style="padding:8px;text-align:right;">Discount:</td><td style="padding:8px;text-align:right;">-$${(Number(quote.subtotal) - Number(quote.total) + (Number(quote.subtotal) * Number(quote.tax) / 100)).toFixed(2)}</td></tr>` : ''}
+          ${Number(quote.tax) > 0 ? `<tr><td colspan="3" style="padding:8px;text-align:right;">Tax (${quote.tax}%):</td><td style="padding:8px;text-align:right;">$${(Number(quote.total) - Number(quote.subtotal) + (Number(quote.subtotal) - Number(quote.total) + (Number(quote.subtotal) * Number(quote.tax) / 100))).toFixed(2)}</td></tr>` : ''}
           <tr><td colspan="3" style="padding:8px;text-align:right;font-weight:bold;font-size:18px;">Total:</td><td style="padding:8px;text-align:right;font-weight:bold;font-size:18px;">$${quote.total.toFixed(2)}</td></tr>
         </tfoot>
       </table>
