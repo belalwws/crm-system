@@ -15,6 +15,7 @@ jest.mock('jsonwebtoken', () => ({
 
 const mockPrismaUser = {
   findUnique: jest.fn(),
+  findFirst: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),
 };
@@ -22,11 +23,19 @@ const mockPrismaUser = {
 jest.mock('../../lib/prisma', () => ({
   __esModule: true,
   default: { user: mockPrismaUser },
+  prisma: { user: mockPrismaUser },
 }));
 
 jest.mock('../../lib/logger', () => ({
   __esModule: true,
   default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
+// Mock email module to prevent Resend API key error
+jest.mock('../../lib/email', () => ({
+  sendPasswordResetEmail: jest.fn(),
+  sendVerificationEmail: jest.fn(),
+  sendWelcomeEmail: jest.fn(),
 }));
 
 // Import actual controllers AFTER mocks

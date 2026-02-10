@@ -15,6 +15,11 @@ jest.mock('../../lib/prisma', () => ({
   prisma: mockPrisma,
 }));
 
+jest.mock('../../lib/logger', () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 import * as activityController from '../../controllers/activityController';
 
 describe('Activity Controller', () => {
@@ -38,12 +43,11 @@ describe('Activity Controller', () => {
   describe('getActivities', () => {
     it('should return activities for the user', async () => {
       const mockActivities = [
-        { id: '1', type: 'CUSTOMER_CREATED', title: 'Customer created', owner: {} },
-        { id: '2', type: 'DEAL_CREATED', title: 'Deal created', owner: {} },
+        { id: '1', type: 'CREATED', title: 'Customer created', ownerId: 'test-user-id' },
+        { id: '2', type: 'CREATED', title: 'Deal created', ownerId: 'test-user-id' },
       ];
 
       mockPrisma.activity.findMany.mockResolvedValue(mockActivities);
-      mockPrisma.activity.count.mockResolvedValue(2);
 
       await activityController.getActivities(
         mockRequest as AuthRequest,
@@ -51,7 +55,6 @@ describe('Activity Controller', () => {
       );
 
       expect(mockPrisma.activity.findMany).toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({ success: true })
       );
@@ -62,7 +65,7 @@ describe('Activity Controller', () => {
     it('should return activities for a specific entity', async () => {
       mockRequest.params = { entityType: 'customer', entityId: 'cust-1' };
       const mockActivities = [
-        { id: '1', type: 'CUSTOMER_UPDATED', entityType: 'customer', entityId: 'cust-1' },
+        { id: '1', type: 'UPDATED', entityType: 'customer', entityId: 'cust-1' },
       ];
 
       mockPrisma.activity.findMany.mockResolvedValue(mockActivities);
@@ -73,7 +76,9 @@ describe('Activity Controller', () => {
       );
 
       expect(mockPrisma.activity.findMany).toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
   });
 
@@ -82,7 +87,7 @@ describe('Activity Controller', () => {
       mockPrisma.activity.create.mockResolvedValue({
         id: 'activity-1',
         ownerId: 'user-1',
-        type: 'CUSTOMER_CREATED',
+        type: 'CREATED',
         entityType: 'customer',
         entityId: 'cust-1',
         title: 'Created customer',
@@ -90,7 +95,7 @@ describe('Activity Controller', () => {
 
       await activityController.logActivity(
         'user-1',
-        'CUSTOMER_CREATED' as any,
+        'CREATED' as any,
         'customer',
         'cust-1',
         'Created customer'

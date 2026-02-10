@@ -40,7 +40,7 @@ export function ActivityTimeline({ entityType, entityId, limit = 20 }: ActivityT
       try {
         setLoading(true);
         const token = await getToken();
-        let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/activities`;
+        let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/activities`;
         
         if (entityType && entityId) {
           url = `${url}/${entityType}/${entityId}`;

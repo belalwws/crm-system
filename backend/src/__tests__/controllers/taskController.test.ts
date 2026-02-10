@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../types';
 
-// Mock Prisma
 const mockPrisma = {
   task: {
     findMany: jest.fn(),
@@ -12,11 +11,31 @@ const mockPrisma = {
     delete: jest.fn(),
     count: jest.fn(),
   },
+  customer: {
+    findFirst: jest.fn(),
+  },
+  deal: {
+    findFirst: jest.fn(),
+  },
+  user: {
+    findFirst: jest.fn(),
+  },
 };
 
 jest.mock('../../lib/prisma', () => ({
   __esModule: true,
   default: mockPrisma,
+  prisma: mockPrisma,
+}));
+
+jest.mock('../../lib/auditLog', () => ({
+  createAuditLog: jest.fn(),
+  createTimelineEvent: jest.fn(),
+}));
+
+jest.mock('../../lib/workflowEngine', () => ({
+  fireWebhooks: jest.fn(),
+  evaluateWorkflows: jest.fn(),
 }));
 
 import * as taskController from '../../controllers/taskController';
@@ -47,6 +66,7 @@ describe('Task Controller', () => {
       ];
 
       mockPrisma.task.findMany.mockResolvedValue(mockTasks);
+      mockPrisma.task.count.mockResolvedValue(2);
 
       await taskController.getTasks(
         mockRequest as AuthRequest,
@@ -55,7 +75,10 @@ describe('Task Controller', () => {
 
       expect(mockPrisma.task.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { assignedToId: 'test-user-id' },
+          where: expect.objectContaining({
+            assignedToId: 'test-user-id',
+            deletedAt: null,
+          }),
         })
       );
 
@@ -71,9 +94,9 @@ describe('Task Controller', () => {
 
   describe('getTask', () => {
     it('should return a single task by id', async () => {
-      const mockTask = { 
-        id: '1', 
-        title: 'Task 1', 
+      const mockTask = {
+        id: '1',
+        title: 'Task 1',
         status: 'PENDING',
         priority: 'HIGH',
         type: 'CALL',
@@ -81,7 +104,7 @@ describe('Task Controller', () => {
         customer: { id: 'c1', name: 'Customer 1' },
         deal: null,
         assignedTo: {},
-        createdBy: {}
+        createdBy: {},
       };
       mockRequest.params = { id: '1' };
       mockPrisma.task.findFirst.mockResolvedValue(mockTask);
@@ -93,10 +116,11 @@ describe('Task Controller', () => {
 
       expect(mockPrisma.task.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {
+          where: expect.objectContaining({
             id: '1',
             assignedToId: 'test-user-id',
-          },
+            deletedAt: null,
+          }),
         })
       );
 
@@ -127,17 +151,19 @@ describe('Task Controller', () => {
       };
       mockRequest.body = taskData;
 
-      const createdTask = { 
-        id: '1', 
+      const createdTask = {
+        id: '1',
         title: 'New Task',
-        status: 'PENDING', 
+        status: 'PENDING',
         priority: 'HIGH',
         type: 'CALL',
         assignedToId: 'test-user-id',
+        customerId: null,
+        dealId: null,
         customer: null,
         deal: null,
         assignedTo: {},
-        createdBy: {}
+        createdBy: {},
       };
       mockPrisma.task.create.mockResolvedValue(createdTask);
 
@@ -153,17 +179,17 @@ describe('Task Controller', () => {
 
   describe('updateTask', () => {
     it('should update task status', async () => {
-      const existingTask = { 
-        id: '1', 
-        title: 'Task 1', 
-        status: 'PENDING', 
+      const existingTask = {
+        id: '1',
+        title: 'Task 1',
+        status: 'PENDING',
         priority: 'HIGH',
         type: 'CALL',
         assignedToId: 'test-user-id',
         customer: null,
         deal: null,
         assignedTo: {},
-        createdBy: {}
+        createdBy: {},
       };
       mockRequest.params = { id: '1' };
       mockRequest.body = { status: 'completed' };
@@ -199,21 +225,24 @@ describe('Task Controller', () => {
   });
 
   describe('deleteTask', () => {
-    it('should delete a task', async () => {
+    it('should soft delete a task', async () => {
       const existingTask = { id: '1', title: 'Task 1', assignedToId: 'test-user-id' };
       mockRequest.params = { id: '1' };
 
       mockPrisma.task.findFirst.mockResolvedValue(existingTask);
-      mockPrisma.task.delete.mockResolvedValue(existingTask);
+      mockPrisma.task.update.mockResolvedValue({ ...existingTask, deletedAt: new Date() });
 
       await taskController.deleteTask(
         mockRequest as AuthRequest,
         mockResponse as Response
       );
 
-      expect(mockPrisma.task.delete).toHaveBeenCalledWith({
-        where: { id: '1' },
-      });
+      expect(mockPrisma.task.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: '1' },
+          data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+        })
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });

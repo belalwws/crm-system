@@ -72,7 +72,7 @@ export default function CalendarPage() {
       lastDay.setDate(lastDay.getDate() + (6 - lastDay.getDay()));
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/meetings/calendar?start=${firstDay.toISOString()}&end=${lastDay.toISOString()}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/meetings/calendar?start=${firstDay.toISOString()}&end=${lastDay.toISOString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -97,7 +97,7 @@ export default function CalendarPage() {
     try {
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/meetings`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/meetings`,
         {
           method: 'POST',
           headers: {
@@ -124,7 +124,7 @@ export default function CalendarPage() {
     try {
       const token = await getToken();
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/meetings/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/meetings/${id}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },

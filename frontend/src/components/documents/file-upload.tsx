@@ -117,7 +117,7 @@ export default function FileUpload({ customerId, dealId, onUploadComplete }: Fil
 
           xhr.addEventListener('error', () => reject(new Error('Upload failed')));
 
-          xhr.open('POST', `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/documents/upload`);
+          xhr.open('POST', `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/documents/upload`);
           xhr.setRequestHeader('Authorization', `Bearer ${token}`);
           xhr.send(formData);
         });

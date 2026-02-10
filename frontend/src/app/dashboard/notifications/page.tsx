@@ -49,7 +49,7 @@ export default function NotificationsPage() {
   const markAsRead = async (id: string) => {
     try {
       const token = await getToken();
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/${id}/read`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notifications/${id}/read`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -62,7 +62,7 @@ export default function NotificationsPage() {
   const markAllAsRead = async () => {
     try {
       const token = await getToken();
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/mark-all-read`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notifications/mark-all-read`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -75,7 +75,7 @@ export default function NotificationsPage() {
   const deleteNotification = async (id: string) => {
     try {
       const token = await getToken();
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/${id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notifications/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -89,7 +89,7 @@ export default function NotificationsPage() {
     if (!confirm('Are you sure you want to delete all notifications?')) return;
     try {
       const token = await getToken();
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notifications`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -30,7 +30,7 @@ export default function EmailTemplatesPage() {
       setLoading(true);
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/emails/templates`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/emails/templates`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -70,8 +70,8 @@ export default function EmailTemplatesPage() {
     try {
       const token = await getToken();
       const url = editingTemplate
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/emails/templates/${editingTemplate.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/emails/templates`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/emails/templates/${editingTemplate.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/emails/templates`;
       
       const res = await fetch(url, {
         method: editingTemplate ? 'PUT' : 'POST',
@@ -97,7 +97,7 @@ export default function EmailTemplatesPage() {
     try {
       const token = await getToken();
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/emails/templates/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/emails/templates/${id}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },

@@ -20,6 +20,15 @@ jest.mock('../../lib/prisma', () => ({
   prisma: mockPrisma,
 }));
 
+jest.mock('../../lib/logger', () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
+jest.mock('../../lib/socket', () => ({
+  emitToUser: jest.fn(),
+}));
+
 import * as notificationController from '../../controllers/notificationController';
 
 describe('Notification Controller', () => {
@@ -56,7 +65,6 @@ describe('Notification Controller', () => {
       );
 
       expect(mockPrisma.notification.findMany).toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({ success: true })
       );
@@ -66,22 +74,22 @@ describe('Notification Controller', () => {
   describe('markAsRead', () => {
     it('should mark a notification as read', async () => {
       mockRequest.params = { id: 'notif-1' };
-      const mockNotification = { id: 'notif-1', userId: 'test-user-id', read: false };
-      mockPrisma.notification.findFirst.mockResolvedValue(mockNotification);
-      mockPrisma.notification.update.mockResolvedValue({ ...mockNotification, read: true });
+      mockPrisma.notification.updateMany.mockResolvedValue({ count: 1 });
 
       await notificationController.markAsRead(
         mockRequest as AuthRequest,
         mockResponse as Response
       );
 
-      expect(mockPrisma.notification.update).toHaveBeenCalledWith(
+      expect(mockPrisma.notification.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'notif-1' },
+          where: { id: 'notif-1', userId: 'test-user-id' },
           data: { read: true },
         })
       );
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
   });
 
@@ -100,26 +108,30 @@ describe('Notification Controller', () => {
           data: { read: true },
         })
       );
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
   });
 
   describe('deleteNotification', () => {
     it('should delete a notification', async () => {
       mockRequest.params = { id: 'notif-1' };
-      const mockNotification = { id: 'notif-1', userId: 'test-user-id' };
-      mockPrisma.notification.findFirst.mockResolvedValue(mockNotification);
-      mockPrisma.notification.delete.mockResolvedValue(mockNotification);
+      mockPrisma.notification.deleteMany.mockResolvedValue({ count: 1 });
 
       await notificationController.deleteNotification(
         mockRequest as AuthRequest,
         mockResponse as Response
       );
 
-      expect(mockPrisma.notification.delete).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 'notif-1' } })
+      expect(mockPrisma.notification.deleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'notif-1', userId: 'test-user-id' },
+        })
       );
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
   });
 
@@ -137,7 +149,9 @@ describe('Notification Controller', () => {
           where: { userId: 'test-user-id' },
         })
       );
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
   });
 

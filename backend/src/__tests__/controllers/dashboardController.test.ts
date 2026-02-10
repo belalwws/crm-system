@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../types';
 
-// Mock Prisma
 const mockPrisma = {
   customer: {
     count: jest.fn(),
@@ -17,11 +16,15 @@ const mockPrisma = {
     count: jest.fn(),
     findMany: jest.fn(),
   },
+  activity: {
+    findMany: jest.fn(),
+  },
 };
 
 jest.mock('../../lib/prisma', () => ({
   __esModule: true,
   default: mockPrisma,
+  prisma: mockPrisma,
 }));
 
 import * as dashboardController from '../../controllers/dashboardController';
@@ -42,33 +45,64 @@ describe('Dashboard Controller', () => {
     };
   });
 
+  /**
+   * Helper to set up all the mocks needed for getDashboardStats.
+   * The controller does a Promise.all with 15 queries + 1 after.
+   */
+  function setupDashboardMocks(overrides: {
+    customerCount?: number;
+    dealCount?: number;
+    taskCount?: number;
+    dealAggregate?: any;
+    dealGroupBy?: any[];
+    taskFindMany?: any[];
+    dealFindMany?: any[];
+  } = {}) {
+    const {
+      customerCount = 10,
+      dealCount = 5,
+      taskCount = 3,
+      dealAggregate = { _sum: { value: 100000 }, _count: { id: 5 } },
+      dealGroupBy = [],
+      taskFindMany = [],
+      dealFindMany = [],
+    } = overrides;
+
+    mockPrisma.customer.count.mockResolvedValue(customerCount);
+    mockPrisma.deal.count.mockResolvedValue(dealCount);
+    mockPrisma.task.count.mockResolvedValue(taskCount);
+    mockPrisma.deal.aggregate.mockResolvedValue(dealAggregate);
+    mockPrisma.deal.groupBy.mockResolvedValue(dealGroupBy);
+    mockPrisma.task.findMany.mockResolvedValue(taskFindMany);
+    mockPrisma.deal.findMany.mockResolvedValue(dealFindMany);
+  }
+
   describe('getDashboardStats', () => {
     it('should return dashboard statistics', async () => {
-      // Mock all Promise.all queries in the correct order
-      mockPrisma.customer.count.mockResolvedValue(50);
-      mockPrisma.deal.count.mockResolvedValue(25);
-      mockPrisma.deal.aggregate.mockResolvedValue({ 
-        _sum: { value: 500000 }, 
-        _count: { id: 5 } 
+      setupDashboardMocks({
+        customerCount: 50,
+        dealCount: 25,
+        taskCount: 30,
+        dealAggregate: { _sum: { value: 500000 }, _count: { id: 5 } },
+        dealGroupBy: [
+          { stage: 'LEAD', _count: { id: 10 }, _sum: { value: 100000 } },
+          { stage: 'PROPOSAL', _count: { id: 8 }, _sum: { value: 200000 } },
+          { stage: 'CLOSED_WON', _count: { id: 7 }, _sum: { value: 200000 } },
+        ],
+        taskFindMany: [
+          { id: '1', title: 'Task 1', dueDate: new Date(), type: 'CALL', priority: 'HIGH', status: 'PENDING', customer: null, deal: null },
+        ],
+        dealFindMany: [
+          { id: '1', value: 10000, stage: 'LEAD', createdAt: new Date() },
+        ],
       });
-      mockPrisma.task.count.mockResolvedValue(30);
-      mockPrisma.deal.groupBy.mockResolvedValue([
-        { stage: 'LEAD', _count: { id: 10 }, _sum: { value: 100000 } },
-        { stage: 'PROPOSAL', _count: { id: 8 }, _sum: { value: 200000 } },
-        { stage: 'CLOSED_WON', _count: { id: 7 }, _sum: { value: 200000 } },
-      ]);
-      mockPrisma.task.findMany.mockResolvedValue([
-        { id: '1', title: 'Task 1', dueDate: new Date(), type: 'CALL', priority: 'HIGH', status: 'PENDING', customer: null, deal: null },
-      ]);
-      mockPrisma.deal.findMany.mockResolvedValue([
-        { id: '1', title: 'Deal 1', value: 10000, stage: 'LEAD', customer: { id: 'c1', name: 'Customer 1' }, owner: {} },
-      ]);
 
       await dashboardController.getDashboardStats(
         mockRequest as AuthRequest,
         mockResponse as Response
       );
 
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
@@ -78,37 +112,27 @@ describe('Dashboard Controller', () => {
     });
 
     it('should return correct customer count', async () => {
-      mockPrisma.customer.count.mockResolvedValue(100);
-      mockPrisma.deal.count.mockResolvedValue(0);
-      mockPrisma.deal.aggregate.mockResolvedValue({ _sum: { value: 0 } });
-      mockPrisma.task.count.mockResolvedValue(0);
-      mockPrisma.deal.groupBy.mockResolvedValue([]);
-      mockPrisma.task.findMany.mockResolvedValue([]);
-      mockPrisma.deal.findMany.mockResolvedValue([]);
+      setupDashboardMocks({ customerCount: 100 });
 
       await dashboardController.getDashboardStats(
         mockRequest as AuthRequest,
         mockResponse as Response
       );
 
-      expect(mockPrisma.customer.count).toHaveBeenCalledWith({
-        where: { ownerId: 'test-user-id' },
-      });
+      expect(mockPrisma.customer.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ ownerId: 'test-user-id', deletedAt: null }),
+        })
+      );
     });
 
     it('should return deals by stage', async () => {
-      const stageData = [
-        { stage: 'LEAD', _count: { _all: 5 } },
-        { stage: 'QUALIFIED', _count: { _all: 3 } },
-      ];
-      
-      mockPrisma.customer.count.mockResolvedValue(10);
-      mockPrisma.deal.count.mockResolvedValue(11);
-      mockPrisma.deal.aggregate.mockResolvedValue({ _sum: { value: 100000 } });
-      mockPrisma.task.count.mockResolvedValue(5);
-      mockPrisma.deal.groupBy.mockResolvedValue(stageData);
-      mockPrisma.task.findMany.mockResolvedValue([]);
-      mockPrisma.deal.findMany.mockResolvedValue([]);
+      setupDashboardMocks({
+        dealGroupBy: [
+          { stage: 'LEAD', _count: { id: 5 }, _sum: { value: 50000 } },
+          { stage: 'QUALIFIED', _count: { id: 3 }, _sum: { value: 30000 } },
+        ],
+      });
 
       await dashboardController.getDashboardStats(
         mockRequest as AuthRequest,

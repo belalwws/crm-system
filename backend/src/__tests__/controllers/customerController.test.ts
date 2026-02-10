@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../types';
 
-// Mock Prisma
 const mockPrisma = {
   customer: {
     findMany: jest.fn(),
@@ -17,6 +16,18 @@ const mockPrisma = {
 jest.mock('../../lib/prisma', () => ({
   __esModule: true,
   default: mockPrisma,
+  prisma: mockPrisma,
+}));
+
+jest.mock('../../lib/auditLog', () => ({
+  createAuditLog: jest.fn(),
+  createTimelineEvent: jest.fn(),
+  computeDiff: jest.fn().mockReturnValue(null),
+}));
+
+jest.mock('../../lib/workflowEngine', () => ({
+  fireWebhooks: jest.fn(),
+  evaluateWorkflows: jest.fn(),
 }));
 
 import * as customerController from '../../controllers/customerController';
@@ -47,6 +58,7 @@ describe('Customer Controller', () => {
       ];
 
       mockPrisma.customer.findMany.mockResolvedValue(mockCustomers);
+      mockPrisma.customer.count.mockResolvedValue(2);
 
       await customerController.getCustomers(
         mockRequest as AuthRequest,
@@ -55,7 +67,10 @@ describe('Customer Controller', () => {
 
       expect(mockPrisma.customer.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { ownerId: 'test-user-id' },
+          where: expect.objectContaining({
+            ownerId: 'test-user-id',
+            deletedAt: null,
+          }),
         })
       );
 
@@ -82,10 +97,11 @@ describe('Customer Controller', () => {
 
       expect(mockPrisma.customer.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {
+          where: expect.objectContaining({
             id: '1',
             ownerId: 'test-user-id',
-          },
+            deletedAt: null,
+          }),
         })
       );
 
@@ -121,14 +137,17 @@ describe('Customer Controller', () => {
       };
       mockRequest.body = customerData;
 
-      const createdCustomer = { 
-        id: '1', 
+      // Mock duplicate detection (findMany for duplicates)
+      mockPrisma.customer.findMany.mockResolvedValue([]);
+
+      const createdCustomer = {
+        id: '1',
         name: 'New Customer',
         email: 'new@test.com',
         company: 'Test Corp',
-        status: 'LEAD', 
+        status: 'LEAD',
         ownerId: 'test-user-id',
-        owner: {} 
+        owner: {},
       };
       mockPrisma.customer.create.mockResolvedValue(createdCustomer);
 
@@ -179,21 +198,24 @@ describe('Customer Controller', () => {
   });
 
   describe('deleteCustomer', () => {
-    it('should delete a customer', async () => {
+    it('should soft delete a customer', async () => {
       const existingCustomer = { id: '1', name: 'Customer', ownerId: 'test-user-id', status: 'ACTIVE' };
       mockRequest.params = { id: '1' };
 
       mockPrisma.customer.findFirst.mockResolvedValue(existingCustomer);
-      mockPrisma.customer.delete.mockResolvedValue(existingCustomer);
+      mockPrisma.customer.update.mockResolvedValue({ ...existingCustomer, deletedAt: new Date() });
 
       await customerController.deleteCustomer(
         mockRequest as AuthRequest,
         mockResponse as Response
       );
 
-      expect(mockPrisma.customer.delete).toHaveBeenCalledWith({
-        where: { id: '1' },
-      });
+      expect(mockPrisma.customer.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: '1' },
+          data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+        })
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });

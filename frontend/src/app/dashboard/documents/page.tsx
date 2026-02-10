@@ -60,7 +60,7 @@ export default function DocumentsPage() {
       setLoading(true);
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/documents`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/documents`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -84,7 +84,7 @@ export default function DocumentsPage() {
     try {
       const token = await getToken();
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/documents/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/documents/${id}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
@@ -100,7 +100,7 @@ export default function DocumentsPage() {
     try {
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/documents/${doc.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/documents/${doc.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -233,7 +233,7 @@ export default function DocumentsPage() {
                 <div className="relative aspect-[4/3] bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                   {isImage ? (
                     <img
-                      src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${doc.url}`}
+                      src={`${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '')}${doc.url}`}
                       alt={doc.name}
                       className="w-full h-full object-cover"
                     />

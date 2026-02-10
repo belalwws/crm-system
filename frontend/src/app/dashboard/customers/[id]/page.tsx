@@ -180,7 +180,7 @@ export default function CustomerDetailPage() {
     try {
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/customers/${customerId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/customers/${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -198,7 +198,7 @@ export default function CustomerDetailPage() {
     try {
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/documents?customerId=${customerId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/documents?customerId=${customerId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -221,7 +221,7 @@ export default function CustomerDetailPage() {
     try {
       const token = await getToken();
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/customers/${customerId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/customers/${customerId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },

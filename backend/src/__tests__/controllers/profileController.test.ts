@@ -7,8 +7,9 @@ const mockPrisma = {
     findUnique: jest.fn(),
     update: jest.fn(),
   },
-  userPreference: {
+  userPreferences: {
     findUnique: jest.fn(),
+    create: jest.fn(),
     upsert: jest.fn(),
   },
 };
@@ -22,6 +23,12 @@ jest.mock('../../lib/prisma', () => ({
 jest.mock('bcryptjs', () => ({
   compare: jest.fn(),
   hash: jest.fn(),
+  genSalt: jest.fn(),
+}));
+
+jest.mock('../../lib/logger', () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
 }));
 
 import * as profileController from '../../controllers/profileController';
@@ -64,7 +71,9 @@ describe('Profile Controller', () => {
           where: { id: 'test-user-id' },
         })
       );
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
 
     it('should return 404 if user not found', async () => {
@@ -99,7 +108,9 @@ describe('Profile Controller', () => {
           where: { id: 'test-user-id' },
         })
       );
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
   });
 
@@ -107,43 +118,46 @@ describe('Profile Controller', () => {
     it('should return user preferences', async () => {
       const mockPrefs = {
         userId: 'test-user-id',
-        theme: 'dark',
-        language: 'en',
-        emailNotifications: true,
+        emailTaskReminders: true,
+        emailDealUpdates: true,
       };
-      mockPrisma.userPreference.findUnique.mockResolvedValue(mockPrefs);
+      mockPrisma.userPreferences.findUnique.mockResolvedValue(mockPrefs);
 
       await profileController.getPreferences(
         mockRequest as AuthRequest,
         mockResponse as Response
       );
 
-      expect(mockPrisma.userPreference.findUnique).toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockPrisma.userPreferences.findUnique).toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
   });
 
   describe('updatePreferences', () => {
     it('should upsert user preferences', async () => {
-      mockRequest.body = { theme: 'light', language: 'ar' };
+      mockRequest.body = { emailTaskReminders: false, displayDensity: 'compact' };
       const mockPrefs = {
         userId: 'test-user-id',
-        theme: 'light',
-        language: 'ar',
+        emailTaskReminders: false,
+        displayDensity: 'compact',
       };
-      mockPrisma.userPreference.upsert.mockResolvedValue(mockPrefs);
+      mockPrisma.userPreferences.upsert.mockResolvedValue(mockPrefs);
 
       await profileController.updatePreferences(
         mockRequest as AuthRequest,
         mockResponse as Response
       );
 
-      expect(mockPrisma.userPreference.upsert).toHaveBeenCalledWith(
+      expect(mockPrisma.userPreferences.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId: 'test-user-id' },
         })
       );
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
   });
 });

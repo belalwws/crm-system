@@ -141,12 +141,18 @@ describe('StatusBadge Component', () => {
 
 describe('Toast Hook', () => {
   it('should provide toast methods', () => {
-    const { useToast } = require('@/components/ui');
-    const toast = useToast();
-    
-    expect(toast.success).toBeDefined();
-    expect(toast.error).toBeDefined();
-    expect(toast.info).toBeDefined();
-    expect(toast.warning).toBeDefined();
+    const { useToast, ToastProvider } = require('@/components/ui');
+    const { renderHook } = require('@testing-library/react');
+    const { createElement } = require('react');
+
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      createElement(ToastProvider, null, children);
+
+    const { result } = renderHook(() => useToast(), { wrapper });
+
+    expect(result.current.success).toBeDefined();
+    expect(result.current.error).toBeDefined();
+    expect(result.current.info).toBeDefined();
+    expect(result.current.warning).toBeDefined();
   });
 });

@@ -80,7 +80,7 @@ export default function DealDetailPage() {
     try {
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/deals/${dealId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/deals/${dealId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -98,7 +98,7 @@ export default function DealDetailPage() {
     try {
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/documents?dealId=${dealId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/documents?dealId=${dealId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -122,7 +122,7 @@ export default function DealDetailPage() {
       setUpdating(true);
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/deals/${dealId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/deals/${dealId}`,
         {
           method: 'PUT',
           headers: {
@@ -149,7 +149,7 @@ export default function DealDetailPage() {
     try {
       const token = await getToken();
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/deals/${dealId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/deals/${dealId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },

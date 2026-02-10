@@ -57,7 +57,7 @@ export default function EmailComposer({ isOpen, onClose, customer, deal, onSent 
     try {
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/emails/templates`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/emails/templates`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -100,7 +100,7 @@ export default function EmailComposer({ isOpen, onClose, customer, deal, onSent 
       const token = await getToken();
       
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/emails/send`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/emails/send`,
         {
           method: 'POST',
           headers: {

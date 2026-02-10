@@ -36,7 +36,7 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
       if (taskId) params.append('taskId', taskId);
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notes?${params}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notes?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -60,7 +60,7 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
     try {
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notes`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notes`,
         {
           method: 'POST',
           headers: {
@@ -92,7 +92,7 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
     try {
       const token = await getToken();
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notes/${editingNote.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notes/${editingNote.id}`,
         {
           method: 'PUT',
           headers: {
@@ -117,7 +117,7 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
     try {
       const token = await getToken();
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notes/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notes/${id}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
@@ -133,7 +133,7 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
     try {
       const token = await getToken();
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notes/${note.id}/pin`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notes/${note.id}/pin`,
         {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` },

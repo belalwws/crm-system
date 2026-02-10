@@ -60,7 +60,7 @@ export default function EmailsPage() {
       setLoading(true);
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/emails/history?page=${page}&limit=20`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/emails/history?page=${page}&limit=20`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -87,7 +87,7 @@ export default function EmailsPage() {
     try {
       const token = await getToken();
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/emails/send`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/emails/send`,
         {
           method: 'POST',
           headers: {

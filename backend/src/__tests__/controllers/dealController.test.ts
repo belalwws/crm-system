@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../../types';
 
-// Mock Prisma
 const mockPrisma = {
   deal: {
     findMany: jest.fn(),
@@ -16,11 +15,30 @@ const mockPrisma = {
   customer: {
     findFirst: jest.fn(),
   },
+  notification: {
+    create: jest.fn(),
+  },
 };
 
 jest.mock('../../lib/prisma', () => ({
   __esModule: true,
   default: mockPrisma,
+  prisma: mockPrisma,
+}));
+
+jest.mock('../../lib/auditLog', () => ({
+  createAuditLog: jest.fn(),
+  createTimelineEvent: jest.fn(),
+  computeDiff: jest.fn().mockReturnValue(null),
+}));
+
+jest.mock('../../lib/workflowEngine', () => ({
+  fireWebhooks: jest.fn(),
+  evaluateWorkflows: jest.fn(),
+}));
+
+jest.mock('../../lib/socket', () => ({
+  emitToUser: jest.fn(),
 }));
 
 import * as dealController from '../../controllers/dealController';
@@ -46,11 +64,12 @@ describe('Deal Controller', () => {
   describe('getDeals', () => {
     it('should return all deals for a user', async () => {
       const mockDeals = [
-        { id: '1', title: 'Deal 1', value: 10000, stage: 'LEAD', customer: {}, owner: {} },
-        { id: '2', title: 'Deal 2', value: 20000, stage: 'PROPOSAL', customer: {}, owner: {} },
+        { id: '1', title: 'Deal 1', value: 10000, stage: 'LEAD', customer: { id: 'c1' }, owner: {}, _count: {} },
+        { id: '2', title: 'Deal 2', value: 20000, stage: 'PROPOSAL', customer: { id: 'c2' }, owner: {}, _count: {} },
       ];
 
       mockPrisma.deal.findMany.mockResolvedValue(mockDeals);
+      mockPrisma.deal.count.mockResolvedValue(2);
 
       await dealController.getDeals(
         mockRequest as AuthRequest,
@@ -59,7 +78,10 @@ describe('Deal Controller', () => {
 
       expect(mockPrisma.deal.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { ownerId: 'test-user-id' },
+          where: expect.objectContaining({
+            ownerId: 'test-user-id',
+            deletedAt: null,
+          }),
         })
       );
 
@@ -75,14 +97,14 @@ describe('Deal Controller', () => {
 
   describe('getDeal', () => {
     it('should return a single deal by id', async () => {
-      const mockDeal = { 
-        id: '1', 
-        title: 'Deal 1', 
-        value: 10000, 
+      const mockDeal = {
+        id: '1',
+        title: 'Deal 1',
+        value: 10000,
         stage: 'LEAD',
         ownerId: 'test-user-id',
         customer: { id: 'c1', name: 'Customer 1' },
-        owner: {}
+        owner: {},
       };
       mockRequest.params = { id: '1' };
       mockPrisma.deal.findFirst.mockResolvedValue(mockDeal);
@@ -94,10 +116,11 @@ describe('Deal Controller', () => {
 
       expect(mockPrisma.deal.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {
+          where: expect.objectContaining({
             id: '1',
             ownerId: 'test-user-id',
-          },
+            deletedAt: null,
+          }),
         })
       );
 
@@ -127,22 +150,21 @@ describe('Deal Controller', () => {
       };
       mockRequest.body = dealData;
 
-      // Mock customer verification - this is called first
-      mockPrisma.customer.findFirst.mockResolvedValue({ 
-        id: 'customer-1', 
+      mockPrisma.customer.findFirst.mockResolvedValue({
+        id: 'customer-1',
         name: 'Test Customer',
-        ownerId: 'test-user-id'
+        ownerId: 'test-user-id',
       });
 
-      const createdDeal = { 
-        id: '1', 
+      const createdDeal = {
+        id: '1',
         title: 'New Deal',
         value: 15000,
-        stage: 'LEAD', 
+        stage: 'LEAD',
         ownerId: 'test-user-id',
         customerId: 'customer-1',
         customer: { id: 'customer-1', name: 'Test Customer' },
-        owner: { id: 'test-user-id', name: 'Test User' }
+        owner: { id: 'test-user-id', name: 'Test User' },
       };
       mockPrisma.deal.create.mockResolvedValue(createdDeal);
 
@@ -165,7 +187,6 @@ describe('Deal Controller', () => {
       };
       mockRequest.body = dealData;
 
-      // Mock customer not found
       mockPrisma.customer.findFirst.mockResolvedValue(null);
 
       await dealController.createDeal(
@@ -180,12 +201,18 @@ describe('Deal Controller', () => {
 
   describe('updateDeal', () => {
     it('should update deal stage', async () => {
-      const existingDeal = { id: '1', title: 'Deal 1', stage: 'LEAD', ownerId: 'test-user-id', customer: {}, owner: {} };
+      const existingDeal = { id: '1', title: 'Deal 1', stage: 'LEAD', ownerId: 'test-user-id', value: 10000 };
       mockRequest.params = { id: '1' };
       mockRequest.body = { stage: 'proposal' };
 
       mockPrisma.deal.findFirst.mockResolvedValue(existingDeal);
-      mockPrisma.deal.update.mockResolvedValue({ ...existingDeal, stage: 'PROPOSAL' });
+      mockPrisma.deal.update.mockResolvedValue({
+        ...existingDeal,
+        stage: 'PROPOSAL',
+        customer: { id: 'c1' },
+        owner: {},
+        customerId: 'c1',
+      });
 
       await dealController.updateDeal(
         mockRequest as AuthRequest,
@@ -215,21 +242,24 @@ describe('Deal Controller', () => {
   });
 
   describe('deleteDeal', () => {
-    it('should delete a deal', async () => {
+    it('should soft delete a deal', async () => {
       const existingDeal = { id: '1', title: 'Deal 1', ownerId: 'test-user-id' };
       mockRequest.params = { id: '1' };
 
       mockPrisma.deal.findFirst.mockResolvedValue(existingDeal);
-      mockPrisma.deal.delete.mockResolvedValue(existingDeal);
+      mockPrisma.deal.update.mockResolvedValue({ ...existingDeal, deletedAt: new Date() });
 
       await dealController.deleteDeal(
         mockRequest as AuthRequest,
         mockResponse as Response
       );
 
-      expect(mockPrisma.deal.delete).toHaveBeenCalledWith({
-        where: { id: '1' },
-      });
+      expect(mockPrisma.deal.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: '1' },
+          data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+        })
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });

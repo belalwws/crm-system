@@ -19,6 +19,11 @@ jest.mock('../../lib/prisma', () => ({
   prisma: mockPrisma,
 }));
 
+jest.mock('../../lib/logger', () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 import * as contactController from '../../controllers/contactController';
 
 describe('Contact Controller', () => {
@@ -42,12 +47,11 @@ describe('Contact Controller', () => {
   describe('getContacts', () => {
     it('should return contacts for the user', async () => {
       const mockContacts = [
-        { id: '1', firstName: 'John', lastName: 'Doe', email: 'john@test.com' },
-        { id: '2', firstName: 'Jane', lastName: 'Smith', email: 'jane@test.com' },
+        { id: '1', firstName: 'John', lastName: 'Doe', email: 'john@test.com', customer: {} },
+        { id: '2', firstName: 'Jane', lastName: 'Smith', email: 'jane@test.com', customer: {} },
       ];
 
       mockPrisma.contact.findMany.mockResolvedValue(mockContacts);
-      mockPrisma.contact.count.mockResolvedValue(2);
 
       await contactController.getContacts(
         mockRequest as AuthRequest,
@@ -55,7 +59,6 @@ describe('Contact Controller', () => {
       );
 
       expect(mockPrisma.contact.findMany).toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({ success: true })
       );
@@ -65,7 +68,7 @@ describe('Contact Controller', () => {
   describe('getContact', () => {
     it('should return a single contact', async () => {
       mockRequest.params = { id: 'contact-1' };
-      const mockContact = { id: 'contact-1', firstName: 'John', lastName: 'Doe', ownerId: 'test-user-id' };
+      const mockContact = { id: 'contact-1', firstName: 'John', lastName: 'Doe', ownerId: 'test-user-id', customer: {} };
       mockPrisma.contact.findFirst.mockResolvedValue(mockContact);
 
       await contactController.getContact(
@@ -73,7 +76,9 @@ describe('Contact Controller', () => {
         mockResponse as Response
       );
 
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
 
     it('should return 404 if contact not found', async () => {
@@ -101,6 +106,7 @@ describe('Contact Controller', () => {
         id: 'contact-1',
         ...mockRequest.body,
         ownerId: 'test-user-id',
+        customer: { id: 'cust-1', name: 'Test Customer' },
       };
       mockPrisma.contact.create.mockResolvedValue(mockContact);
 
@@ -120,7 +126,7 @@ describe('Contact Controller', () => {
       mockRequest.body = { firstName: 'Updated' };
       const existing = { id: 'contact-1', ownerId: 'test-user-id', firstName: 'John' };
       mockPrisma.contact.findFirst.mockResolvedValue(existing);
-      mockPrisma.contact.update.mockResolvedValue({ ...existing, firstName: 'Updated' });
+      mockPrisma.contact.update.mockResolvedValue({ ...existing, firstName: 'Updated', customer: {} });
 
       await contactController.updateContact(
         mockRequest as AuthRequest,
@@ -128,7 +134,9 @@ describe('Contact Controller', () => {
       );
 
       expect(mockPrisma.contact.update).toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
 
     it('should return 404 if contact not found', async () => {
@@ -158,7 +166,9 @@ describe('Contact Controller', () => {
       );
 
       expect(mockPrisma.contact.delete).toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true })
+      );
     });
   });
 });
