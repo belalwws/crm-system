@@ -62,26 +62,26 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="mb-8">
           <Link
             href="/sign-in"
-            className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Sign In
           </Link>
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 p-8">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 p-8">
           {status === 'success' ? (
             <div className="text-center py-4">
               <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Password Reset!</h2>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
+              <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">Password Reset!</h2>
+              <p className="text-neutral-500 dark:text-neutral-400 mb-6">
                 Your password has been reset successfully.
               </p>
               <Link
@@ -96,8 +96,8 @@ function ResetPasswordForm() {
               <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Invalid Link</h2>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
+              <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">Invalid Link</h2>
+              <p className="text-neutral-500 dark:text-neutral-400 mb-6">
                 This reset link is invalid or has expired. Please request a new one.
               </p>
               <Link
@@ -113,15 +113,15 @@ function ResetPasswordForm() {
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Set New Password</h1>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                <h1 className="text-xl font-bold text-neutral-900 dark:text-white mb-1">Set New Password</h1>
+                <p className="text-neutral-500 dark:text-neutral-400 text-sm">
                   Choose a strong password for your account.
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                     New Password
                   </label>
                   <input
@@ -131,13 +131,13 @@ function ResetPasswordForm() {
                     minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     placeholder="Min 8 characters"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                     Confirm Password
                   </label>
                   <input
@@ -146,7 +146,7 @@ function ResetPasswordForm() {
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     placeholder="Repeat your password"
                   />
                 </div>
@@ -180,7 +180,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-neutral-950 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-neutral-400" /></div>}>
       <ResetPasswordForm />
     </Suspense>
   );

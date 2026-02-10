@@ -13,8 +13,11 @@ const mapStatus = (status?: string): CustomerStatus => {
     active: 'ACTIVE',
     inactive: 'INACTIVE',
     lead: 'LEAD',
+    ACTIVE: 'ACTIVE',
+    INACTIVE: 'INACTIVE',
+    LEAD: 'LEAD',
   };
-  return statusMap[status?.toLowerCase() || 'lead'] || 'LEAD';
+  return statusMap[status || 'LEAD'] || 'LEAD';
 };
 
 /**
@@ -45,6 +48,8 @@ export const getCustomers = async (
     } = req.query as Record<string, string>;
 
     // Build where clause
+    const allowedSortFields = ['createdAt', 'updatedAt', 'name', 'email', 'company', 'status'];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
     const where: any = {
       ownerId: req.user?.id,
       ...(includeDeleted !== 'true' && { deletedAt: null }),
@@ -71,7 +76,7 @@ export const getCustomers = async (
     const [customers, total] = await Promise.all([
       prisma.customer.findMany({
         where,
-        orderBy: { [sortBy]: sortOrder === 'asc' ? 'asc' : 'desc' },
+        orderBy: { [safeSortBy]: sortOrder === 'asc' ? 'asc' : 'desc' },
         skip: (pageNum - 1) * pageSize,
         take: pageSize,
         include: {

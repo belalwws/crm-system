@@ -82,7 +82,7 @@ export const protect = async (
               id: clerkUserId,
               email: email,
               name: (verifiedPayload as any).name || (verifiedPayload as any).first_name || (verifiedPayload as any).username || 'User',
-              password: 'clerk_managed',
+              password: (await import('crypto')).randomBytes(32).toString('base64'),
             },
             select: { id: true, email: true, role: true, isActive: true, name: true },
           }));

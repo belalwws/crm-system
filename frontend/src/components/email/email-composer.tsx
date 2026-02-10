@@ -141,17 +141,17 @@ export default function EmailComposer({ isOpen, onClose, customer, deal, onSent 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
       <div 
-        className="bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col" 
+        className="bg-white dark:bg-neutral-900 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col" 
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Compose Email</h3>
+        <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-700">
+          <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">Compose Email</h3>
           <button 
             onClick={onClose} 
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+            className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-neutral-500" />
           </button>
         </div>
 
@@ -167,7 +167,7 @@ export default function EmailComposer({ isOpen, onClose, customer, deal, onSent 
           <div className="relative">
             <button
               onClick={() => setShowTemplates(!showTemplates)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800"
             >
               <FileText className="w-4 h-4" />
               Use Template
@@ -175,18 +175,18 @@ export default function EmailComposer({ isOpen, onClose, customer, deal, onSent 
             </button>
             
             {showTemplates && (
-              <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
+              <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg z-10">
                 {templates.length === 0 ? (
-                  <div className="p-3 text-sm text-gray-500">No templates available</div>
+                  <div className="p-3 text-sm text-neutral-500">No templates available</div>
                 ) : (
                   templates.map((template) => (
                     <button
                       key={template.id}
                       onClick={() => applyTemplate(template)}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-700"
                     >
-                      <div className="font-medium text-gray-900 dark:text-white">{template.name}</div>
-                      <div className="text-gray-500 text-xs truncate">{template.subject}</div>
+                      <div className="font-medium text-neutral-900 dark:text-white">{template.name}</div>
+                      <div className="text-neutral-500 text-xs truncate">{template.subject}</div>
                     </button>
                   ))
                 )}
@@ -196,31 +196,31 @@ export default function EmailComposer({ isOpen, onClose, customer, deal, onSent 
 
           {/* To Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">To</label>
             <input
               type="email"
               value={to}
               onChange={(e) => setTo(e.target.value)}
               placeholder="recipient@example.com"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {/* Subject Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Subject</label>
             <input
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               placeholder="Email subject"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {/* Body Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Message</label>
             <RichTextEditor
               value={body}
               onChange={setBody}
@@ -247,17 +247,17 @@ export default function EmailComposer({ isOpen, onClose, customer, deal, onSent 
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-end gap-3 p-4 border-t border-neutral-200 dark:border-neutral-700">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="px-4 py-2 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={sendEmail}
             disabled={sending || !to || !subject || !body}
-            className="flex items-center gap-2 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
             {sending ? 'Sending...' : 'Send Email'}

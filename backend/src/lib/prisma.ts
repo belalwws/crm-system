@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import logger from './logger';
 
 /**
  * Prisma Client Singleton with Retry Logic for Neon
@@ -46,7 +47,7 @@ export async function withRetry<T>(
         throw error;
       }
       
-      console.log(`Database connection attempt ${i + 1} failed, retrying in ${delay}ms...`);
+      logger.warn(`Database connection attempt ${i + 1} failed, retrying in ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
       
       // Try to reconnect

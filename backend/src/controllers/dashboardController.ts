@@ -60,11 +60,11 @@ export const getDashboardStats = async (
       // Monthly deal data for chart
       monthlyDeals,
     ] = await Promise.all([
-      prisma.customer.count({ where: { ownerId: userId } }),
-      prisma.customer.count({ where: { ownerId: userId, status: 'ACTIVE' } }),
-      prisma.deal.count({ where: { ownerId: userId } }),
-      prisma.task.count({ where: { assignedToId: userId } }),
-      prisma.task.count({ where: { assignedToId: userId, status: 'PENDING' } }),
+      prisma.customer.count({ where: { ownerId: userId, deletedAt: null } }),
+      prisma.customer.count({ where: { ownerId: userId, status: 'ACTIVE', deletedAt: null } }),
+      prisma.deal.count({ where: { ownerId: userId, deletedAt: null } }),
+      prisma.task.count({ where: { assignedToId: userId, deletedAt: null } }),
+      prisma.task.count({ where: { assignedToId: userId, status: 'PENDING', deletedAt: null } }),
       // Deal aggregates
       prisma.deal.aggregate({
         where: { ownerId: userId },
@@ -214,11 +214,11 @@ export const getRecentActivities = async (
   res: Response
 ): Promise<void> => {
   try {
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
 
-    const activities = await prisma.task.findMany({
-      where: { assignedToId: req.user?.id },
-      orderBy: { updatedAt: 'desc' },
+    const activities = await prisma.activity.findMany({
+      where: { ownerId: req.user?.id },
+      orderBy: { createdAt: 'desc' },
       take: limit,
       include: {
         customer: { select: { id: true, name: true, email: true } },
@@ -228,7 +228,7 @@ export const getRecentActivities = async (
 
     res.status(200).json({
       success: true,
-      data: activities.map(formatTask),
+      data: activities,
     });
   } catch (error: any) {
     res.status(500).json({

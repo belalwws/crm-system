@@ -16,8 +16,14 @@ const mapStage = (stage?: string): DealStage => {
     negotiation: 'NEGOTIATION',
     'closed-won': 'CLOSED_WON',
     'closed-lost': 'CLOSED_LOST',
+    LEAD: 'LEAD',
+    QUALIFIED: 'QUALIFIED',
+    PROPOSAL: 'PROPOSAL',
+    NEGOTIATION: 'NEGOTIATION',
+    CLOSED_WON: 'CLOSED_WON',
+    CLOSED_LOST: 'CLOSED_LOST',
   };
-  return stageMap[stage?.toLowerCase() || 'lead'] || 'LEAD';
+  return stageMap[stage || 'LEAD'] || 'LEAD';
 };
 
 /**
@@ -70,6 +76,9 @@ export const getDeals = async (
       ...(includeDeleted !== 'true' && { deletedAt: null }),
     };
 
+    const allowedSortFields = ['createdAt', 'updatedAt', 'title', 'value', 'stage', 'probability', 'expectedCloseDate'];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
@@ -89,7 +98,7 @@ export const getDeals = async (
     const [deals, total] = await Promise.all([
       prisma.deal.findMany({
         where,
-        orderBy: { [sortBy]: sortOrder === 'asc' ? 'asc' : 'desc' },
+        orderBy: { [safeSortBy]: sortOrder === 'asc' ? 'asc' : 'desc' },
         skip: (pageNum - 1) * pageSize,
         take: pageSize,
         include: {
@@ -338,7 +347,7 @@ export const updateDeal = async (
             userId: req.user?.id as string,
             type: isClosedWon ? 'DEAL_WON' : 'DEAL_LOST',
             title: isClosedWon ? '🎉 Deal Won!' : 'Deal Lost',
-            message: `"${deal.title}" - $${deal.value.toLocaleString()}`,
+            message: `"${deal.title}" - $${Number(deal.value).toLocaleString()}`,
             link: `/dashboard/deals/${deal.id}`,
           },
         });

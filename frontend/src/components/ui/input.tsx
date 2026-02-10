@@ -1,6 +1,6 @@
 "use client";
 
-import { InputHTMLAttributes, TextareaHTMLAttributes, forwardRef, ReactNode } from "react";
+import { InputHTMLAttributes, TextareaHTMLAttributes, forwardRef, ReactNode, useId } from "react";
 import { Search } from "lucide-react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -10,11 +10,13 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, icon, className = "", ...props }, ref) => {
+  ({ label, error, icon, className = "", id: propId, ...props }, ref) => {
+    const autoId = useId();
+    const id = propId || autoId;
     return (
       <div className="space-y-2">
         {label && (
-          <label className="block text-sm font-medium text-neutral-400">
+          <label htmlFor={id} className="block text-sm font-medium text-neutral-400">
             {label}
             {props.required && <span className="text-red-400 ml-1">*</span>}
           </label>
@@ -27,6 +29,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
           <input
             ref={ref}
+            id={id}
             className={`
               w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl
               text-white placeholder-neutral-500
@@ -54,17 +57,20 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, className = "", ...props }, ref) => {
+  ({ label, error, className = "", id: propId, ...props }, ref) => {
+    const autoId = useId();
+    const id = propId || autoId;
     return (
       <div className="space-y-2">
         {label && (
-          <label className="block text-sm font-medium text-neutral-400">
+          <label htmlFor={id} className="block text-sm font-medium text-neutral-400">
             {label}
             {props.required && <span className="text-red-400 ml-1">*</span>}
           </label>
         )}
         <textarea
           ref={ref}
+          id={id}
           className={`
             w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl
             text-white placeholder-neutral-500 resize-none
@@ -91,17 +97,20 @@ interface SelectProps extends InputHTMLAttributes<HTMLSelectElement> {
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, options, className = "", ...props }, ref) => {
+  ({ label, error, options, className = "", id: propId, ...props }, ref) => {
+    const autoId = useId();
+    const id = propId || autoId;
     return (
       <div className="space-y-2">
         {label && (
-          <label className="block text-sm font-medium text-neutral-400">
+          <label htmlFor={id} className="block text-sm font-medium text-neutral-400">
             {label}
             {props.required && <span className="text-red-400 ml-1">*</span>}
           </label>
         )}
         <select
           ref={ref}
+          id={id}
           className={`
             w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl
             text-white appearance-none cursor-pointer

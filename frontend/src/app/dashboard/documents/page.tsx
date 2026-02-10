@@ -140,14 +140,14 @@ export default function DocumentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Documents</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Documents</h1>
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             Manage all your uploaded files and documents
           </p>
         </div>
         <button
           onClick={() => setShowUpload(!showUpload)}
-          className="flex items-center gap-2 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors"
         >
           <Upload className="w-4 h-4" />
           Upload Files
@@ -156,7 +156,7 @@ export default function DocumentsPage() {
 
       {/* Upload Section */}
       {showUpload && (
-        <div className="mb-6 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="mb-6 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
           <FileUpload 
             onUploadComplete={() => {
               setShowUpload(false);
@@ -169,19 +169,19 @@ export default function DocumentsPage() {
       {/* Search and Filter */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search documents..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full pl-10 pr-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white"
           />
         </div>
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          className="px-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white"
         >
           {fileTypes.map((type) => (
             <option key={type.value} value={type.value}>{type.label}</option>
@@ -193,16 +193,16 @@ export default function DocumentsPage() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <div key={i} className="h-32 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
+            <div key={i} className="h-32 bg-neutral-100 dark:bg-neutral-800 rounded-xl animate-pulse" />
           ))}
         </div>
       ) : filteredDocuments.length === 0 ? (
         <div className="text-center py-12">
-          <File className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+          <File className="w-12 h-12 text-neutral-300 dark:text-neutral-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-neutral-900 dark:text-white mb-2">
             {searchQuery ? 'No documents found' : 'No documents yet'}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
+          <p className="text-neutral-500 dark:text-neutral-400 mb-4">
             {searchQuery 
               ? 'Try a different search term'
               : 'Upload your first document to get started'
@@ -211,7 +211,7 @@ export default function DocumentsPage() {
           {!searchQuery && (
             <button
               onClick={() => setShowUpload(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-100"
             >
               <Upload className="w-4 h-4" />
               Upload Files
@@ -227,10 +227,10 @@ export default function DocumentsPage() {
             return (
               <div
                 key={doc.id}
-                className="group bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow"
+                className="group bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden hover:shadow-lg transition-shadow"
               >
                 {/* Preview Area */}
-                <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <div className="relative aspect-[4/3] bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                   {isImage ? (
                     <img
                       src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}${doc.url}`}
@@ -238,17 +238,17 @@ export default function DocumentsPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <FileIcon className="w-12 h-12 text-gray-400" />
+                    <FileIcon className="w-12 h-12 text-neutral-400" />
                   )}
                   
                   {/* Hover Actions */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <button
                       onClick={() => downloadDocument(doc)}
-                      className="p-2 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+                      className="p-2 bg-white rounded-lg hover:bg-neutral-100 transition-colors"
                       title="Download"
                     >
-                      <Download className="w-4 h-4 text-gray-700" />
+                      <Download className="w-4 h-4 text-neutral-700" />
                     </button>
                     <button
                       onClick={() => deleteDocument(doc.id)}
@@ -262,12 +262,12 @@ export default function DocumentsPage() {
 
                 {/* Info */}
                 <div className="p-3">
-                  <h4 className="font-medium text-gray-900 dark:text-white truncate text-sm" title={doc.name}>
+                  <h4 className="font-medium text-neutral-900 dark:text-white truncate text-sm" title={doc.name}>
                     {doc.name}
                   </h4>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-xs text-gray-500">{formatFileSize(doc.size)}</span>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-neutral-500">{formatFileSize(doc.size)}</span>
+                    <span className="text-xs text-neutral-400">
                       {new Date(doc.createdAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -294,8 +294,8 @@ export default function DocumentsPage() {
 
       {/* Stats */}
       {documents.length > 0 && (
-        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex flex-wrap gap-6 text-sm text-gray-500 dark:text-gray-400">
+        <div className="mt-6 pt-6 border-t border-neutral-200 dark:border-neutral-700">
+          <div className="flex flex-wrap gap-6 text-sm text-neutral-500 dark:text-neutral-400">
             <span>{documents.length} total files</span>
             <span>
               {formatFileSize(documents.reduce((acc, doc) => acc + doc.size, 0))} total size

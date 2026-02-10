@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import {
   ResponsiveContainer,
   BarChart as RechartsBarChart,
@@ -62,11 +63,13 @@ export function LineChartComponent({ data, dataKey, xKey = 'name', height = 300,
 }
 
 export function AreaChartComponent({ data, dataKey, xKey = 'name', height = 300, color = '#3b82f6', formatter }: ChartProps & { dataKey: string; xKey?: string; color?: string; formatter?: (v: number) => string }) {
+  const gradientId = useId();
+  const safeGradientId = `gradient-${gradientId.replace(/:/g, '')}-${dataKey}`;
   return (
     <ResponsiveContainer width="100%" height={height}>
       <RechartsAreaChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
         <defs>
-          <linearGradient id={`gradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={safeGradientId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor={color} stopOpacity={0.3} />
             <stop offset="95%" stopColor={color} stopOpacity={0} />
           </linearGradient>
@@ -75,7 +78,7 @@ export function AreaChartComponent({ data, dataKey, xKey = 'name', height = 300,
         <XAxis dataKey={xKey} tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} tickFormatter={formatter} />
         <Tooltip contentStyle={darkTooltipStyle} formatter={formatter ? (v: unknown) => [formatter(Number(v))] : undefined} />
-        <Area type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} fill={`url(#gradient-${dataKey})`} />
+        <Area type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} fill={`url(#${safeGradientId})`} />
       </RechartsAreaChart>
     </ResponsiveContainer>
   );

@@ -17,8 +17,13 @@ import {
   Target,
 } from "lucide-react";
 import { Card, CardHeader, StatCard, Badge, Progress, CircularProgress, PageLoading } from "@/components/ui";
-import { BarChart, DonutChart, AreaChartComponent, LineChartComponent } from "@/components/ui/charts";
+import dynamic from "next/dynamic";
 import { formatCurrency } from "@/lib/hooks";
+
+const BarChart = dynamic(() => import("@/components/ui/charts").then(m => ({ default: m.BarChart })), { ssr: false, loading: () => <div className="h-[300px] animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
+const DonutChart = dynamic(() => import("@/components/ui/charts").then(m => ({ default: m.DonutChart })), { ssr: false, loading: () => <div className="h-[300px] animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
+const AreaChartComponent = dynamic(() => import("@/components/ui/charts").then(m => ({ default: m.AreaChartComponent })), { ssr: false, loading: () => <div className="h-[300px] animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
+const LineChartComponent = dynamic(() => import("@/components/ui/charts").then(m => ({ default: m.LineChartComponent })), { ssr: false, loading: () => <div className="h-[300px] animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
 
 interface AnalyticsData {
   totalCustomers: number;
@@ -45,10 +50,11 @@ export default function AnalyticsPage() {
 
   const fetchAnalytics = useCallback(async () => {
     try {
+      setLoading(true);
       const token = await getToken();
       // Fetch dashboard stats which contains most of the analytics data
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats`,
+        `${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats?period=${period}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -110,7 +116,7 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [getToken, period]);
 
   useEffect(() => {
     fetchAnalytics();

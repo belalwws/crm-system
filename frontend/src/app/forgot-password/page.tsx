@@ -36,29 +36,29 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-neutral-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="mb-8">
           <Link
             href="/sign-in"
-            className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Sign In
           </Link>
         </div>
 
-        <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-gray-200 dark:border-neutral-800 p-8">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 p-8">
           {status === 'sent' ? (
             <div className="text-center py-4">
               <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Check Your Email</h2>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
+              <h2 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">Check Your Email</h2>
+              <p className="text-neutral-500 dark:text-neutral-400 mb-4">
                 If an account exists with <strong>{email}</strong>, we&apos;ve sent a password reset link.
               </p>
-              <p className="text-sm text-gray-400 dark:text-gray-500">
+              <p className="text-sm text-neutral-400 dark:text-neutral-500">
                 The link will expire in 1 hour. Check your spam folder if you don&apos;t see it.
               </p>
             </div>
@@ -68,15 +68,15 @@ export default function ForgotPasswordPage() {
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Forgot your password?</h1>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                <h1 className="text-xl font-bold text-neutral-900 dark:text-white mb-1">Forgot your password?</h1>
+                <p className="text-neutral-500 dark:text-neutral-400 text-sm">
                   Enter your email and we&apos;ll send you a reset link.
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                     Email Address
                   </label>
                   <input
@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-3 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     placeholder="you@example.com"
                   />
                 </div>

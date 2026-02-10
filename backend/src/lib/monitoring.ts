@@ -28,6 +28,8 @@ const startedAt = new Date();
 // Keep last 1000 response times for percentile calculations
 const MAX_SAMPLES = 1000;
 
+const MAX_ENDPOINTS = 200;
+
 /**
  * Middleware to track request performance
  */
@@ -36,7 +38,17 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
 
   res.on('finish', () => {
     const durationMs = Number(process.hrtime.bigint() - start) / 1_000_000;
-    const path = `${req.method} ${req.route?.path || req.path}`;
+    const routePath = req.route?.path;
+    // Only track known routes to prevent unbounded memory growth from bot/scanner paths
+    if (!routePath) {
+      totalRequests++;
+      responseTimes.push(durationMs);
+      if (responseTimes.length > MAX_SAMPLES) responseTimes.shift();
+      statusCounts[res.statusCode] = (statusCounts[res.statusCode] || 0) + 1;
+      if (res.statusCode >= 500) totalErrors++;
+      return;
+    }
+    const path = `${req.method} ${routePath}`;
 
     totalRequests++;
 

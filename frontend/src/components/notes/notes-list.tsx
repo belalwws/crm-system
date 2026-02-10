@@ -168,7 +168,7 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+          <div key={i} className="h-20 bg-neutral-100 dark:bg-neutral-800 rounded-lg animate-pulse" />
         ))}
       </div>
     );
@@ -180,32 +180,32 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
       {!showForm ? (
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+          className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
         >
           <Plus className="w-4 h-4" />
           Add Note
         </button>
       ) : (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg p-4">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Write your note..."
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             autoFocus
           />
           <div className="flex items-center justify-end gap-2 mt-3">
             <button
               onClick={cancelEdit}
-              className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+              className="px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg"
             >
               Cancel
             </button>
             <button
               onClick={editingNote ? updateNote : createNote}
               disabled={!content.trim()}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-100 disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
               {editingNote ? 'Update' : 'Save'}
@@ -216,7 +216,7 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
 
       {/* Notes List */}
       {sortedNotes.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
           <StickyNote className="w-10 h-10 mx-auto mb-2 opacity-50" />
           <p>No notes yet</p>
         </div>
@@ -225,10 +225,10 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
           {sortedNotes.map((note) => (
             <div
               key={note.id}
-              className={`group relative bg-white dark:bg-gray-900 border rounded-lg p-4 ${
+              className={`group relative bg-white dark:bg-neutral-900 border rounded-lg p-4 ${
                 note.pinned 
                   ? 'border-yellow-300 dark:border-yellow-700 bg-yellow-50/50 dark:bg-yellow-900/10' 
-                  : 'border-gray-200 dark:border-gray-700'
+                  : 'border-neutral-200 dark:border-neutral-700'
               }`}
             >
               {/* Pin indicator */}
@@ -237,13 +237,13 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
               )}
 
               {/* Content */}
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap pr-6">
+              <p className="text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap pr-6">
                 {note.content}
               </p>
 
               {/* Footer */}
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-                <span className="text-xs text-gray-400">
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                <span className="text-xs text-neutral-400">
                   {new Date(note.createdAt).toLocaleDateString()} at{' '}
                   {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   {note.updatedAt !== note.createdAt && ' (edited)'}
@@ -253,21 +253,21 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => togglePin(note)}
-                    className="p-1.5 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded"
+                    className="p-1.5 text-neutral-400 hover:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded"
                     title={note.pinned ? 'Unpin' : 'Pin'}
                   >
                     {note.pinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
                   </button>
                   <button
                     onClick={() => startEdit(note)}
-                    className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                    className="p-1.5 text-neutral-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
                     title="Edit"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => deleteNote(note.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                    className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                     title="Delete"
                   >
                     <Trash2 className="w-4 h-4" />

@@ -1,6 +1,13 @@
 import { Resend } from 'resend';
+import logger from './logger';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+/**
+ * Escape HTML to prevent XSS in email templates
+ */
+const escapeHtml = (str: string): string =>
+  str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 /**
  * Send welcome email to new users
@@ -26,7 +33,7 @@ export const sendWelcomeEmail = async (email: string, name: string): Promise<voi
             </div>
             <div style="background-color: white; padding: 40px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
               <p style="color: #374151; font-size: 18px; margin-bottom: 20px;">
-                Hi <strong>${name}</strong>,
+                Hi <strong>${escapeHtml(name)}</strong>,
               </p>
               <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
                 Thank you for signing up for our CRM system! We're excited to have you on board.
@@ -59,9 +66,9 @@ export const sendWelcomeEmail = async (email: string, name: string): Promise<voi
         </html>
       `,
     });
-    console.log(`✉️ Welcome email sent to ${email}`);
+    logger.info(`Welcome email sent to ${email}`);
   } catch (error) {
-    console.error('Failed to send welcome email:', error);
+    logger.error('Failed to send welcome email:', error);
     // Don't throw - email sending should not block registration
   }
 };
@@ -81,7 +88,7 @@ export const sendNotificationEmail = async (
       subject,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #2563eb;">${subject}</h2>
+          <h2 style="color: #2563eb;">${escapeHtml(subject)}</h2>
           <p style="color: #374151; line-height: 1.6;">${message}</p>
           <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
           <p style="color: #9ca3af; font-size: 12px;">CRM System Notification</p>
@@ -89,7 +96,7 @@ export const sendNotificationEmail = async (
       `,
     });
   } catch (error) {
-    console.error('Failed to send notification email:', error);
+    logger.error('Failed to send notification email:', error);
   }
 };
 
@@ -127,10 +134,10 @@ export const sendEmail = async (
         </html>
       `,
     });
-    console.log(`✉️ Email sent to ${to}: ${subject}`);
+    logger.info(`Email sent to ${to}: ${subject}`);
     return { success: true };
   } catch (error) {
-    console.error('Failed to send email:', error);
+    logger.error('Failed to send email:', error);
     return { success: false, error: String(error) };
   }
 };
@@ -160,7 +167,7 @@ export const sendPasswordResetEmail = async (
               <h1 style="color: white; margin: 0; font-size: 28px;">Password Reset 🔒</h1>
             </div>
             <div style="background-color: white; padding: 40px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-              <p style="color: #374151; font-size: 18px; margin-bottom: 20px;">Hi <strong>${name}</strong>,</p>
+              <p style="color: #374151; font-size: 18px; margin-bottom: 20px;">Hi <strong>${escapeHtml(name)}</strong>,</p>
               <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
                 We received a request to reset your password. Click the button below to set a new password.
               </p>
@@ -184,9 +191,9 @@ export const sendPasswordResetEmail = async (
         </html>
       `,
     });
-    console.log(`🔒 Password reset email sent to ${email}`);
+    logger.info(`Password reset email sent to ${email}`);
   } catch (error) {
-    console.error('Failed to send password reset email:', error);
+    logger.error('Failed to send password reset email:', error);
   }
 };
 
@@ -213,7 +220,7 @@ export const sendVerificationEmail = async (
               <h1 style="color: white; margin: 0; font-size: 28px;">Verify Your Email ✉️</h1>
             </div>
             <div style="background-color: white; padding: 40px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-              <p style="color: #374151; font-size: 18px; margin-bottom: 20px;">Hi <strong>${name}</strong>,</p>
+              <p style="color: #374151; font-size: 18px; margin-bottom: 20px;">Hi <strong>${escapeHtml(name)}</strong>,</p>
               <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
                 Please verify your email address to get full access to all CRM features.
               </p>
@@ -237,8 +244,8 @@ export const sendVerificationEmail = async (
         </html>
       `,
     });
-    console.log(`✉️ Verification email sent to ${email}`);
+    logger.info(`Verification email sent to ${email}`);
   } catch (error) {
-    console.error('Failed to send verification email:', error);
+    logger.error('Failed to send verification email:', error);
   }
 };

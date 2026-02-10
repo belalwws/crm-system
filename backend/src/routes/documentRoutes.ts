@@ -1,6 +1,7 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { protect } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { validateFileType } from '../middleware/sanitize';
@@ -20,7 +21,12 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
+    // Sanitize originalname: remove path traversal, null bytes, and special chars
+    const safeName = file.originalname
+      .replace(/[\x00-\x1f]/g, '') // null bytes & control chars
+      .replace(/\.\./g, '')         // path traversal
+      .replace(/[/\\:*?"<>|]/g, '_'); // OS-unsafe chars
+    cb(null, uniqueSuffix + '-' + safeName);
   },
 });
 
@@ -67,7 +73,23 @@ router.get('/:id', getDocument);
 router.post('/', validate(uploadDocumentSchema), uploadDocument);
 
 // POST /api/documents/upload - Upload file
-router.post('/upload', upload.single('file'), validateFileType, handleFileUpload);
+// Wrap validateFileType to clean up rejected files
+const safeValidateFileType = (req: Request, res: Response, next: NextFunction) => {
+  validateFileType(req, res, (err?: any) => {
+    if (err || res.headersSent) {
+      // Clean up the uploaded file if validation failed
+      if (req.file?.path) {
+        fs.unlink(req.file.path, () => {});
+      }
+      if (!res.headersSent) {
+        return next(err);
+      }
+      return;
+    }
+    next();
+  });
+};
+router.post('/upload', upload.single('file'), safeValidateFileType, handleFileUpload);
 
 // DELETE /api/documents/:id - Delete document
 router.delete('/:id', deleteDocument);

@@ -77,6 +77,7 @@ export function RichTextEditor({ value, onChange, placeholder = 'Write something
               key={i}
               type="button"
               title={tool.title}
+              aria-label={tool.title}
               onMouseDown={(e) => {
                 e.preventDefault();
                 if (tool.action) tool.action();
@@ -95,6 +96,9 @@ export function RichTextEditor({ value, onChange, placeholder = 'Write something
       <div
         ref={editorRef}
         contentEditable
+        role="textbox"
+        aria-multiline="true"
+        aria-label={placeholder}
         onInput={handleInput}
         data-placeholder={placeholder}
         className="p-3 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white focus:outline-none prose prose-sm dark:prose-invert max-w-none [&:empty]:before:content-[attr(data-placeholder)] [&:empty]:before:text-neutral-400"

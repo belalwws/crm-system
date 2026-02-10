@@ -171,11 +171,11 @@ export function GlobalSearch() {
       {/* Search Trigger Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
       >
         <Search className="w-4 h-4" />
         <span className="hidden sm:inline">Search...</span>
-        <kbd className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-gray-200 dark:bg-gray-700 rounded">
+        <kbd className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-neutral-200 dark:bg-neutral-700 rounded">
           <Command className="w-3 h-3" />K
         </kbd>
       </button>
@@ -187,15 +187,15 @@ export function GlobalSearch() {
           onClick={() => setIsOpen(false)}
         >
           <div 
-            className="w-full max-w-xl bg-white dark:bg-gray-900 rounded-xl shadow-2xl overflow-hidden"
+            className="w-full max-w-xl bg-white dark:bg-neutral-900 rounded-xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Search Input */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
               {loading ? (
-                <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                <Loader2 className="w-5 h-5 text-neutral-400 animate-spin" />
               ) : (
-                <Search className="w-5 h-5 text-gray-400" />
+                <Search className="w-5 h-5 text-neutral-400" />
               )}
               <input
                 ref={inputRef}
@@ -204,11 +204,11 @@ export function GlobalSearch() {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Search customers, deals, tasks..."
-                className="flex-1 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                className="flex-1 bg-transparent text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none"
               />
               {query && (
-                <button onClick={() => setQuery('')} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-                  <X className="w-4 h-4 text-gray-400" />
+                <button onClick={() => setQuery('')} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded">
+                  <X className="w-4 h-4 text-neutral-400" />
                 </button>
               )}
             </div>
@@ -222,50 +222,50 @@ export function GlobalSearch() {
                     onClick={() => navigateToResult(result)}
                     className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                       index === selectedIndex
-                        ? 'bg-gray-100 dark:bg-gray-800'
-                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                        ? 'bg-neutral-100 dark:bg-neutral-800'
+                        : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                     }`}
                   >
-                    <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+                    <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
                       {getIcon(result.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
                         {result.title}
                       </p>
                       {result.subtitle && (
-                        <p className="text-xs text-gray-500 truncate">{result.subtitle}</p>
+                        <p className="text-xs text-neutral-500 truncate">{result.subtitle}</p>
                       )}
                     </div>
-                    <span className="text-xs text-gray-400 capitalize">{result.type}</span>
-                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                    <span className="text-xs text-neutral-400 capitalize">{result.type}</span>
+                    <ArrowRight className="w-4 h-4 text-neutral-400" />
                   </button>
                 ))}
               </div>
             ) : query.length >= 2 && !loading ? (
-              <div className="py-8 text-center text-gray-500">
+              <div className="py-8 text-center text-neutral-500">
                 <p>No results found for "{query}"</p>
               </div>
             ) : query.length > 0 && query.length < 2 ? (
-              <div className="py-8 text-center text-gray-500">
+              <div className="py-8 text-center text-neutral-500">
                 <p>Type at least 2 characters to search</p>
               </div>
             ) : (
-              <div className="py-8 text-center text-gray-500">
+              <div className="py-8 text-center text-neutral-500">
                 <p>Start typing to search...</p>
               </div>
             )}
 
             {/* Footer */}
-            <div className="flex items-center gap-4 px-4 py-2 bg-gray-50 dark:bg-gray-800/50 text-xs text-gray-500 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-4 px-4 py-2 bg-neutral-50 dark:bg-neutral-800/50 text-xs text-neutral-500 border-t border-neutral-200 dark:border-neutral-700">
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">↑↓</kbd> to navigate
+                <kbd className="px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-700 rounded">↑↓</kbd> to navigate
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Enter</kbd> to select
+                <kbd className="px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-700 rounded">Enter</kbd> to select
               </span>
               <span className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Esc</kbd> to close
+                <kbd className="px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-700 rounded">Esc</kbd> to close
               </span>
             </div>
           </div>

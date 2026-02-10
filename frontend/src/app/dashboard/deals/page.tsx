@@ -36,7 +36,7 @@ import {
   Badge,
   useToast,
 } from "@/components/ui";
-import { formatCurrency, formatDate } from "@/lib/hooks";
+import { formatCurrency, formatDate, useDebounce } from "@/lib/hooks";
 import { KanbanView } from "@/components/deals/kanban-view";
 import { Pagination } from "@/components/ui/pagination";
 import { BulkActionsBar } from "@/components/ui/bulk-actions-bar";
@@ -77,6 +77,7 @@ export default function DealsPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [stageFilter, setStageFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -101,7 +102,7 @@ export default function DealsPage() {
     try {
       const token = await getToken();
       const params = new URLSearchParams({ page: String(page), limit: "20" });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (stageFilter !== "all") params.set("stage", stageFilter);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deals?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -117,7 +118,8 @@ export default function DealsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, toast, page, search, stageFilter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getToken, page, debouncedSearch, stageFilter]);
 
   const fetchCustomers = useCallback(async () => {
     try {
@@ -423,7 +425,7 @@ export default function DealsPage() {
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" checked={selectedIds.has(deal.id)} onChange={(e) => { e.stopPropagation(); toggleSelect(deal.id); }} onClick={(e) => e.stopPropagation()} className="rounded" />
+                  <input type="checkbox" checked={selectedIds.has(deal.id)} onChange={(e) => { e.stopPropagation(); toggleSelect(deal.id); }} onClick={(e) => e.stopPropagation()} aria-label={`Select ${deal.title}`} className="rounded" />
                   <h3 className="font-semibold text-neutral-900 dark:text-white line-clamp-1">{deal.title}</h3>
                 </div>
                 <StatusBadge status={deal.stage} size="sm" />

@@ -50,6 +50,26 @@ export const createNote = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ success: false, message: 'customerId, dealId, or taskId is required' });
     }
 
+    // Validate ownership of referenced entities
+    if (customerId) {
+      const customer = await prisma.customer.findFirst({ where: { id: customerId, ownerId: userId } });
+      if (!customer) {
+        return res.status(403).json({ success: false, message: 'Customer not found or not authorized' });
+      }
+    }
+    if (dealId) {
+      const deal = await prisma.deal.findFirst({ where: { id: dealId, ownerId: userId } });
+      if (!deal) {
+        return res.status(403).json({ success: false, message: 'Deal not found or not authorized' });
+      }
+    }
+    if (taskId) {
+      const task = await prisma.task.findFirst({ where: { id: taskId, OR: [{ createdById: userId }, { assignedToId: userId }] } });
+      if (!task) {
+        return res.status(403).json({ success: false, message: 'Task not found or not authorized' });
+      }
+    }
+
     const note = await prisma.note.create({
       data: {
         ownerId: userId,

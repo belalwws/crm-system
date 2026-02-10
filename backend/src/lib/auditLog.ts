@@ -1,4 +1,5 @@
 import prisma from './prisma';
+import logger from './logger';
 
 /**
  * Audit Log Service
@@ -33,7 +34,7 @@ export async function createAuditLog(params: AuditLogParams): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('Failed to create audit log:', error);
+    logger.error('Failed to create audit log:', error);
     // Don't throw - audit logging should never break the main operation
   }
 }
@@ -63,7 +64,7 @@ export async function createTimelineEvent(params: {
       },
     });
   } catch (error) {
-    console.error('Failed to create timeline event:', error);
+    logger.error('Failed to create timeline event:', error);
   }
 }
 

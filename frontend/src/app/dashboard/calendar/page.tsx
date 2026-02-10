@@ -247,8 +247,8 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Calendar</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Calendar</h1>
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             Manage your meetings and tasks
           </p>
         </div>
@@ -265,7 +265,7 @@ export default function CalendarPage() {
             });
             setShowModal(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors"
         >
           <Plus className="w-4 h-4" />
           New Meeting
@@ -273,16 +273,16 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar Navigation */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-700">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigateCalendar(-1)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white min-w-[180px] text-center">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white min-w-[180px] text-center">
               {view === 'day'
                 ? currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
                 : view === 'week'
@@ -291,18 +291,18 @@ export default function CalendarPage() {
             </h2>
             <button
               onClick={() => navigateCalendar(1)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
           <button
             onClick={() => setCurrentDate(new Date())}
-            className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="px-3 py-1.5 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800"
           >
             Today
           </button>
-          <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden ml-2">
+          <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-600 overflow-hidden ml-2">
             {(['month', 'week', 'day'] as const).map((v) => (
               <button
                 key={v}
@@ -310,7 +310,7 @@ export default function CalendarPage() {
                 className={`px-3 py-1.5 text-sm capitalize transition-colors ${
                   view === v
                     ? 'bg-black text-white dark:bg-white dark:text-black'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
                 }`}
               >
                 {v}
@@ -326,7 +326,7 @@ export default function CalendarPage() {
           {weekDays.map((day) => (
             <div
               key={day}
-              className="p-3 text-center text-sm font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700"
+              className="p-3 text-center text-sm font-medium text-neutral-500 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-700"
             >
               {day}
             </div>
@@ -341,15 +341,15 @@ export default function CalendarPage() {
               <div
                 key={index}
                 onClick={() => setSelectedDate(date)}
-                className={`min-h-[100px] p-2 border-b border-r border-gray-100 dark:border-gray-800 cursor-pointer transition-colors
-                  ${!isCurrentMonth(date) ? 'bg-gray-50 dark:bg-gray-950' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'}
+                className={`min-h-[100px] p-2 border-b border-r border-neutral-100 dark:border-neutral-800 cursor-pointer transition-colors
+                  ${!isCurrentMonth(date) ? 'bg-neutral-50 dark:bg-neutral-950' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'}
                   ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
                 `}
               >
                 <div
                   className={`w-7 h-7 flex items-center justify-center rounded-full text-sm mb-1
                     ${isToday(date) ? 'bg-black text-white dark:bg-white dark:text-black' : ''}
-                    ${!isCurrentMonth(date) ? 'text-gray-400' : 'text-gray-900 dark:text-white'}
+                    ${!isCurrentMonth(date) ? 'text-neutral-400' : 'text-neutral-900 dark:text-white'}
                   `}
                 >
                   {date.getDate()}
@@ -373,7 +373,7 @@ export default function CalendarPage() {
                     </div>
                   ))}
                   {dayEvents.length > 3 && (
-                    <div className="text-xs text-gray-500 pl-1">
+                    <div className="text-xs text-neutral-500 pl-1">
                       +{dayEvents.length - 3} more
                     </div>
                   )}
@@ -387,23 +387,23 @@ export default function CalendarPage() {
           <div className="overflow-auto max-h-[600px]">
             <div className="grid grid-cols-8 min-w-[800px]">
               {/* Header row */}
-              <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 p-2 border-b border-r border-gray-200 dark:border-gray-700" />
+              <div className="sticky top-0 z-10 bg-white dark:bg-neutral-900 p-2 border-b border-r border-neutral-200 dark:border-neutral-700" />
               {weekViewDays.map((date, i) => (
-                <div key={i} className={`sticky top-0 z-10 bg-white dark:bg-gray-900 p-2 text-center border-b border-r border-gray-200 dark:border-gray-700 ${isToday(date) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
-                  <div className="text-xs text-gray-500">{weekDays[i]}</div>
-                  <div className={`text-lg font-semibold ${isToday(date) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>{date.getDate()}</div>
+                <div key={i} className={`sticky top-0 z-10 bg-white dark:bg-neutral-900 p-2 text-center border-b border-r border-neutral-200 dark:border-neutral-700 ${isToday(date) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                  <div className="text-xs text-neutral-500">{weekDays[i]}</div>
+                  <div className={`text-lg font-semibold ${isToday(date) ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-900 dark:text-white'}`}>{date.getDate()}</div>
                 </div>
               ))}
               {/* Hour rows */}
               {hours.filter(h => h >= 6 && h <= 22).map((hour) => (
                 <>
-                  <div key={`label-${hour}`} className="p-2 text-xs text-gray-500 text-right border-r border-gray-200 dark:border-gray-700 h-16">
+                  <div key={`label-${hour}`} className="p-2 text-xs text-neutral-500 text-right border-r border-neutral-200 dark:border-neutral-700 h-16">
                     {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
                   </div>
                   {weekViewDays.map((date, di) => {
                     const hourEvents = getEventsForHour(date, hour);
                     return (
-                      <div key={`${hour}-${di}`} className={`border-b border-r border-gray-100 dark:border-gray-800 h-16 p-0.5 ${isToday(date) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                      <div key={`${hour}-${di}`} className={`border-b border-r border-neutral-100 dark:border-neutral-800 h-16 p-0.5 ${isToday(date) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
                         {hourEvents.map((ev) => (
                           <div
                             key={ev.id}
@@ -431,8 +431,8 @@ export default function CalendarPage() {
               {hours.filter(h => h >= 6 && h <= 22).map((hour) => {
                 const hourEvents = getEventsForHour(currentDate, hour);
                 return (
-                  <div key={hour} className="flex border-b border-gray-100 dark:border-gray-800">
-                    <div className="w-20 p-2 text-xs text-gray-500 text-right flex-shrink-0">
+                  <div key={hour} className="flex border-b border-neutral-100 dark:border-neutral-800">
+                    <div className="w-20 p-2 text-xs text-neutral-500 text-right flex-shrink-0">
                       {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
                     </div>
                     <div className="flex-1 min-h-[60px] p-1">
@@ -463,7 +463,7 @@ export default function CalendarPage() {
       {/* Event Details Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setSelectedEvent(null)}>
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-4">
               <div>
                 <span className={`inline-block px-2 py-0.5 text-xs rounded-full mb-2 ${
@@ -473,15 +473,15 @@ export default function CalendarPage() {
                 }`}>
                   {selectedEvent.type === 'meeting' ? 'Meeting' : 'Task'}
                 </span>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedEvent.title}</h3>
+                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">{selectedEvent.title}</h3>
               </div>
-              <button onClick={() => setSelectedEvent(null)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-                <X className="w-5 h-5 text-gray-500" />
+              <button onClick={() => setSelectedEvent(null)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded">
+                <X className="w-5 h-5 text-neutral-500" />
               </button>
             </div>
             
             <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-3 text-neutral-600 dark:text-neutral-400">
                 <Clock className="w-4 h-4" />
                 <span>
                   {formatTime(selectedEvent.start)}
@@ -490,21 +490,21 @@ export default function CalendarPage() {
               </div>
               
               {selectedEvent.location && (
-                <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-3 text-neutral-600 dark:text-neutral-400">
                   <MapPin className="w-4 h-4" />
                   <span>{selectedEvent.location}</span>
                 </div>
               )}
               
               {selectedEvent.customer && (
-                <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-3 text-neutral-600 dark:text-neutral-400">
                   <User className="w-4 h-4" />
                   <span>{selectedEvent.customer.name}</span>
                 </div>
               )}
               
               {selectedEvent.deal && (
-                <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-3 text-neutral-600 dark:text-neutral-400">
                   <Briefcase className="w-4 h-4" />
                   <span>{selectedEvent.deal.title}</span>
                 </div>
@@ -528,65 +528,65 @@ export default function CalendarPage() {
       {/* New Meeting Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowModal(false)}>
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">New Meeting</h3>
-              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
-                <X className="w-5 h-5 text-gray-500" />
+              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">New Meeting</h3>
+              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded">
+                <X className="w-5 h-5 text-neutral-500" />
               </button>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title *</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Title *</label>
                 <input
                   type="text"
                   value={newMeeting.title}
                   onChange={(e) => setNewMeeting({ ...newMeeting, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white"
                   placeholder="Meeting title"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Description</label>
                 <textarea
                   value={newMeeting.description}
                   onChange={(e) => setNewMeeting({ ...newMeeting, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white"
                   rows={2}
                   placeholder="Meeting description"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Location</label>
                 <input
                   type="text"
                   value={newMeeting.location}
                   onChange={(e) => setNewMeeting({ ...newMeeting, location: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white"
                   placeholder="Meeting location or link"
                 />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Start *</label>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Start *</label>
                   <input
                     type="datetime-local"
                     value={newMeeting.startTime}
                     onChange={(e) => setNewMeeting({ ...newMeeting, startTime: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">End *</label>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">End *</label>
                   <input
                     type="datetime-local"
                     value={newMeeting.endTime}
                     onChange={(e) => setNewMeeting({ ...newMeeting, endTime: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -595,14 +595,14 @@ export default function CalendarPage() {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="flex-1 px-4 py-2 text-neutral-600 dark:text-neutral-400 border border-neutral-300 dark:border-neutral-600 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800"
               >
                 Cancel
               </button>
               <button
                 onClick={createMeeting}
                 disabled={!newMeeting.title || !newMeeting.startTime || !newMeeting.endTime}
-                className="flex-1 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-100 disabled:opacity-50"
               >
                 Create Meeting
               </button>

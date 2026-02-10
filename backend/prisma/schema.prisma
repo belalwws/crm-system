@@ -271,6 +271,8 @@ model Notification {
   @@index([userId])
   @@index([read])
   @@index([createdAt])
+  @@index([userId, read])
+  @@index([userId, createdAt])
   @@map("notifications")
 }
 
@@ -381,6 +383,7 @@ model Activity {
 
   @@index([ownerId])
   @@index([entityType, entityId])
+  @@index([ownerId, createdAt])
   @@map("activities")
 }
 
@@ -475,6 +478,8 @@ model TimelineEvent {
   @@index([ownerId])
   @@index([type])
   @@index([createdAt])
+  @@index([customerId, createdAt])
+  @@index([dealId, createdAt])
   @@map("timeline_events")
 }
 
@@ -735,7 +740,7 @@ model Product {
   name        String
   sku         String?
   description String?
-  unitPrice   Float    @default(0)
+  unitPrice   Decimal  @default(0) @db.Decimal(12, 2)
   currency    String   @default("USD")
   category    String?
   isActive    Boolean  @default(true)
@@ -762,11 +767,11 @@ model Quote {
   quoteNumber    String      @unique
   title          String
   status         QuoteStatus @default(DRAFT)
-  subtotal       Float       @default(0)
-  discount       Float       @default(0)
+  subtotal       Decimal     @default(0) @db.Decimal(12, 2)
+  discount       Decimal     @default(0) @db.Decimal(12, 2)
   discountType   String      @default("PERCENTAGE") // "PERCENTAGE" or "FIXED"
-  tax            Float       @default(0)
-  total          Float       @default(0)
+  tax            Decimal     @default(0) @db.Decimal(12, 2)
+  total          Decimal     @default(0) @db.Decimal(12, 2)
   validUntil     DateTime?
   notes          String?
   terms          String?
@@ -807,9 +812,9 @@ model LineItem {
   id          String   @id @default(cuid())
   description String?
   quantity    Float    @default(1)
-  unitPrice   Float    @default(0)
-  discount    Float    @default(0)
-  total       Float    @default(0)
+  unitPrice   Decimal  @default(0) @db.Decimal(12, 2)
+  discount    Decimal  @default(0) @db.Decimal(12, 2)
+  total       Decimal  @default(0) @db.Decimal(12, 2)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

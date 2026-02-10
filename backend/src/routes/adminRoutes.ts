@@ -2,7 +2,7 @@ import express from 'express';
 import { protect } from '../middleware/auth';
 import { requireRole } from '../middleware/rbac';
 import { validate } from '../middleware/validate';
-import { updateUserRoleSchema, updateUserSchema } from '../lib/validators';
+import { updateUserRoleSchema, updateUserSchema, toggleUserStatusSchema, inviteUserSchema, updateSystemSettingsSchema } from '../lib/validators';
 import {
   getUsers,
   getUser,
@@ -30,14 +30,14 @@ router.get('/users', getUsers);
 router.get('/users/:id', getUser);
 router.put('/users/:id', validate(updateUserSchema), updateUser);
 router.patch('/users/:id/role', validate(updateUserRoleSchema), updateUserRole);
-router.patch('/users/:id/status', toggleUserStatus);
+router.patch('/users/:id/status', validate(toggleUserStatusSchema), toggleUserStatus);
 router.delete('/users/:id', deleteUser);
 
 // Invite user
-router.post('/invite', inviteUser);
+router.post('/invite', validate(inviteUserSchema), inviteUser);
 
 // System settings
 router.get('/settings', getSystemSettings);
-router.put('/settings', updateSystemSettings);
+router.put('/settings', validate(updateSystemSettingsSchema), updateSystemSettings);
 
 export default router;

@@ -145,7 +145,7 @@ export default function FileUpload({ customerId, dealId, onUploadComplete }: Fil
           relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all
           ${isDragging 
             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
-            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+            : 'border-neutral-300 dark:border-neutral-600 hover:border-neutral-400 dark:hover:border-neutral-500'
           }
         `}
       >
@@ -157,11 +157,11 @@ export default function FileUpload({ customerId, dealId, onUploadComplete }: Fil
           className="hidden"
         />
         
-        <Upload className={`w-10 h-10 mx-auto mb-3 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
-        <p className="text-gray-600 dark:text-gray-400 mb-1">
+        <Upload className={`w-10 h-10 mx-auto mb-3 ${isDragging ? 'text-blue-500' : 'text-neutral-400'}`} />
+        <p className="text-neutral-600 dark:text-neutral-400 mb-1">
           {isDragging ? 'Drop files here' : 'Drag & drop files here, or click to select'}
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-neutral-400">
           Max file size: 10MB
         </p>
       </div>
@@ -169,7 +169,7 @@ export default function FileUpload({ customerId, dealId, onUploadComplete }: Fil
       {/* Selected Files */}
       {files.length > 0 && (
         <div className="mt-4 space-y-2">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
             Selected Files ({files.length})
           </h4>
           
@@ -181,18 +181,18 @@ export default function FileUpload({ customerId, dealId, onUploadComplete }: Fil
             return (
               <div
                 key={`${file.name}-${index}`}
-                className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                className="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
               >
-                <FileIcon className="w-8 h-8 text-gray-400 flex-shrink-0" />
+                <FileIcon className="w-8 h-8 text-neutral-400 flex-shrink-0" />
                 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
                     {file.name}
                   </p>
-                  <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                  <p className="text-xs text-neutral-500">{formatFileSize(file.size)}</p>
                   
                   {fileProgress !== undefined && fileProgress < 100 && (
-                    <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                    <div className="mt-1 w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-1.5">
                       <div
                         className="bg-blue-500 h-1.5 rounded-full transition-all"
                         style={{ width: `${fileProgress}%` }}
@@ -211,7 +211,7 @@ export default function FileUpload({ customerId, dealId, onUploadComplete }: Fil
                       e.stopPropagation();
                       removeFile(index);
                     }}
-                    className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                    className="p-1 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -223,7 +223,7 @@ export default function FileUpload({ customerId, dealId, onUploadComplete }: Fil
           <button
             onClick={uploadFiles}
             disabled={uploading}
-            className="w-full mt-3 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 transition-colors"
+            className="w-full mt-3 px-4 py-2 bg-black text-white dark:bg-white dark:text-black rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-100 disabled:opacity-50 transition-colors"
           >
             {uploading ? 'Uploading...' : `Upload ${files.length} file${files.length > 1 ? 's' : ''}`}
           </button>

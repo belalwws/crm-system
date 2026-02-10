@@ -79,6 +79,20 @@ export const createMeeting = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ success: false, message: 'title, startTime, and endTime are required' });
     }
 
+    // Validate ownership of referenced entities
+    if (customerId) {
+      const customer = await prisma.customer.findFirst({ where: { id: customerId, ownerId: userId } });
+      if (!customer) {
+        return res.status(403).json({ success: false, message: 'Customer not found or not authorized' });
+      }
+    }
+    if (dealId) {
+      const deal = await prisma.deal.findFirst({ where: { id: dealId, ownerId: userId } });
+      if (!deal) {
+        return res.status(403).json({ success: false, message: 'Deal not found or not authorized' });
+      }
+    }
+
     const meeting = await prisma.meeting.create({
       data: {
         ownerId: userId,

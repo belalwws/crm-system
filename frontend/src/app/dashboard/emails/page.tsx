@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import DOMPurify from 'dompurify';
 import {
   Mail,
   Send,
@@ -434,7 +435,7 @@ export default function EmailsPage() {
               <div className="border-t border-neutral-200 dark:border-neutral-700 pt-4">
                 <div
                   className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{ __html: selectedEmail.body }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEmail.body, { ALLOWED_TAGS: ['b', 'i', 'u', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'blockquote', 'code', 'pre', 'span', 'div'], ALLOWED_ATTR: ['href', 'target', 'style', 'class'] }) }}
                 />
               </div>
             </div>

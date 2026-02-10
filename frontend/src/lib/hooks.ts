@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "./api";
 
 // Hook to set API token from Clerk
@@ -46,9 +46,6 @@ export function useDebounce<T>(value: T, delay: number): T {
 
   return debouncedValue;
 }
-
-// Import useState for debounce
-import { useState } from "react";
 
 // Format currency
 export function formatCurrency(amount: number, currency = 'USD'): string {

@@ -6,6 +6,7 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   closestCorners,
@@ -17,6 +18,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
   useSortable,
+  sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Badge, Dropdown } from "@/components/ui";
@@ -85,16 +87,16 @@ function DealCard({
         />
       </div>
       {deal.customer && (
-        <p className="text-xs text-neutral-500 mb-3 ml-5.5">{deal.customer.name}</p>
+        <p className="text-xs text-neutral-500 mb-3 ml-6">{deal.customer.name}</p>
       )}
-      <div className="flex items-center justify-between ml-5.5">
+      <div className="flex items-center justify-between ml-6">
         <span className="text-sm font-semibold text-emerald-500 dark:text-emerald-400">
           {formatCurrency(deal.value)}
         </span>
         <span className="text-xs text-neutral-500">{deal.probability}%</span>
       </div>
       {deal.expectedCloseDate && (
-        <div className="flex items-center gap-1 mt-2 text-xs text-neutral-500 ml-5.5">
+        <div className="flex items-center gap-1 mt-2 text-xs text-neutral-500 ml-6">
           <Calendar className="w-3 h-3" />
           {formatDate(deal.expectedCloseDate)}
         </div>
@@ -217,6 +219,9 @@ export function KanbanView({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 

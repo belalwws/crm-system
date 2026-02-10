@@ -44,7 +44,7 @@ import {
 } from "@/components/ui";
 import { Pagination } from "@/components/ui/pagination";
 import { BulkActionsBar } from "@/components/ui/bulk-actions-bar";
-import { formatDate } from "@/lib/hooks";
+import { formatDate, useDebounce } from "@/lib/hooks";
 import api from "@/lib/api";
 
 interface Customer {
@@ -71,6 +71,7 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -95,7 +96,7 @@ export default function CustomersPage() {
     try {
       const token = await getToken();
       const params = new URLSearchParams({ page: String(page), limit: "20" });
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (statusFilter !== "all") params.set("status", statusFilter);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/customers?${params.toString()}`,
@@ -116,7 +117,8 @@ export default function CustomersPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, toast, page, search, statusFilter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getToken, page, debouncedSearch, statusFilter]);
 
   useEffect(() => {
     fetchCustomers();
@@ -250,18 +252,25 @@ export default function CustomersPage() {
     try {
       const token = await getToken();
       api.setToken(token);
-      // Check each customer for duplicates
+      // Batch duplicate check — send all emails+names in one request
       const allDups: Customer[] = [];
-      for (const c of customers.slice(0, 20)) {
-        try {
-          const res = await api.checkDuplicates({ email: c.email, name: c.name, phone: c.phone });
-          if (res.data && Array.isArray(res.data)) {
-            const dups = (res.data as Customer[]).filter((d: Customer) => d.id !== c.id);
-            dups.forEach((d: Customer) => {
-              if (!allDups.find(x => x.id === d.id)) allDups.push(d);
-            });
-          }
-        } catch {}
+      const seen = new Set<string>();
+      // Check in batches of 5 parallel requests
+      const batch = customers.slice(0, 20);
+      const results = await Promise.allSettled(
+        batch.map(c => api.checkDuplicates({ email: c.email, name: c.name, phone: c.phone }))
+      );
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        if (result.status === 'fulfilled' && result.value.data && Array.isArray(result.value.data)) {
+          const dups = (result.value.data as Customer[]).filter((d: Customer) => d.id !== batch[i].id);
+          dups.forEach((d: Customer) => {
+            if (!seen.has(d.id)) {
+              seen.add(d.id);
+              allDups.push(d);
+            }
+          });
+        }
       }
       setDuplicates(allDups);
       setShowDuplicates(true);
@@ -326,6 +335,7 @@ export default function CustomersPage() {
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          aria-label="Filter by status"
           className="px-4 py-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
         >
           <option value="all">All Status</option>
@@ -336,7 +346,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Customers Table */}
-      {customers.length === 0 ? (
+      {customers.length === 0 && !debouncedSearch && statusFilter === "all" ? (
         <NoData
           type="Customer"
           onAdd={() => {
@@ -353,7 +363,7 @@ export default function CustomersPage() {
           <Table>
             <TableHeader>
               <TableHead>
-                <input type="checkbox" checked={selectedIds.size === customers.length && customers.length > 0} onChange={toggleSelectAll} className="rounded" />
+                <input type="checkbox" checked={selectedIds.size === customers.length && customers.length > 0} onChange={toggleSelectAll} aria-label="Select all customers" className="rounded" />
               </TableHead>
               <TableHead>Customer</TableHead>
               <TableHead className="hidden md:table-cell">Company</TableHead>
@@ -369,7 +379,7 @@ export default function CustomersPage() {
                   style={{ animationDelay: `${index * 0.03}s` }}
                 >
                   <TableCell>
-                    <input type="checkbox" checked={selectedIds.has(customer.id)} onChange={() => toggleSelect(customer.id)} className="rounded" />
+                    <input type="checkbox" checked={selectedIds.has(customer.id)} onChange={() => toggleSelect(customer.id)} aria-label={`Select ${customer.name}`} className="rounded" />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">

@@ -17,8 +17,10 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatRelativeTime } from "@/lib/hooks";
 import { AIDashboardInsights } from "@/components/ai/ai-insights";
-import { AreaChartComponent } from "@/components/ui/charts";
+import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
+
+const AreaChartComponent = dynamic(() => import("@/components/ui/charts").then(m => ({ default: m.AreaChartComponent })), { ssr: false, loading: () => <div className="h-[300px] animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
 
 interface DashboardStats {
   totalCustomers: number;

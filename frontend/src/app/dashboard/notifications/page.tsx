@@ -138,20 +138,20 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Notifications</h1>
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* Filter */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 rounded-lg p-1">
             <button
               onClick={() => setFilter('all')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 filter === 'all' 
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' 
-                  : 'text-gray-600 dark:text-gray-400'
+                  ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm' 
+                  : 'text-neutral-600 dark:text-neutral-400'
               }`}
             >
               All
@@ -160,8 +160,8 @@ export default function NotificationsPage() {
               onClick={() => setFilter('unread')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 filter === 'unread' 
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' 
-                  : 'text-gray-600 dark:text-gray-400'
+                  ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm' 
+                  : 'text-neutral-600 dark:text-neutral-400'
               }`}
             >
               Unread
@@ -172,7 +172,7 @@ export default function NotificationsPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={markAllAsRead}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
               >
                 <CheckCheck className="w-4 h-4" />
                 <span className="hidden sm:inline">Mark all read</span>
@@ -190,28 +190,28 @@ export default function NotificationsPage() {
       </div>
 
       {/* Notifications List */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 overflow-hidden">
         {loading ? (
           <div className="py-12 text-center">
-            <div className="w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mx-auto"></div>
-            <p className="mt-3 text-gray-500">Loading notifications...</p>
+            <div className="w-8 h-8 border-2 border-neutral-300 border-t-black rounded-full animate-spin mx-auto"></div>
+            <p className="mt-3 text-neutral-500">Loading notifications...</p>
           </div>
         ) : notifications.length === 0 ? (
           <div className="py-16 text-center">
-            <Bell className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+            <Bell className="w-16 h-16 mx-auto text-neutral-300 dark:text-neutral-600 mb-4" />
+            <h3 className="text-lg font-medium text-neutral-900 dark:text-white mb-1">
               {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
             </h3>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-neutral-500 dark:text-neutral-400">
               {filter === 'unread' ? 'You\'re all caught up!' : 'Notifications will appear here when you have updates.'}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
+                className={`p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors ${
                   !notification.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
                 }`}
               >
@@ -220,13 +220,13 @@ export default function NotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
+                        <p className="font-medium text-neutral-900 dark:text-white">
                           {notification.title}
                         </p>
-                        <p className="text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-neutral-600 dark:text-neutral-400 mt-1">
                           {notification.message}
                         </p>
-                        <p className="text-sm text-gray-400 mt-2">
+                        <p className="text-sm text-neutral-400 mt-2">
                           {formatDate(notification.createdAt)}
                         </p>
                       </div>
@@ -247,14 +247,14 @@ export default function NotificationsPage() {
                       {!notification.read && (
                         <button
                           onClick={() => markAsRead(notification.id)}
-                          className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 flex items-center gap-1"
+                          className="text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 flex items-center gap-1"
                         >
                           <Check className="w-4 h-4" /> Mark as read
                         </button>
                       )}
                       <button
                         onClick={() => deleteNotification(notification.id)}
-                        className="text-sm text-gray-400 hover:text-red-500 flex items-center gap-1 ml-auto"
+                        className="text-sm text-neutral-400 hover:text-red-500 flex items-center gap-1 ml-auto"
                       >
                         <Trash2 className="w-4 h-4" /> Delete
                       </button>

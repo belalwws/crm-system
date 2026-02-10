@@ -131,16 +131,11 @@ describe('Modal Component (real)', () => {
   });
 });
 
-      expect(handleClose).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('StatusBadge Component', () => {
-    it('should render status text', () => {
-      const { StatusBadge } = require('@/components/ui');
-      render(<StatusBadge status="active" />);
-      expect(screen.getByText('active')).toBeInTheDocument();
-    });
+describe('StatusBadge Component', () => {
+  it('should render status text', () => {
+    const { StatusBadge } = require('@/components/ui');
+    render(<StatusBadge status="active" />);
+    expect(screen.getByText('active')).toBeInTheDocument();
   });
 });
 

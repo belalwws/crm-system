@@ -103,10 +103,15 @@ export const cacheDel = async (pattern: string): Promise<void> => {
   try {
     if (redisAvailable && redis) {
       if (pattern.includes('*')) {
-        const keys = await redis.keys(pattern);
-        if (keys.length > 0) {
-          await redis.del(...keys);
-        }
+        // Use SCAN instead of KEYS for production safety
+        let cursor = '0';
+        do {
+          const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+          cursor = nextCursor;
+          if (keys.length > 0) {
+            await redis.del(...keys);
+          }
+        } while (cursor !== '0');
       } else {
         await redis.del(pattern);
       }

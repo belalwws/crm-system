@@ -85,7 +85,7 @@ export function ActivityTimeline({ entityType, entityId, limit = 20 }: ActivityT
       case 'TASK_COMPLETED':
         return <CheckCircle className="w-4 h-4 text-green-600" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-neutral-500" />;
     }
   };
 
@@ -109,7 +109,7 @@ export function ActivityTimeline({ entityType, entityId, limit = 20 }: ActivityT
       case 'TASK_COMPLETED':
         return 'bg-green-100 dark:bg-green-900/30';
       default:
-        return 'bg-gray-100 dark:bg-gray-800';
+        return 'bg-neutral-100 dark:bg-neutral-800';
     }
   };
 
@@ -131,15 +131,15 @@ export function ActivityTimeline({ entityType, entityId, limit = 20 }: ActivityT
   if (loading) {
     return (
       <div className="py-8 text-center">
-        <div className="w-6 h-6 border-2 border-gray-300 border-t-black rounded-full animate-spin mx-auto"></div>
-        <p className="mt-2 text-sm text-gray-500">Loading activity...</p>
+        <div className="w-6 h-6 border-2 border-neutral-300 border-t-black rounded-full animate-spin mx-auto"></div>
+        <p className="mt-2 text-sm text-neutral-500">Loading activity...</p>
       </div>
     );
   }
 
   if (activities.length === 0) {
     return (
-      <div className="py-8 text-center text-gray-500">
+      <div className="py-8 text-center text-neutral-500">
         <Clock className="w-10 h-10 mx-auto mb-2 opacity-30" />
         <p>No activity yet</p>
       </div>
@@ -156,14 +156,14 @@ export function ActivityTimeline({ entityType, entityId, limit = 20 }: ActivityT
               {getActivityIcon(activity.type)}
             </div>
             {index < activities.length - 1 && (
-              <div className="w-0.5 h-full bg-gray-200 dark:bg-gray-700 mt-2"></div>
+              <div className="w-0.5 h-full bg-neutral-200 dark:bg-neutral-700 mt-2"></div>
             )}
           </div>
           
           {/* Content */}
           <div className="flex-1 pb-4">
-            <p className="text-sm text-gray-900 dark:text-white">{activity.title}</p>
-            <p className="text-xs text-gray-500 mt-1">{formatDate(activity.createdAt)}</p>
+            <p className="text-sm text-neutral-900 dark:text-white">{activity.title}</p>
+            <p className="text-xs text-neutral-500 mt-1">{formatDate(activity.createdAt)}</p>
           </div>
         </div>
       ))}
@@ -179,9 +179,9 @@ interface ActivityFeedProps {
 
 export function ActivityFeed({ entityType, entityId }: ActivityFeedProps = {}) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+    <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+        <h3 className="font-semibold text-neutral-900 dark:text-white">Recent Activity</h3>
         {!entityType && (
           <a href="/dashboard/activity" className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400">
             View all

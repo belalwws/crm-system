@@ -279,6 +279,16 @@ export const updateUser = async (req: AuthRequest, res: Response): Promise<void>
       },
     });
 
+    await createAuditLog({
+      userId: req.user!.id,
+      action: 'UPDATE',
+      entityType: 'User',
+      entityId: id,
+      entityName: targetUser.name,
+      oldValues: { name: targetUser.name, company: targetUser.company, phone: targetUser.phone, timezone: targetUser.timezone },
+      newValues: { name, company, phone, timezone },
+    });
+
     res.json({ success: true, data: updated });
   } catch (error) {
     logger.error('Error updating user:', error);
@@ -525,11 +535,11 @@ export const updateSystemSettings = async (req: AuthRequest, res: Response): Pro
       settings = await prisma.systemSettings.update({
         where: { id: settings.id },
         data: {
-          ...(companyName && { companyName }),
-          ...(defaultCurrency && { defaultCurrency }),
-          ...(defaultTimezone && { defaultTimezone }),
-          ...(maxUsersAllowed && { maxUsersAllowed }),
-          ...(features && { features }),
+          ...(companyName !== undefined && { companyName }),
+          ...(defaultCurrency !== undefined && { defaultCurrency }),
+          ...(defaultTimezone !== undefined && { defaultTimezone }),
+          ...(maxUsersAllowed !== undefined && { maxUsersAllowed }),
+          ...(features !== undefined && { features }),
         },
       });
     }

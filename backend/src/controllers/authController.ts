@@ -112,6 +112,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Check if user is active
+    if (!user.isActive) {
+      res.status(403).json({
+        success: false,
+        message: 'Account is deactivated. Contact your administrator.',
+      });
+      return;
+    }
+
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {

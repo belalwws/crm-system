@@ -1,6 +1,7 @@
 import prisma from './prisma';
 import { createAuditLog, createTimelineEvent } from './auditLog';
 import logger from './logger';
+import crypto from 'crypto';
 
 /**
  * Workflow Engine
@@ -316,6 +317,5 @@ export async function fireWebhooks(
  * Create HMAC signature for webhook payloads
  */
 function createHmacSignature(payload: string, secret: string): string {
-  const crypto = require('crypto');
   return crypto.createHmac('sha256', secret).update(payload).digest('hex');
 }

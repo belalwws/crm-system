@@ -16,8 +16,14 @@ const mapType = (type?: string): TaskType => {
     'follow-up': 'FOLLOW_UP',
     whatsapp: 'WHATSAPP',
     other: 'OTHER',
+    CALL: 'CALL',
+    EMAIL: 'EMAIL',
+    MEETING: 'MEETING',
+    FOLLOW_UP: 'FOLLOW_UP',
+    WHATSAPP: 'WHATSAPP',
+    OTHER: 'OTHER',
   };
-  return typeMap[type?.toLowerCase() || 'other'] || 'OTHER';
+  return typeMap[type || 'OTHER'] || 'OTHER';
 };
 
 /**
@@ -29,8 +35,12 @@ const mapPriority = (priority?: string): Priority => {
     medium: 'MEDIUM',
     high: 'HIGH',
     urgent: 'URGENT',
+    LOW: 'LOW',
+    MEDIUM: 'MEDIUM',
+    HIGH: 'HIGH',
+    URGENT: 'URGENT',
   };
-  return priorityMap[priority?.toLowerCase() || 'medium'] || 'MEDIUM';
+  return priorityMap[priority || 'MEDIUM'] || 'MEDIUM';
 };
 
 /**
@@ -42,8 +52,12 @@ const mapStatus = (status?: string): TaskStatus => {
     'in-progress': 'IN_PROGRESS',
     completed: 'COMPLETED',
     cancelled: 'CANCELLED',
+    PENDING: 'PENDING',
+    IN_PROGRESS: 'IN_PROGRESS',
+    COMPLETED: 'COMPLETED',
+    CANCELLED: 'CANCELLED',
   };
-  return statusMap[status?.toLowerCase() || 'pending'] || 'PENDING';
+  return statusMap[status || 'PENDING'] || 'PENDING';
 };
 
 /**
@@ -82,6 +96,9 @@ export const getTasks = async (
       ...(includeDeleted !== 'true' && { deletedAt: null }),
     };
 
+    const allowedSortFields = ['createdAt', 'updatedAt', 'dueDate', 'title', 'priority', 'status', 'type'];
+    const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'dueDate';
+
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
@@ -104,7 +121,7 @@ export const getTasks = async (
     const [tasks, total] = await Promise.all([
       prisma.task.findMany({
         where,
-        orderBy: { [sortBy]: sortOrder === 'desc' ? 'desc' : 'asc' },
+        orderBy: { [safeSortBy]: sortOrder === 'desc' ? 'desc' : 'asc' },
         skip: (pageNum - 1) * pageSize,
         take: pageSize,
         include: {
@@ -226,6 +243,20 @@ export const createTask = async (
         res.status(400).json({
           success: false,
           message: 'Deal not found or does not belong to you',
+        });
+        return;
+      }
+    }
+
+    // Validate assignedToId is a real active user
+    if (assignedToId && assignedToId !== req.user?.id) {
+      const assignee = await prisma.user.findFirst({
+        where: { id: assignedToId, isActive: true },
+      });
+      if (!assignee) {
+        res.status(400).json({
+          success: false,
+          message: 'Assigned user not found or is inactive',
         });
         return;
       }

@@ -242,3 +242,25 @@ export const updateUserSchema = z.object({
   avatar: z.string().url().or(z.literal('')).optional().nullable(),
   isActive: z.boolean().optional(),
 });
+
+// Admin Toggle User Status Schema
+export const toggleUserStatusSchema = z.object({
+  isActive: z.boolean(),
+});
+
+// Admin Invite User Schema
+export const inviteUserSchema = z.object({
+  email: z.string().email().max(255),
+  name: z.string().min(1).max(100),
+  role: z.enum(['USER', 'MANAGER', 'ADMIN']).default('USER'),
+});
+
+// Admin System Settings Schema
+export const updateSystemSettingsSchema = z.object({
+  companyName: z.string().max(255).optional(),
+  companyLogo: z.string().url().or(z.literal('')).optional(),
+  defaultCurrency: z.string().max(10).optional(),
+  timezone: z.string().max(50).optional(),
+  features: z.record(z.string(), z.boolean()).optional(),
+  maxUsersAllowed: z.number().int().min(0).optional(),
+});
