@@ -8,15 +8,16 @@ import {
 } from '../controllers/reportController';
 import { protect } from '../middleware/auth';
 import { requireRole } from '../middleware/rbac';
+import { cacheMiddleware } from '../lib/redis';
 
 const router = express.Router();
 router.use(protect);
 router.use(requireRole('ADMIN', 'MANAGER'));
 
-router.get('/funnel', getConversionFunnel);
-router.get('/aging', getDealAging);
-router.get('/forecast', getRevenueForecast);
-router.get('/performance', getPerformanceMetrics);
-router.get('/activity-heatmap', getActivityHeatmap);
+router.get('/funnel', cacheMiddleware('report-funnel', 300), getConversionFunnel);
+router.get('/aging', cacheMiddleware('report-aging', 300), getDealAging);
+router.get('/forecast', cacheMiddleware('report-forecast', 300), getRevenueForecast);
+router.get('/performance', cacheMiddleware('report-performance', 180), getPerformanceMetrics);
+router.get('/activity-heatmap', cacheMiddleware('report-heatmap', 300), getActivityHeatmap);
 
 export default router;

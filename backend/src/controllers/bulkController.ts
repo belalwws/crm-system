@@ -126,14 +126,20 @@ export const bulkUpdateDealStage = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ success: false, message: `Maximum ${MAX_BULK_SIZE} items per bulk operation` });
     }
 
-    const validStages = ['lead', 'qualified', 'proposal', 'negotiation', 'closed-won', 'closed-lost'];
-    if (!validStages.includes(stage)) {
-      return res.status(400).json({ success: false, message: `Invalid stage. Must be one of: ${validStages.join(', ')}` });
+    const stageMap: Record<string, string> = {
+      'lead': 'LEAD', 'qualified': 'QUALIFIED', 'proposal': 'PROPOSAL',
+      'negotiation': 'NEGOTIATION', 'closed-won': 'CLOSED_WON', 'closed-lost': 'CLOSED_LOST',
+      'LEAD': 'LEAD', 'QUALIFIED': 'QUALIFIED', 'PROPOSAL': 'PROPOSAL',
+      'NEGOTIATION': 'NEGOTIATION', 'CLOSED_WON': 'CLOSED_WON', 'CLOSED_LOST': 'CLOSED_LOST',
+    };
+    const mappedStage = stageMap[stage];
+    if (!mappedStage) {
+      return res.status(400).json({ success: false, message: `Invalid stage. Must be one of: LEAD, QUALIFIED, PROPOSAL, NEGOTIATION, CLOSED_WON, CLOSED_LOST` });
     }
 
     const result = await prisma.deal.updateMany({
       where: { id: { in: ids }, ownerId: userId, deletedAt: null },
-      data: { stage },
+      data: { stage: mappedStage as any },
     });
 
     await createAuditLog({
@@ -141,7 +147,7 @@ export const bulkUpdateDealStage = async (req: AuthRequest, res: Response) => {
       action: 'BULK_UPDATE',
       entityType: 'Deal',
       entityId: 'bulk',
-      entityName: `${result.count} deals → ${stage}`,
+      entityName: `${result.count} deals → ${mappedStage}`,
     });
 
     res.json({ success: true, data: { updated: result.count } });
@@ -166,14 +172,18 @@ export const bulkUpdateTaskStatus = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ success: false, message: `Maximum ${MAX_BULK_SIZE} items per bulk operation` });
     }
 
-    const validStatuses = ['TODO', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+    const statusMap: Record<string, string> = {
+      'TODO': 'PENDING', 'PENDING': 'PENDING', 'IN_PROGRESS': 'IN_PROGRESS',
+      'COMPLETED': 'COMPLETED', 'CANCELLED': 'CANCELLED',
+    };
+    const mappedStatus = statusMap[status];
+    if (!mappedStatus) {
+      return res.status(400).json({ success: false, message: `Invalid status. Must be one of: PENDING, IN_PROGRESS, COMPLETED, CANCELLED` });
     }
 
     const result = await prisma.task.updateMany({
       where: { id: { in: ids }, OR: [{ assignedToId: userId }, { createdById: userId }], deletedAt: null },
-      data: { status },
+      data: { status: mappedStatus as any },
     });
 
     await createAuditLog({
@@ -181,7 +191,7 @@ export const bulkUpdateTaskStatus = async (req: AuthRequest, res: Response) => {
       action: 'BULK_UPDATE',
       entityType: 'Task',
       entityId: 'bulk',
-      entityName: `${result.count} tasks → ${status}`,
+      entityName: `${result.count} tasks → ${mappedStatus}`,
     });
 
     res.json({ success: true, data: { updated: result.count } });

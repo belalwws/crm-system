@@ -17,6 +17,7 @@ import {
   Target,
 } from "lucide-react";
 import { Card, CardHeader, StatCard, Badge, Progress, CircularProgress, PageLoading } from "@/components/ui";
+import { BarChart, DonutChart, AreaChartComponent, LineChartComponent } from "@/components/ui/charts";
 import { formatCurrency } from "@/lib/hooks";
 
 interface AnalyticsData {
@@ -57,6 +58,31 @@ export default function AnalyticsPage() {
       if (result.success) {
         const summary = result.data.summary;
         const dealsByStage = result.data.dealsByStage || [];
+        const monthlyData = result.data.monthlyData || [];
+        
+        // Build revenue by month from monthlyData
+        const revenueByMonth = monthlyData.map((m: any) => ({
+          month: m.month,
+          value: m.value || 0,
+        }));
+
+        // Build tasks by type from separate API call
+        let tasksByType: { type: string; count: number }[] = [];
+        try {
+          const tasksRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/tasks`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const tasksData = await tasksRes.json();
+          if (tasksData.success && Array.isArray(tasksData.data)) {
+            const typeCounts: Record<string, number> = {};
+            tasksData.data.forEach((t: any) => {
+              const type = t.type || 'other';
+              typeCounts[type] = (typeCounts[type] || 0) + 1;
+            });
+            tasksByType = Object.entries(typeCounts).map(([type, count]) => ({ type, count }));
+          }
+        } catch {}
         
         setData({
           totalCustomers: summary.totalCustomers || 0,
@@ -75,8 +101,8 @@ export default function AnalyticsPage() {
             count: s.count,
             value: s.value,
           })),
-          revenueByMonth: [], // Would come from a separate API
-          tasksByType: [], // Would come from a separate API
+          revenueByMonth,
+          tasksByType,
         });
       }
     } catch (error) {
@@ -300,41 +326,23 @@ export default function AnalyticsPage() {
           iconBg="bg-violet-500/20"
         />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Stage Distribution */}
-          <div className="space-y-4">
-            {data.dealsByStage.map((stage, index) => {
-              const maxValue = Math.max(...data.dealsByStage.map(s => s.value), 1);
-              const percentage = (stage.value / maxValue) * 100;
-              
-              return (
-                <div key={stage.stage} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-3 h-3 rounded-full ${stageColors[stage.stage] || 'bg-neutral-500'}`} />
-                      <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300 capitalize">
-                        {stage.stage.replace("-", " ")}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Badge variant="neutral" size="sm">{stage.count} deals</Badge>
-                      <span className="text-sm font-semibold text-neutral-900 dark:text-white w-24 text-right">
-                        {formatCurrency(stage.value)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-2 bg-white dark:bg-neutral-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${stageColors[stage.stage] || 'bg-neutral-500'} rounded-full transition-all duration-700`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-            {data.dealsByStage.length === 0 && (
-              <div className="text-center py-8 text-neutral-500">
-                No deals data available
-              </div>
+          {/* Stage Distribution - Chart */}
+          <div>
+            {data.dealsByStage.length > 0 ? (
+              <BarChart
+                data={data.dealsByStage.map(s => ({
+                  name: s.stage.replace('-', ' '),
+                  value: s.value,
+                  count: s.count,
+                }))}
+                dataKey="value"
+                xKey="name"
+                height={250}
+                color="#8b5cf6"
+                formatter={(v: number) => formatCurrency(v)}
+              />
+            ) : (
+              <div className="text-center py-12 text-neutral-500">No deals data available</div>
             )}
           </div>
 
@@ -383,6 +391,47 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </Card>
+
+      {/* Revenue & Tasks Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-up">
+        <Card>
+          <CardHeader
+            title="Revenue Trend"
+            subtitle="Monthly revenue overview"
+            icon={<TrendingUp className="w-4 h-4 text-emerald-400" />}
+            iconBg="bg-emerald-500/20"
+          />
+          {data.revenueByMonth.length > 0 ? (
+            <AreaChartComponent
+              data={data.revenueByMonth.map(r => ({ name: r.month.slice(0, 3), value: r.value }))}
+              dataKey="value"
+              xKey="name"
+              height={250}
+              color="#10b981"
+              formatter={(v: number) => formatCurrency(v)}
+            />
+          ) : (
+            <div className="text-center py-12 text-neutral-500">No revenue data yet</div>
+          )}
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Tasks by Type"
+            subtitle="Distribution of task types"
+            icon={<CheckSquare className="w-4 h-4 text-amber-400" />}
+            iconBg="bg-amber-500/20"
+          />
+          {data.tasksByType.length > 0 ? (
+            <DonutChart
+              data={data.tasksByType.map(t => ({ name: t.type, value: t.count }))}
+              height={250}
+            />
+          ) : (
+            <div className="text-center py-12 text-neutral-500">No tasks data yet</div>
+          )}
+        </Card>
+      </div>
 
       {/* Tips Card */}
       <Card className="animate-slide-up bg-gradient-to-br from-blue-500/10 to-violet-500/10 border-blue-500/20">

@@ -331,7 +331,7 @@ export const updateTask = async (
         ...(status && { status: mapStatus(status) }),
         ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
         ...(finalCompletedDate !== undefined && { completedDate: finalCompletedDate ? new Date(finalCompletedDate) : null }),
-        ...(notes !== undefined && { notes }),
+        ...(notes !== undefined && { notesText: notes }),
       },
       include: {
         customer: {

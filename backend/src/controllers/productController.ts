@@ -102,9 +102,18 @@ export const updateProduct = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    const { name, sku, description, unitPrice, currency, category, isActive } = req.body;
     const product = await prisma.product.update({
       where: { id: req.params.id },
-      data: req.body,
+      data: {
+        ...(name !== undefined && { name }),
+        ...(sku !== undefined && { sku }),
+        ...(description !== undefined && { description }),
+        ...(unitPrice !== undefined && { unitPrice }),
+        ...(currency !== undefined && { currency }),
+        ...(category !== undefined && { category }),
+        ...(isActive !== undefined && { isActive }),
+      },
     });
 
     res.json({ success: true, data: product });

@@ -16,6 +16,7 @@ import {
   List,
   TrendingUp,
   ArrowRight,
+  Download,
 } from "lucide-react";
 import {
   Button,
@@ -37,6 +38,9 @@ import {
 } from "@/components/ui";
 import { formatCurrency, formatDate } from "@/lib/hooks";
 import { KanbanView } from "@/components/deals/kanban-view";
+import { Pagination } from "@/components/ui/pagination";
+import { BulkActionsBar } from "@/components/ui/bulk-actions-bar";
+import api from "@/lib/api";
 
 interface Customer {
   id: string;
@@ -74,12 +78,15 @@ export default function DealsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [viewMode, setViewMode] = useState<"grid" | "kanban">("kanban");
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -93,12 +100,16 @@ export default function DealsPage() {
   const fetchDeals = useCallback(async () => {
     try {
       const token = await getToken();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deals`, {
+      const params = new URLSearchParams({ page: String(page), limit: "20" });
+      if (search) params.set("search", search);
+      if (stageFilter !== "all") params.set("stage", stageFilter);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deals?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
       if (data.success) {
         setDeals(data.data);
+        setTotalPages(data.totalPages || 1);
       }
     } catch (error) {
       console.error("Error fetching deals:", error);
@@ -106,7 +117,7 @@ export default function DealsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, toast]);
+  }, [getToken, toast, page, search, stageFilter]);
 
   const fetchCustomers = useCallback(async () => {
     try {
@@ -244,17 +255,40 @@ export default function DealsPage() {
     }
   };
 
-  const filteredDeals = deals.filter((deal) => {
-    const matchesSearch =
-      deal.title.toLowerCase().includes(search.toLowerCase()) ||
-      deal.customer?.name?.toLowerCase().includes(search.toLowerCase());
-    const matchesStage = stageFilter === "all" || deal.stage === stageFilter;
-    return matchesSearch && matchesStage;
-  });
-
-  const totalValue = filteredDeals.reduce((sum, d) => sum + d.value, 0);
+  const totalValue = deals.reduce((sum, d) => sum + d.value, 0);
   const wonDeals = deals.filter((d) => d.stage === "closed-won");
   const wonValue = wonDeals.reduce((sum, d) => sum + d.value, 0);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedIds.size} deals?`)) return;
+    try {
+      const token = await getToken(); api.setToken(token);
+      await api.bulkDeleteDeals(Array.from(selectedIds));
+      toast.success(`${selectedIds.size} deals deleted`); setSelectedIds(new Set()); fetchDeals();
+    } catch { toast.error('Bulk delete failed'); }
+  };
+
+  const handleBulkStageChange = async (stage: string) => {
+    try {
+      const token = await getToken(); api.setToken(token);
+      await api.bulkUpdateDealStage(Array.from(selectedIds), stage);
+      toast.success(`${selectedIds.size} deals moved to ${stage}`); setSelectedIds(new Set()); fetchDeals();
+    } catch { toast.error('Bulk stage update failed'); }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      const token = await getToken(); api.setToken(token);
+      const blob = await api.exportCsv('deals');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'deals.csv'; a.click();
+      URL.revokeObjectURL(url); toast.success('Export started');
+    } catch { toast.error('Export failed'); }
+  };
 
   if (loading) {
     return <PageLoading />;
@@ -270,15 +304,20 @@ export default function DealsPage() {
             {deals.length} deals • {formatCurrency(totalValue)} pipeline
           </p>
         </div>
-        <Button
-          icon={<Plus className="w-4 h-4" />}
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-        >
-          Add Deal
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" icon={<Download className="w-4 h-4" />} onClick={handleExportCsv}>
+            Export
+          </Button>
+          <Button
+            icon={<Plus className="w-4 h-4" />}
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+          >
+            Add Deal
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -324,12 +363,12 @@ export default function DealsPage() {
           <SearchInput
             placeholder="Search deals..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
         <select
           value={stageFilter}
-          onChange={(e) => setStageFilter(e.target.value)}
+          onChange={(e) => { setStageFilter(e.target.value); setPage(1); }}
           className="px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
         >
           <option value="all">All Stages</option>
@@ -366,23 +405,27 @@ export default function DealsPage() {
         />
       ) : viewMode === "kanban" ? (
         <KanbanView
-          deals={filteredDeals}
+          deals={deals}
           onEdit={openEditModal}
           onDelete={handleDelete}
           onView={openViewModal}
+          onStageChange={handleStageChange}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-slide-up">
-          {filteredDeals.map((deal, index) => (
+          {deals.map((deal, index) => (
             <Card
               key={deal.id}
               hover
-              className="animate-fade-in"
+              className={`animate-fade-in ${selectedIds.has(deal.id) ? 'ring-2 ring-blue-500' : ''}`}
               style={{ animationDelay: `${index * 0.03}s` } as any}
               onClick={() => openViewModal(deal)}
             >
               <div className="flex items-start justify-between mb-3">
-                <h3 className="font-semibold text-neutral-900 dark:text-white line-clamp-1">{deal.title}</h3>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={selectedIds.has(deal.id)} onChange={(e) => { e.stopPropagation(); toggleSelect(deal.id); }} onClick={(e) => e.stopPropagation()} className="rounded" />
+                  <h3 className="font-semibold text-neutral-900 dark:text-white line-clamp-1">{deal.title}</h3>
+                </div>
                 <StatusBadge status={deal.stage} size="sm" />
               </div>
               {deal.customer && (
@@ -413,6 +456,18 @@ export default function DealsPage() {
           ))}
         </div>
       )}
+
+      {deals.length > 0 && <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
+
+      <BulkActionsBar
+        selectedCount={selectedIds.size}
+        onClear={() => setSelectedIds(new Set())}
+        actions={[
+          { label: 'Move to Won', icon: <ArrowRight className="w-3.5 h-3.5" />, onClick: () => handleBulkStageChange('closed-won') },
+          { label: 'Move to Lost', icon: <ArrowRight className="w-3.5 h-3.5" />, onClick: () => handleBulkStageChange('closed-lost') },
+          { label: 'Delete', icon: <Trash2 className="w-3.5 h-3.5" />, onClick: handleBulkDelete, variant: 'danger' },
+        ]}
+      />
 
       {/* Add/Edit Modal */}
       <Modal

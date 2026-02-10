@@ -3,6 +3,7 @@ import 'express-async-errors'; // Must be imported before routes
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import { doubleCsrf } from 'csrf-csrf';
@@ -62,6 +63,9 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin for uploads
 }));
 
+// Gzip/Brotli compression for all responses
+app.use(compression());
+
 // Rate limiting: 100 requests per minute per IP
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,
@@ -115,11 +119,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Cookie parser (required for CSRF)
-app.use(cookieParser(process.env.CSRF_SECRET || process.env.JWT_SECRET || 'csrf-secret-change-me'));
+const csrfSecret = process.env.CSRF_SECRET || process.env.JWT_SECRET;
+if (!csrfSecret && process.env.NODE_ENV === 'production') {
+  throw new Error('CSRF_SECRET or JWT_SECRET must be set in production');
+}
+app.use(cookieParser(csrfSecret || 'csrf-secret-dev-only'));
 
 // CSRF Protection (double-submit cookie pattern)
 const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
-  getSecret: () => process.env.CSRF_SECRET || process.env.JWT_SECRET || 'csrf-secret-change-me',
+  getSecret: () => csrfSecret || 'csrf-secret-dev-only',
   getSessionIdentifier: (req: Request) => req.headers['authorization'] as string || 'anonymous',
   cookieName: '__csrf',
   cookieOptions: {

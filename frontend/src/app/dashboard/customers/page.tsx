@@ -17,6 +17,8 @@ import {
   Upload,
   UserPlus,
   X,
+  Copy,
+  Merge,
 } from "lucide-react";
 import {
   Button,
@@ -40,7 +42,10 @@ import {
   Card,
   useToast,
 } from "@/components/ui";
+import { Pagination } from "@/components/ui/pagination";
+import { BulkActionsBar } from "@/components/ui/bulk-actions-bar";
 import { formatDate } from "@/lib/hooks";
+import api from "@/lib/api";
 
 interface Customer {
   id: string;
@@ -67,11 +72,16 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showDuplicates, setShowDuplicates] = useState(false);
+  const [duplicates, setDuplicates] = useState<Customer[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -84,8 +94,11 @@ export default function CustomersPage() {
   const fetchCustomers = useCallback(async () => {
     try {
       const token = await getToken();
+      const params = new URLSearchParams({ page: String(page), limit: "20" });
+      if (search) params.set("search", search);
+      if (statusFilter !== "all") params.set("status", statusFilter);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/customers`,
+        `${process.env.NEXT_PUBLIC_API_URL}/customers?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -95,6 +108,7 @@ export default function CustomersPage() {
       const data = await response.json();
       if (data.success) {
         setCustomers(data.data);
+        setTotalPages(data.totalPages || 1);
       }
     } catch (error) {
       console.error("Error fetching customers:", error);
@@ -102,7 +116,7 @@ export default function CustomersPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, toast]);
+  }, [getToken, toast, page, search, statusFilter]);
 
   useEffect(() => {
     fetchCustomers();
@@ -194,14 +208,78 @@ export default function CustomersPage() {
     }
   };
 
-  const filteredCustomers = customers.filter((customer) => {
-    const matchesSearch =
-      customer.name.toLowerCase().includes(search.toLowerCase()) ||
-      customer.email.toLowerCase().includes(search.toLowerCase()) ||
-      customer.company?.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || customer.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.size === customers.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(customers.map(c => c.id)));
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedIds.size} customers?`)) return;
+    try {
+      const token = await getToken();
+      api.setToken(token);
+      await api.bulkDeleteCustomers(Array.from(selectedIds));
+      toast.success(`${selectedIds.size} customers deleted`);
+      setSelectedIds(new Set());
+      fetchCustomers();
+    } catch { toast.error('Bulk delete failed'); }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      const token = await getToken();
+      api.setToken(token);
+      const blob = await api.exportCsv('customers');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'customers.csv'; a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Export started');
+    } catch { toast.error('Export failed'); }
+  };
+
+  const handleCheckDuplicates = async () => {
+    try {
+      const token = await getToken();
+      api.setToken(token);
+      // Check each customer for duplicates
+      const allDups: Customer[] = [];
+      for (const c of customers.slice(0, 20)) {
+        try {
+          const res = await api.checkDuplicates({ email: c.email, name: c.name, phone: c.phone });
+          if (res.data && Array.isArray(res.data)) {
+            const dups = (res.data as Customer[]).filter((d: Customer) => d.id !== c.id);
+            dups.forEach((d: Customer) => {
+              if (!allDups.find(x => x.id === d.id)) allDups.push(d);
+            });
+          }
+        } catch {}
+      }
+      setDuplicates(allDups);
+      setShowDuplicates(true);
+      if (allDups.length === 0) toast.info('No duplicates found!');
+    } catch { toast.error('Duplicate check failed'); }
+  };
+
+  const handleMerge = async (primaryId: string, secondaryId: string) => {
+    if (!confirm('Merge these customers? The secondary customer will be removed.')) return;
+    try {
+      const token = await getToken();
+      api.setToken(token);
+      await api.mergeCustomers(primaryId, secondaryId);
+      toast.success('Customers merged');
+      setShowDuplicates(false);
+      fetchCustomers();
+    } catch { toast.error('Merge failed'); }
+  };
 
   if (loading) {
     return <PageLoading />;
@@ -214,18 +292,26 @@ export default function CustomersPage() {
         <div>
           <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">Customers</h1>
           <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            {customers.length} total customers • {filteredCustomers.length} showing
+            Customers • Page {page} of {totalPages}
           </p>
         </div>
-        <Button
-          icon={<Plus className="w-4 h-4" />}
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-        >
-          Add Customer
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" icon={<Copy className="w-4 h-4" />} onClick={handleCheckDuplicates}>
+            Duplicates
+          </Button>
+          <Button variant="secondary" icon={<Download className="w-4 h-4" />} onClick={handleExportCsv}>
+            Export
+          </Button>
+          <Button
+            icon={<Plus className="w-4 h-4" />}
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+          >
+            Add Customer
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -234,12 +320,12 @@ export default function CustomersPage() {
           <SearchInput
             placeholder="Search by name, email, or company..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="px-4 py-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
         >
           <option value="all">All Status</option>
@@ -258,7 +344,7 @@ export default function CustomersPage() {
             setShowModal(true);
           }}
         />
-      ) : filteredCustomers.length === 0 ? (
+      ) : customers.length === 0 ? (
         <Card>
           <NoResults searchTerm={search} />
         </Card>
@@ -266,6 +352,9 @@ export default function CustomersPage() {
         <div className="animate-slide-up">
           <Table>
             <TableHeader>
+              <TableHead>
+                <input type="checkbox" checked={selectedIds.size === customers.length && customers.length > 0} onChange={toggleSelectAll} className="rounded" />
+              </TableHead>
               <TableHead>Customer</TableHead>
               <TableHead className="hidden md:table-cell">Company</TableHead>
               <TableHead className="hidden sm:table-cell">Status</TableHead>
@@ -273,12 +362,15 @@ export default function CustomersPage() {
               <TableHead align="right">Actions</TableHead>
             </TableHeader>
             <TableBody>
-              {filteredCustomers.map((customer, index) => (
+              {customers.map((customer, index) => (
                 <TableRow
                   key={customer.id}
-                  className={`animate-slide-up`}
+                  className={`animate-slide-up ${selectedIds.has(customer.id) ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}
                   style={{ animationDelay: `${index * 0.03}s` }}
                 >
+                  <TableCell>
+                    <input type="checkbox" checked={selectedIds.has(customer.id)} onChange={() => toggleSelect(customer.id)} className="rounded" />
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar name={customer.name} size="md" />
@@ -337,8 +429,17 @@ export default function CustomersPage() {
               ))}
             </TableBody>
           </Table>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       )}
+
+      <BulkActionsBar
+        selectedCount={selectedIds.size}
+        onClear={() => setSelectedIds(new Set())}
+        actions={[
+          { label: 'Delete', icon: <Trash2 className="w-3.5 h-3.5" />, onClick: handleBulkDelete, variant: 'danger' },
+        ]}
+      />
 
       {/* Add/Edit Modal */}
       <Modal
@@ -487,6 +588,44 @@ export default function CustomersPage() {
                 Delete
               </Button>
             </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Duplicates Modal */}
+      <Modal
+        isOpen={showDuplicates}
+        onClose={() => setShowDuplicates(false)}
+        title="Potential Duplicates"
+        size="lg"
+      >
+        {duplicates.length === 0 ? (
+          <div className="text-center py-8 text-neutral-500">No duplicate customers found.</div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-neutral-500 mb-4">Found {duplicates.length} potential duplicate(s). Select a customer to merge.</p>
+            {duplicates.map((dup) => (
+              <div key={dup.id} className="flex items-center justify-between p-3 border border-neutral-200 dark:border-neutral-700 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Avatar name={dup.name} size="sm" />
+                  <div>
+                    <p className="font-medium text-neutral-900 dark:text-white text-sm">{dup.name}</p>
+                    <p className="text-xs text-neutral-500">{dup.email}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {customers.filter(c => c.id !== dup.id && (c.email === dup.email || c.name === dup.name)).map((primary) => (
+                    <button
+                      key={primary.id}
+                      onClick={() => handleMerge(primary.id, dup.id)}
+                      className="text-xs px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Merge into {primary.name.split(' ')[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </Modal>

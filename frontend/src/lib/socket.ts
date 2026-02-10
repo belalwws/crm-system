@@ -106,3 +106,29 @@ export function disconnectSocket() {
     globalSocket = null;
   }
 }
+
+/**
+ * Hook to listen for real-time events and auto-refetch data.
+ * Provide an array of event names; when any fires, the onRefresh callback runs.
+ */
+export function useRealtimeRefresh(
+  token: string | null | undefined,
+  events: string[],
+  onRefresh: () => void
+) {
+  const { on, isConnected } = useSocket(token);
+
+  useEffect(() => {
+    if (!isConnected || events.length === 0) return;
+
+    const cleanups = events.map(event => on(event, () => {
+      onRefresh();
+    }));
+
+    return () => {
+      cleanups.forEach(cleanup => cleanup());
+    };
+  }, [isConnected, events, on, onRefresh]);
+
+  return { isConnected };
+}

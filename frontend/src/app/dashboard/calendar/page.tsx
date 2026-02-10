@@ -45,7 +45,7 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [view, setView] = useState<'month' | 'week'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month');
 
   // Form state for new meeting
   const [newMeeting, setNewMeeting] = useState({
@@ -201,6 +201,47 @@ export default function CalendarPage() {
   const days = getDaysInMonth(currentDate);
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+  // Week view helpers
+  const getWeekDays = (date: Date) => {
+    const start = new Date(date);
+    start.setDate(start.getDate() - start.getDay());
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+  };
+
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const weekViewDays = getWeekDays(currentDate);
+
+  const getEventsForHour = (date: Date, hour: number) => {
+    return events.filter((event) => {
+      const eventDate = new Date(event.start);
+      return (
+        eventDate.getDate() === date.getDate() &&
+        eventDate.getMonth() === date.getMonth() &&
+        eventDate.getFullYear() === date.getFullYear() &&
+        eventDate.getHours() === hour
+      );
+    });
+  };
+
+  const navigateCalendar = (direction: number) => {
+    if (view === 'month') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + direction, 1));
+    } else if (view === 'week') {
+      const d = new Date(currentDate);
+      d.setDate(d.getDate() + direction * 7);
+      setCurrentDate(d);
+    } else {
+      const d = new Date(currentDate);
+      d.setDate(d.getDate() + direction);
+      setCurrentDate(d);
+    }
+  };
+
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -236,16 +277,20 @@ export default function CalendarPage() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))}
+              onClick={() => navigateCalendar(-1)}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white min-w-[180px] text-center">
-              {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              {view === 'day'
+                ? currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+                : view === 'week'
+                ? `${weekViewDays[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekViewDays[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                : currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
             </h2>
             <button
-              onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))}
+              onClick={() => navigateCalendar(1)}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
@@ -257,9 +302,25 @@ export default function CalendarPage() {
           >
             Today
           </button>
+          <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden ml-2">
+            {(['month', 'week', 'day'] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-3 py-1.5 text-sm capitalize transition-colors ${
+                  view === v
+                    ? 'bg-black text-white dark:bg-white dark:text-black'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Calendar Grid */}
+        {view === 'month' ? (
         <div className="grid grid-cols-7">
           {/* Weekday Headers */}
           {weekDays.map((day) => (
@@ -321,6 +382,82 @@ export default function CalendarPage() {
             );
           })}
         </div>
+        ) : view === 'week' ? (
+          /* Week View */
+          <div className="overflow-auto max-h-[600px]">
+            <div className="grid grid-cols-8 min-w-[800px]">
+              {/* Header row */}
+              <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 p-2 border-b border-r border-gray-200 dark:border-gray-700" />
+              {weekViewDays.map((date, i) => (
+                <div key={i} className={`sticky top-0 z-10 bg-white dark:bg-gray-900 p-2 text-center border-b border-r border-gray-200 dark:border-gray-700 ${isToday(date) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
+                  <div className="text-xs text-gray-500">{weekDays[i]}</div>
+                  <div className={`text-lg font-semibold ${isToday(date) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>{date.getDate()}</div>
+                </div>
+              ))}
+              {/* Hour rows */}
+              {hours.filter(h => h >= 6 && h <= 22).map((hour) => (
+                <>
+                  <div key={`label-${hour}`} className="p-2 text-xs text-gray-500 text-right border-r border-gray-200 dark:border-gray-700 h-16">
+                    {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                  </div>
+                  {weekViewDays.map((date, di) => {
+                    const hourEvents = getEventsForHour(date, hour);
+                    return (
+                      <div key={`${hour}-${di}`} className={`border-b border-r border-gray-100 dark:border-gray-800 h-16 p-0.5 ${isToday(date) ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
+                        {hourEvents.map((ev) => (
+                          <div
+                            key={ev.id}
+                            onClick={() => setSelectedEvent(ev)}
+                            className={`text-xs p-1 rounded truncate cursor-pointer mb-0.5 ${
+                              ev.type === 'meeting'
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                                : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                            }`}
+                          >
+                            {ev.title}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Day View */
+          <div className="overflow-auto max-h-[600px]">
+            <div className="min-w-[400px]">
+              {hours.filter(h => h >= 6 && h <= 22).map((hour) => {
+                const hourEvents = getEventsForHour(currentDate, hour);
+                return (
+                  <div key={hour} className="flex border-b border-gray-100 dark:border-gray-800">
+                    <div className="w-20 p-2 text-xs text-gray-500 text-right flex-shrink-0">
+                      {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                    </div>
+                    <div className="flex-1 min-h-[60px] p-1">
+                      {hourEvents.map((ev) => (
+                        <div
+                          key={ev.id}
+                          onClick={() => setSelectedEvent(ev)}
+                          className={`text-sm p-2 rounded cursor-pointer mb-1 ${
+                            ev.type === 'meeting'
+                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                              : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                          }`}
+                        >
+                          <div className="font-medium">{ev.title}</div>
+                          <div className="text-xs opacity-75">{formatTime(ev.start)} - {formatTime(ev.end)}</div>
+                          {ev.location && <div className="text-xs opacity-75 flex items-center gap-1 mt-0.5"><MapPin className="w-3 h-3" />{ev.location}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Event Details Modal */}

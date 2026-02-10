@@ -80,9 +80,18 @@ export const updateCustomField = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
+    const { name, label, fieldType, isRequired, options, defaultValue, sortOrder } = req.body;
     const field = await prisma.customField.update({
       where: { id: req.params.id },
-      data: req.body,
+      data: {
+        ...(name !== undefined && { name }),
+        ...(label !== undefined && { label }),
+        ...(fieldType !== undefined && { fieldType }),
+        ...(isRequired !== undefined && { isRequired }),
+        ...(options !== undefined && { options }),
+        ...(defaultValue !== undefined && { defaultValue }),
+        ...(sortOrder !== undefined && { sortOrder }),
+      },
     });
 
     res.json({ success: true, data: field });

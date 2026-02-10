@@ -13,6 +13,9 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.37.1",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
     "next-intl": "^4.8.2",
@@ -20,6 +23,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
+    "recharts": "^3.7.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.9.1",
     "socket.io-client": "^4.8.3",

@@ -88,6 +88,13 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ success: false, message: 'name, type, and url are required' });
     }
 
+    // Validate URL path safety
+    if (url.startsWith('/') || url.startsWith('..')) {
+      if (!isPathSafe(path.join(UPLOAD_DIR, url))) {
+        return res.status(400).json({ success: false, message: 'Invalid file path' });
+      }
+    }
+
     const document = await prisma.document.create({
       data: {
         ownerId: userId,

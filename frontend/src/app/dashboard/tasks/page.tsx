@@ -16,6 +16,8 @@ import {
   ListTodo,
   CalendarDays,
   Sparkles,
+  Download,
+  ArrowRight,
 } from "lucide-react";
 import {
   Button,
@@ -41,6 +43,9 @@ import {
 import { formatDate, formatRelativeTime } from "@/lib/hooks";
 import { AITaskPrioritization } from "@/components/ai/ai-insights";
 import { TaskCard } from "@/components/tasks/task-card";
+import { Pagination } from "@/components/ui/pagination";
+import { BulkActionsBar } from "@/components/ui/bulk-actions-bar";
+import api from "@/lib/api";
 
 interface Task {
   id: string;
@@ -93,11 +98,14 @@ export default function TasksPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -112,12 +120,17 @@ export default function TasksPage() {
   const fetchTasks = useCallback(async () => {
     try {
       const token = await getToken();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tasks`, {
+      const params = new URLSearchParams({ page: String(page), limit: "20" });
+      if (search) params.set("search", search);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (priorityFilter !== "all") params.set("priority", priorityFilter);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/tasks?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
       if (data.success) {
         setTasks(data.data);
+        setTotalPages(data.totalPages || 1);
       }
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -125,7 +138,7 @@ export default function TasksPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, toast]);
+  }, [getToken, toast, page, search, statusFilter, priorityFilter]);
 
   const fetchCustomersAndDeals = useCallback(async () => {
     try {
@@ -261,17 +274,10 @@ export default function TasksPage() {
     }
   };
 
-  const filteredTasks = tasks.filter((task) => {
-    const matchesSearch = task.title.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || task.status === statusFilter;
-    const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter;
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
-
   // Group tasks by status for board view
-  const pendingTasks = filteredTasks.filter((t) => t.status === "pending");
-  const inProgressTasks = filteredTasks.filter((t) => t.status === "in-progress");
-  const completedTasks = filteredTasks.filter((t) => t.status === "completed");
+  const pendingTasks = tasks.filter((t) => t.status === "pending");
+  const inProgressTasks = tasks.filter((t) => t.status === "in-progress");
+  const completedTasks = tasks.filter((t) => t.status === "completed");
 
   // Stats
   const overdueTasks = tasks.filter(
@@ -280,6 +286,37 @@ export default function TasksPage() {
   const todayTasks = tasks.filter(
     (t) => t.dueDate && new Date(t.dueDate).toDateString() === new Date().toDateString()
   );
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedIds.size} tasks?`)) return;
+    try {
+      const token = await getToken(); api.setToken(token);
+      await api.bulkDeleteTasks(Array.from(selectedIds));
+      toast.success(`${selectedIds.size} tasks deleted`); setSelectedIds(new Set()); fetchTasks();
+    } catch { toast.error('Bulk delete failed'); }
+  };
+
+  const handleBulkStatusChange = async (status: string) => {
+    try {
+      const token = await getToken(); api.setToken(token);
+      await api.bulkUpdateTaskStatus(Array.from(selectedIds), status);
+      toast.success(`${selectedIds.size} tasks updated`); setSelectedIds(new Set()); fetchTasks();
+    } catch { toast.error('Bulk status update failed'); }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      const token = await getToken(); api.setToken(token);
+      const blob = await api.exportCsv('tasks');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'tasks.csv'; a.click();
+      URL.revokeObjectURL(url); toast.success('Export started');
+    } catch { toast.error('Export failed'); }
+  };
 
   if (loading) {
     return <PageLoading />;
@@ -296,6 +333,9 @@ export default function TasksPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="secondary" icon={<Download className="w-4 h-4" />} onClick={handleExportCsv}>
+            Export
+          </Button>
           <button
             onClick={() => setShowAI(!showAI)}
             className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${
@@ -380,12 +420,12 @@ export default function TasksPage() {
           <SearchInput
             placeholder="Search tasks..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="px-4 py-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
         >
           <option value="all">All Status</option>
@@ -397,7 +437,7 @@ export default function TasksPage() {
         </select>
         <select
           value={priorityFilter}
-          onChange={(e) => setPriorityFilter(e.target.value)}
+          onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }}
           className="px-4 py-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
         >
           <option value="all">All Priority</option>
@@ -418,24 +458,38 @@ export default function TasksPage() {
             setShowModal(true);
           }}
         />
-      ) : filteredTasks.length === 0 ? (
+      ) : tasks.length === 0 ? (
         <Card>
           <NoResults searchTerm={search} />
         </Card>
       ) : (
         <div className="space-y-3 animate-slide-up">
-          {filteredTasks.map((task, index) => (
-            <div key={task.id} className="animate-fade-in" style={{ animationDelay: `${index * 0.03}s` }}>
-              <TaskCard
-                task={task}
-                onStatusChange={handleStatusChange}
-                onEdit={openEditModal}
-                onDelete={handleDelete}
-              />
+          {tasks.map((task, index) => (
+            <div key={task.id} className={`animate-fade-in flex items-start gap-2 ${selectedIds.has(task.id) ? 'ring-2 ring-blue-500 rounded-xl' : ''}`} style={{ animationDelay: `${index * 0.03}s` }}>
+              <input type="checkbox" checked={selectedIds.has(task.id)} onChange={() => toggleSelect(task.id)} className="mt-4 ml-1 rounded" />
+              <div className="flex-1">
+                <TaskCard
+                  task={task}
+                  onStatusChange={handleStatusChange}
+                  onEdit={openEditModal}
+                  onDelete={handleDelete}
+                />
+              </div>
             </div>
           ))}
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       )}
+
+      <BulkActionsBar
+        selectedCount={selectedIds.size}
+        onClear={() => setSelectedIds(new Set())}
+        actions={[
+          { label: 'Complete', icon: <CheckCircle className="w-3.5 h-3.5" />, onClick: () => handleBulkStatusChange('completed') },
+          { label: 'In Progress', icon: <ArrowRight className="w-3.5 h-3.5" />, onClick: () => handleBulkStatusChange('in-progress') },
+          { label: 'Delete', icon: <Trash2 className="w-3.5 h-3.5" />, onClick: handleBulkDelete, variant: 'danger' },
+        ]}
+      />
 
       {/* Add/Edit Modal */}
       <Modal

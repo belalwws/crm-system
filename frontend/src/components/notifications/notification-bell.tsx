@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, Check, Trash2, X } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
+import { api } from '@/lib/api';
+import { useRealtimeNotifications } from '@/lib/socket';
 
 interface Notification {
   id: string;
@@ -23,28 +25,42 @@ export function NotificationBell() {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const token = await getToken();
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data.notifications || []);
-        setUnreadCount(data.unreadCount || 0);
+      api.setToken(token);
+      const res = await api.getNotifications();
+      const data = res.data as { notifications?: Notification[]; unreadCount?: number } | Notification[];
+      if (Array.isArray(data)) {
+        setNotifications(data);
+        setUnreadCount(data.filter(n => !n.read).length);
+      } else if (data && typeof data === 'object') {
+        setNotifications((data as { notifications?: Notification[] }).notifications || []);
+        setUnreadCount((data as { unreadCount?: number }).unreadCount || 0);
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     }
-  };
+  }, [getToken]);
 
   useEffect(() => {
     fetchNotifications();
-    // Poll every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  // Real-time notification updates via Socket.IO
+  const handleRealtimeNotification = useCallback((notification: Notification) => {
+    setNotifications(prev => [notification, ...prev]);
+    setUnreadCount(prev => prev + 1);
   }, []);
+
+  const tokenForSocket = useRef<string | null>(null);
+  useEffect(() => {
+    getToken().then(t => { tokenForSocket.current = t; });
+  }, [getToken]);
+
+  useRealtimeNotifications(tokenForSocket.current, handleRealtimeNotification);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -59,10 +75,8 @@ export function NotificationBell() {
   const markAsRead = async (id: string) => {
     try {
       const token = await getToken();
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/${id}/read`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      api.setToken(token);
+      await api.markNotificationRead(id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
@@ -74,10 +88,8 @@ export function NotificationBell() {
     try {
       setLoading(true);
       const token = await getToken();
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/mark-all-read`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      api.setToken(token);
+      await api.markAllNotificationsRead();
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {
@@ -90,10 +102,8 @@ export function NotificationBell() {
   const deleteNotification = async (id: string) => {
     try {
       const token = await getToken();
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      api.setToken(token);
+      await api.deleteNotification(id);
       const notification = notifications.find(n => n.id === id);
       setNotifications(prev => prev.filter(n => n.id !== id));
       if (notification && !notification.read) {

@@ -101,9 +101,20 @@ export const updateContact = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    const { firstName, lastName, email, phone, title, department, isPrimary, linkedIn, notes } = req.body;
     const contact = await prisma.contact.update({
       where: { id: req.params.id },
-      data: req.body,
+      data: {
+        ...(firstName !== undefined && { firstName }),
+        ...(lastName !== undefined && { lastName }),
+        ...(email !== undefined && { email }),
+        ...(phone !== undefined && { phone }),
+        ...(title !== undefined && { title }),
+        ...(department !== undefined && { department }),
+        ...(isPrimary !== undefined && { isPrimary }),
+        ...(linkedIn !== undefined && { linkedIn }),
+        ...(notes !== undefined && { notes }),
+      },
       include: { customer: { select: { id: true, name: true } } },
     });
 

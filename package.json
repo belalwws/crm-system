@@ -1,8 +1,8 @@
 {
   "name": "crm-system",
   "version": "1.0.0",
-  "description": "Full-stack CRM application with React, TypeScript, Node.js, and MongoDB",
-  "author": "Your Name",
+  "description": "Full-stack CRM application with Next.js, TypeScript, Node.js, and PostgreSQL (Prisma)",
+  "author": "Belal WS",
   "license": "MIT",
   "scripts": {
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
@@ -18,9 +18,10 @@
     "typescript",
     "nodejs",
     "express",
-    "mongodb",
+    "postgresql",
+    "prisma",
     "full-stack",
-    "jwt",
+    "clerk",
     "tailwindcss"
   ]
 }

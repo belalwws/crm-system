@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatRelativeTime } from "@/lib/hooks";
 import { AIDashboardInsights } from "@/components/ai/ai-insights";
+import { AreaChartComponent } from "@/components/ui/charts";
 import { api } from "@/lib/api";
 
 interface DashboardStats {
@@ -102,31 +103,25 @@ function StatCard({
   );
 }
 
-// Minimal Bar Chart
+// Minimal Bar Chart using Recharts
 function MonthlyChart({ data, loading }: { data: MonthlyData[]; loading: boolean }) {
-  const maxValue = Math.max(...data.map(d => d.value), 1);
-  const currentMonth = new Date().getMonth();
-  
   if (loading) {
     return (
       <div className="p-6 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
         <div className="animate-pulse">
           <div className="h-5 w-24 bg-neutral-200 dark:bg-neutral-800 rounded mb-6" />
-          <div className="flex items-end gap-1 h-40">
-            {[45, 62, 38, 55, 70, 30, 50, 65, 42, 58, 35, 48].map((h, i) => (
-              <div key={i} className="flex-1 bg-neutral-200 dark:bg-neutral-800 rounded-sm" style={{ height: `${h}%` }} />
-            ))}
-          </div>
+          <div className="h-40 bg-neutral-100 dark:bg-neutral-800 rounded" />
         </div>
       </div>
     );
   }
 
   const totalValue = data.reduce((sum, d) => sum + d.value, 0);
+  const chartData = data.map(d => ({ name: d.month.slice(0, 3), value: d.value }));
 
   return (
     <div className="p-6 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="font-medium text-neutral-900 dark:text-white">Revenue Overview</h3>
           <p className="text-2xl font-semibold text-neutral-900 dark:text-white mt-1">
@@ -135,37 +130,14 @@ function MonthlyChart({ data, loading }: { data: MonthlyData[]; loading: boolean
         </div>
         <span className="text-sm text-neutral-500">This Year</span>
       </div>
-      
-      <div className="flex items-end gap-1 h-40">
-        {data.map((item, index) => {
-          const height = maxValue > 0 ? (item.value / maxValue) * 100 : 5;
-          const isCurrent = index === currentMonth;
-          
-          return (
-            <div key={item.month} className="flex-1 flex flex-col items-center gap-2 group">
-              <div className="relative w-full flex justify-center">
-                {isCurrent && item.value > 0 && (
-                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-xs px-2 py-1 rounded whitespace-nowrap z-10">
-                    {formatCurrency(item.value)}
-                  </div>
-                )}
-                <div
-                  className={`w-full max-w-[24px] rounded-sm transition-all ${
-                    isCurrent 
-                      ? "bg-neutral-900 dark:bg-white" 
-                      : "bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600"
-                  }`}
-                  style={{ height: `${Math.max(height, 4)}%` }}
-                  title={`${item.month}: ${formatCurrency(item.value)}`}
-                />
-              </div>
-              <span className={`text-xs ${isCurrent ? "font-medium text-neutral-900 dark:text-white" : "text-neutral-400"}`}>
-                {item.month.slice(0, 1)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      <AreaChartComponent
+        data={chartData}
+        dataKey="value"
+        xKey="name"
+        height={180}
+        color="#3b82f6"
+        formatter={(v: number) => formatCurrency(v)}
+      />
     </div>
   );
 }

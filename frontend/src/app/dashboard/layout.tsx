@@ -23,6 +23,11 @@ import {
   Globe,
   Shield,
   ShieldCheck,
+  Contact,
+  Package,
+  Receipt,
+  UsersRound,
+  SlidersHorizontal,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { ToastProvider } from "@/components/ui/toast";
@@ -31,22 +36,28 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 import { GlobalSearch } from "@/components/search/global-search";
 import { AIChatButton } from "@/components/ai/ai-chat";
 import ErrorBoundary from "@/components/error-boundary";
+import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
 import api from "@/lib/api";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Deals", href: "/dashboard/deals", icon: Briefcase },
   { name: "Customers", href: "/dashboard/customers", icon: Users },
+  { name: "Contacts", href: "/dashboard/contacts", icon: Contact },
   { name: "Tasks", href: "/dashboard/tasks", icon: CheckSquare },
+  { name: "Products", href: "/dashboard/products", icon: Package },
+  { name: "Quotes", href: "/dashboard/quotes", icon: Receipt },
   { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
   { name: "Documents", href: "/dashboard/documents", icon: FileText },
   { name: "Email Templates", href: "/dashboard/emails/templates", icon: Mail },
   { name: "Nexus AI", href: "/dashboard/ai", icon: Sparkles },
+  { name: "Teams", href: "/dashboard/teams", icon: UsersRound },
   { name: "Reports", href: "/dashboard/reports", icon: TrendingUp },
   { name: "Workflows", href: "/dashboard/workflows", icon: GitBranch },
   { name: "Webhooks", href: "/dashboard/webhooks", icon: Globe },
   { name: "Audit Logs", href: "/dashboard/audit-logs", icon: Shield },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { name: "Custom Fields", href: "/dashboard/custom-fields", icon: SlidersHorizontal },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -60,6 +71,14 @@ export default function DashboardLayout({
   const { getToken } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const done = localStorage.getItem('crm_onboarding_complete');
+      if (!done) setShowOnboarding(true);
+    }
+  }, []);
 
   const fetchRole = useCallback(async () => {
     try {
@@ -232,6 +251,11 @@ export default function DashboardLayout({
 
       {/* Floating AI Chat Button */}
       <AIChatButton />
+
+      {/* Onboarding Wizard for new users */}
+      {showOnboarding && (
+        <OnboardingWizard onComplete={() => setShowOnboarding(false)} />
+      )}
     </div>
   );
 }
