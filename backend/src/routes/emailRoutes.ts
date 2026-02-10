@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { protect } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { sendEmailSchema, emailTemplateSchema } from '../lib/validators';
 import {
   sendEmailToCustomer,
   getEmailHistory,
@@ -15,7 +17,7 @@ const router = Router();
 router.use(protect);
 
 // POST /api/emails/send - Send an email
-router.post('/send', sendEmailToCustomer);
+router.post('/send', validate(sendEmailSchema), sendEmailToCustomer);
 
 // GET /api/emails/history - Get email history
 router.get('/history', getEmailHistory);
@@ -25,10 +27,10 @@ router.get('/history', getEmailHistory);
 router.get('/templates', getEmailTemplates);
 
 // POST /api/emails/templates - Create template
-router.post('/templates', createEmailTemplate);
+router.post('/templates', validate(emailTemplateSchema), createEmailTemplate);
 
 // PUT /api/emails/templates/:id - Update template
-router.put('/templates/:id', updateEmailTemplate);
+router.put('/templates/:id', validate(emailTemplateSchema.partial()), updateEmailTemplate);
 
 // DELETE /api/emails/templates/:id - Delete template
 router.delete('/templates/:id', deleteEmailTemplate);

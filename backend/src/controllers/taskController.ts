@@ -195,7 +195,7 @@ export const createTask = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { title, description, type, priority, status, dueDate, customer, customerId, deal, dealId, notes } = req.body;
+    const { title, description, type, priority, status, dueDate, customer, customerId, deal, dealId, notes, assignedToId } = req.body;
 
     // Verify customer belongs to user if provided
     if (customerId || customer) {
@@ -240,7 +240,7 @@ export const createTask = async (
         status: mapStatus(status),
         dueDate: dueDate ? new Date(dueDate) : null,
         notesText: notes,
-        assignedToId: req.user?.id as string,
+        assignedToId: assignedToId || req.user?.id as string,
         createdById: req.user?.id as string,
         customerId: customerId || customer || null,
         dealId: dealId || deal || null,

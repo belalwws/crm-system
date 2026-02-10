@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import {
   Briefcase,
@@ -13,9 +13,11 @@ import {
   ArrowRight,
   Plus,
   Sparkles,
+  AlertCircle,
 } from "lucide-react";
 import { formatCurrency, formatRelativeTime } from "@/lib/hooks";
 import { AIDashboardInsights } from "@/components/ai/ai-insights";
+import { api } from "@/lib/api";
 
 interface DashboardStats {
   totalCustomers: number;
@@ -314,49 +316,43 @@ function RecentTasks({ tasks, loading }: { tasks: RecentTask[]; loading: boolean
 }
 
 export default function DashboardPage() {
-  const { getToken } = useAuth();
   const { user } = useUser();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [recentDeals, setRecentDeals] = useState<RecentDeal[]>([]);
   const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
-      const token = await getToken();
-      const headers = { Authorization: `Bearer ${token}` };
-      
-      const [statsRes, dealsRes, tasksRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats`, { headers }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/deals`, { headers }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tasks`, { headers }),
-      ]);
-      
+      setError(null);
       const [statsData, dealsData, tasksData] = await Promise.all([
-        statsRes.json(),
-        dealsRes.json(),
-        tasksRes.json(),
+        api.getDashboardStats(),
+        api.getDeals({ limit: 5 }),
+        api.getTasks({ limit: 5 }),
       ]);
-      
+
       if (statsData.success) {
-        setStats(statsData.data.summary);
-        setMonthlyData(statsData.data.monthlyData || []);
+        const data = statsData.data as any;
+        setStats(data.summary);
+        setMonthlyData(data.monthlyData || []);
       }
-      
+
       if (dealsData.success) {
-        setRecentDeals(dealsData.data || []);
+        setRecentDeals((dealsData.data as RecentDeal[]) || []);
       }
-      
+
       if (tasksData.success) {
-        setRecentTasks(tasksData.data || []);
+        setRecentTasks((tasksData.data as RecentTask[]) || []);
       }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+      setError("Failed to load dashboard data. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -384,6 +380,15 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-400">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm">{error}</p>
+          <button onClick={fetchData} className="ml-auto text-sm font-medium hover:underline">Retry</button>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

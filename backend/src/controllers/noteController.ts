@@ -1,26 +1,35 @@
 import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { logNoteAdded } from './activityController';
+import { createAuditLog } from '../lib/auditLog';
 import { AuthRequest } from '../types';
 import logger from '../lib/logger';
 
-// Get notes for an entity
+// Get notes for an entity (with pagination)
 export const getNotes = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { customerId, dealId, taskId } = req.query;
+    const { customerId, dealId, taskId, page = '1', limit = '20' } = req.query;
 
-    const where: any = { ownerId: userId };
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 20));
+
+    const where: any = { ownerId: userId, deletedAt: null };
     if (customerId) where.customerId = customerId;
     if (dealId) where.dealId = dealId;
     if (taskId) where.taskId = taskId;
 
-    const notes = await prisma.note.findMany({
-      where,
-      orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
-    });
+    const [notes, total] = await Promise.all([
+      prisma.note.findMany({
+        where,
+        orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+      }),
+      prisma.note.count({ where }),
+    ]);
 
-    res.json({ success: true, data: notes });
+    res.json({ success: true, data: notes, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
   } catch (error) {
     logger.error('Error fetching notes:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch notes' });
@@ -61,7 +70,16 @@ export const createNote = async (req: AuthRequest, res: Response) => {
       await logNoteAdded(userId, 'task', taskId, content);
     }
 
-    res.status(201).json(note);
+    // Audit log
+    await createAuditLog({
+      userId,
+      action: 'CREATE',
+      entityType: 'Note',
+      entityId: note.id,
+      entityName: content.substring(0, 50),
+    });
+
+    res.status(201).json({ success: true, data: note });
   } catch (error) {
     logger.error('Error creating note:', error);
     res.status(500).json({ success: false, message: 'Failed to create note' });
@@ -75,21 +93,22 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { content, pinned } = req.body;
 
-    const note = await prisma.note.updateMany({
-      where: { id, ownerId: userId },
-      data: {
-        content,
-        pinned,
-        updatedAt: new Date(),
-      },
-    });
-
-    if (note.count === 0) {
+    const existing = await prisma.note.findFirst({ where: { id, ownerId: userId, deletedAt: null } });
+    if (!existing) {
       return res.status(404).json({ success: false, message: 'Note not found' });
     }
 
-    const updatedNote = await prisma.note.findUnique({
+    const updatedNote = await prisma.note.update({
       where: { id },
+      data: { content, pinned, updatedAt: new Date() },
+    });
+
+    await createAuditLog({
+      userId,
+      action: 'UPDATE',
+      entityType: 'Note',
+      entityId: id,
+      entityName: (content || existing.content).substring(0, 50),
     });
 
     res.json({ success: true, data: updatedNote });
@@ -99,21 +118,31 @@ export const updateNote = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Delete a note
+// Soft delete a note
 export const deleteNote = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { id } = req.params;
 
-    const note = await prisma.note.deleteMany({
-      where: { id, ownerId: userId },
-    });
-
-    if (note.count === 0) {
+    const note = await prisma.note.findFirst({ where: { id, ownerId: userId, deletedAt: null } });
+    if (!note) {
       return res.status(404).json({ success: false, message: 'Note not found' });
     }
 
-    res.json({ success: true });
+    await prisma.note.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    await createAuditLog({
+      userId,
+      action: 'DELETE',
+      entityType: 'Note',
+      entityId: id,
+      entityName: note.content.substring(0, 50),
+    });
+
+    res.json({ success: true, message: 'Note deleted' });
   } catch (error) {
     logger.error('Error deleting note:', error);
     res.status(500).json({ success: false, message: 'Failed to delete note' });
@@ -127,7 +156,7 @@ export const togglePinNote = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const existingNote = await prisma.note.findFirst({
-      where: { id, ownerId: userId },
+      where: { id, ownerId: userId, deletedAt: null },
     });
 
     if (!existingNote) {

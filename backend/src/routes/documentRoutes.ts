@@ -2,6 +2,8 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import { protect } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { uploadDocumentSchema } from '../lib/validators';
 import {
   getDocuments,
   getDocument,
@@ -61,7 +63,7 @@ router.get('/', getDocuments);
 router.get('/:id', getDocument);
 
 // POST /api/documents - Create document (URL-based)
-router.post('/', uploadDocument);
+router.post('/', validate(uploadDocumentSchema), uploadDocument);
 
 // POST /api/documents/upload - Upload file
 router.post('/upload', upload.single('file'), handleFileUpload);

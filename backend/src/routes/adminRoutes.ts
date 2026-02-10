@@ -11,6 +11,9 @@ import {
   updateUser,
   deleteUser,
   getPlatformStats,
+  inviteUser,
+  getSystemSettings,
+  updateSystemSettings,
 } from '../controllers/adminController';
 
 const router = express.Router();
@@ -29,5 +32,12 @@ router.put('/users/:id', validate(updateUserSchema), updateUser);
 router.patch('/users/:id/role', validate(updateUserRoleSchema), updateUserRole);
 router.patch('/users/:id/status', toggleUserStatus);
 router.delete('/users/:id', deleteUser);
+
+// Invite user
+router.post('/invite', inviteUser);
+
+// System settings
+router.get('/settings', getSystemSettings);
+router.put('/settings', updateSystemSettings);
 
 export default router;

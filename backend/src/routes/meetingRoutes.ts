@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { protect } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { createMeetingSchema, updateMeetingSchema } from '../lib/validators';
 import {
   getMeetings,
   getMeeting,
@@ -28,10 +30,10 @@ router.get('/', getMeetings);
 router.get('/:id', getMeeting);
 
 // POST /api/meetings - Create meeting
-router.post('/', createMeeting);
+router.post('/', validate(createMeetingSchema), createMeeting);
 
 // PUT /api/meetings/:id - Update meeting
-router.put('/:id', updateMeeting);
+router.put('/:id', validate(updateMeetingSchema), updateMeeting);
 
 // DELETE /api/meetings/:id - Delete meeting
 router.delete('/:id', deleteMeeting);

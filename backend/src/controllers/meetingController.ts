@@ -1,35 +1,46 @@
 import { Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { createAuditLog } from '../lib/auditLog';
 import { AuthRequest } from '../types';
 import logger from '../lib/logger';
 
-// Get all meetings
+const meetingIncludes = {
+  customer: { select: { id: true, name: true, email: true } },
+  deal: { select: { id: true, title: true } },
+};
+
+// Get all meetings (with pagination)
 export const getMeetings = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { customerId, dealId, startDate, endDate } = req.query;
+    const { customerId, dealId, startDate, endDate, page = '1', limit = '20' } = req.query;
 
-    const where: any = { ownerId: userId };
-    
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 20));
+
+    const where: any = { ownerId: userId, deletedAt: null };
+
     if (customerId) where.customerId = customerId;
     if (dealId) where.dealId = dealId;
-    
+
     if (startDate || endDate) {
       where.startTime = {};
       if (startDate) where.startTime.gte = new Date(startDate as string);
       if (endDate) where.startTime.lte = new Date(endDate as string);
     }
 
-    const meetings = await prisma.meeting.findMany({
-      where,
-      orderBy: { startTime: 'asc' },
-      include: {
-        customer: { select: { id: true, name: true, email: true } },
-        deal: { select: { id: true, title: true } },
-      },
-    });
+    const [meetings, total] = await Promise.all([
+      prisma.meeting.findMany({
+        where,
+        orderBy: { startTime: 'asc' },
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+        include: meetingIncludes,
+      }),
+      prisma.meeting.count({ where }),
+    ]);
 
-    res.json({ success: true, data: meetings });
+    res.json({ success: true, data: meetings, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
   } catch (error) {
     logger.error('Error fetching meetings:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch meetings' });
@@ -43,11 +54,8 @@ export const getMeeting = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     const meeting = await prisma.meeting.findFirst({
-      where: { id, ownerId: userId },
-      include: {
-        customer: { select: { id: true, name: true, email: true } },
-        deal: { select: { id: true, title: true } },
-      },
+      where: { id, ownerId: userId, deletedAt: null },
+      include: meetingIncludes,
     });
 
     if (!meeting) {
@@ -83,13 +91,19 @@ export const createMeeting = async (req: AuthRequest, res: Response) => {
         customerId: customerId || null,
         dealId: dealId || null,
       },
-      include: {
-        customer: { select: { id: true, name: true, email: true } },
-        deal: { select: { id: true, title: true } },
-      },
+      include: meetingIncludes,
     });
 
-    res.status(201).json(meeting);
+    await createAuditLog({
+      userId,
+      action: 'CREATE',
+      entityType: 'Meeting',
+      entityId: meeting.id,
+      entityName: title,
+      newValues: { startTime, endTime, location },
+    });
+
+    res.status(201).json({ success: true, data: meeting });
   } catch (error) {
     logger.error('Error creating meeting:', error);
     res.status(500).json({ success: false, message: 'Failed to create meeting' });
@@ -104,7 +118,7 @@ export const updateMeeting = async (req: AuthRequest, res: Response) => {
     const { title, description, location, startTime, endTime, reminder, customerId, dealId } = req.body;
 
     const existingMeeting = await prisma.meeting.findFirst({
-      where: { id, ownerId: userId },
+      where: { id, ownerId: userId, deletedAt: null },
     });
 
     if (!existingMeeting) {
@@ -123,10 +137,15 @@ export const updateMeeting = async (req: AuthRequest, res: Response) => {
         customerId: customerId || null,
         dealId: dealId || null,
       },
-      include: {
-        customer: { select: { id: true, name: true, email: true } },
-        deal: { select: { id: true, title: true } },
-      },
+      include: meetingIncludes,
+    });
+
+    await createAuditLog({
+      userId,
+      action: 'UPDATE',
+      entityType: 'Meeting',
+      entityId: id,
+      entityName: meeting.title,
     });
 
     res.json({ success: true, data: meeting });
@@ -136,21 +155,34 @@ export const updateMeeting = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Delete a meeting
+// Soft delete a meeting
 export const deleteMeeting = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { id } = req.params;
 
-    const meeting = await prisma.meeting.deleteMany({
-      where: { id, ownerId: userId },
+    const meeting = await prisma.meeting.findFirst({
+      where: { id, ownerId: userId, deletedAt: null },
     });
 
-    if (meeting.count === 0) {
+    if (!meeting) {
       return res.status(404).json({ success: false, message: 'Meeting not found' });
     }
 
-    res.json({ success: true });
+    await prisma.meeting.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    await createAuditLog({
+      userId,
+      action: 'DELETE',
+      entityType: 'Meeting',
+      entityId: id,
+      entityName: meeting.title,
+    });
+
+    res.json({ success: true, message: 'Meeting deleted' });
   } catch (error) {
     logger.error('Error deleting meeting:', error);
     res.status(500).json({ success: false, message: 'Failed to delete meeting' });
@@ -170,6 +202,7 @@ export const getCalendarEvents = async (req: AuthRequest, res: Response) => {
     const meetings = await prisma.meeting.findMany({
       where: {
         ownerId: userId,
+        deletedAt: null,
         startTime: {
           gte: new Date(start as string),
           lte: new Date(end as string),
@@ -185,6 +218,7 @@ export const getCalendarEvents = async (req: AuthRequest, res: Response) => {
     const tasks = await prisma.task.findMany({
       where: {
         assignedToId: userId,
+        deletedAt: null,
         dueDate: {
           gte: new Date(start as string),
           lte: new Date(end as string),
@@ -237,6 +271,7 @@ export const getUpcomingMeetings = async (req: AuthRequest, res: Response) => {
     const meetings = await prisma.meeting.findMany({
       where: {
         ownerId: userId,
+        deletedAt: null,
         startTime: { gte: new Date() },
       },
       orderBy: { startTime: 'asc' },

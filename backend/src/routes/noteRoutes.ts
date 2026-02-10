@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { protect } from '../middleware/auth';
+import { validate } from '../middleware/validate';
+import { createNoteSchema, updateNoteSchema } from '../lib/validators';
 import {
   getNotes,
   createNote,
@@ -17,10 +19,10 @@ router.use(protect);
 router.get('/', getNotes);
 
 // POST /api/notes - Create note
-router.post('/', createNote);
+router.post('/', validate(createNoteSchema), createNote);
 
 // PUT /api/notes/:id - Update note
-router.put('/:id', updateNote);
+router.put('/:id', validate(updateNoteSchema), updateNote);
 
 // POST /api/notes/:id/toggle-pin - Toggle pin
 router.post('/:id/toggle-pin', togglePinNote);

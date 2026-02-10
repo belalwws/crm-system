@@ -37,6 +37,7 @@ import auditLogRoutes from './routes/auditLogRoutes';
 import webhookRoutes from './routes/webhookRoutes';
 import adminRoutes from './routes/adminRoutes';
 import profileRoutes from './routes/profileRoutes';
+import bulkRoutes from './routes/bulkRoutes';
 
 // Initialize express app
 const app = express();
@@ -48,18 +49,29 @@ app.use(helmet({
 
 // Rate limiting: 100 requests per minute per IP
 const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 1 * 60 * 1000,
+  max: 100,
   message: { success: false, message: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
+// Strict rate limiter for auth endpoints (brute force protection)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 attempts per 15 minutes
+  message: { success: false, message: 'Too many login attempts, please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+
 // Separate rate limiter for AI endpoints (lower limit)
 const aiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
-  max: 20, // 20 AI requests per minute
+  max: 20,
   message: { success: false, message: 'Too many AI requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -75,9 +87,9 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Body size limits
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body size limits (1mb default; uploads use multer with own limits)
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Request logging
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -101,14 +113,14 @@ app.get('/', async (req: Request, res: Response) => {
     res.json({
       success: true,
       message: 'CRM API is running',
-      version: '3.0.0',
+      version: '3.1.0',
       database: 'PostgreSQL (connected)',
     });
   } catch {
     res.status(503).json({
-      success: true,
-      message: 'CRM API is running',
-      version: '3.0.0',
+      success: false,
+      message: 'CRM API is degraded',
+      version: '3.1.0',
       database: 'PostgreSQL (disconnected)',
     });
   }
@@ -135,6 +147,7 @@ app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/bulk', bulkRoutes);
 
 // 404 Error handler
 app.use((req: Request, res: Response) => {

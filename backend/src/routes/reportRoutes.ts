@@ -7,9 +7,11 @@ import {
   getActivityHeatmap,
 } from '../controllers/reportController';
 import { protect } from '../middleware/auth';
+import { requireRole } from '../middleware/rbac';
 
 const router = express.Router();
 router.use(protect);
+router.use(requireRole('ADMIN', 'MANAGER'));
 
 router.get('/funnel', getConversionFunnel);
 router.get('/aging', getDealAging);

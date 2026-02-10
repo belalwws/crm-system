@@ -18,23 +18,32 @@ export function requireRole(...roles: string[]) {
         return;
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id: req.user.id },
-        select: { role: true, isActive: true },
-      });
+      // Use role already attached by protect middleware (avoids redundant DB query)
+      let role = req.user.role;
 
-      if (!user) {
-        res.status(401).json({ success: false, message: 'User not found' });
-        return;
+      // Only fetch from DB if role wasn't attached by protect
+      if (!role) {
+        const user = await prisma.user.findUnique({
+          where: { id: req.user.id },
+          select: { role: true, isActive: true },
+        });
+
+        if (!user) {
+          res.status(401).json({ success: false, message: 'User not found' });
+          return;
+        }
+
+        if (!user.isActive) {
+          res.status(403).json({ success: false, message: 'Account is deactivated' });
+          return;
+        }
+
+        role = user.role;
+        req.user.role = role;
       }
 
-      if (!user.isActive) {
-        res.status(403).json({ success: false, message: 'Account is deactivated' });
-        return;
-      }
-
-      if (!roles.includes(user.role)) {
-        logger.warn(`Access denied: User ${req.user.id} with role ${user.role} tried to access route requiring ${roles.join('/')}`);
+      if (!roles.includes(role)) {
+        logger.warn(`Access denied: User ${req.user.id} with role ${role} tried to access route requiring ${roles.join('/')}`);
         res.status(403).json({
           success: false,
           message: 'You do not have permission to perform this action',
@@ -42,8 +51,6 @@ export function requireRole(...roles: string[]) {
         return;
       }
 
-      // Attach role to request for downstream use
-      req.user.role = user.role;
       next();
     } catch (error) {
       logger.error('RBAC middleware error:', error);

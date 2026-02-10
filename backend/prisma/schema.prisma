@@ -279,15 +279,16 @@ enum NotificationType {
 // Email Template Model - قوالب البريد
 // =============================================
 model EmailTemplate {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   name      String
   subject   String
   body      String
   category  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([ownerId])
   @@map("email_templates")
@@ -342,6 +343,7 @@ model Document {
   size       Int
   url        String
   category   String?
+  deletedAt  DateTime?
   createdAt  DateTime  @default(now())
 
   @@index([ownerId])
@@ -400,6 +402,7 @@ model Note {
   content    String
   pinned     Boolean   @default(false)
   mentions   String[]  @default([])
+  deletedAt  DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -428,6 +431,7 @@ model Meeting {
   endTime     DateTime
   reminder    Int?
   outcome     String?
+  deletedAt   DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -637,4 +641,20 @@ model WebhookLog {
   @@index([webhookId])
   @@index([createdAt])
   @@map("webhook_logs")
+}
+
+// =============================================
+// System Settings - إعدادات النظام
+// =============================================
+model SystemSettings {
+  id               String   @id @default(cuid())
+  companyName      String   @default("My CRM")
+  defaultCurrency  String   @default("USD")
+  defaultTimezone  String   @default("UTC")
+  maxUsersAllowed  Int      @default(50)
+  features         Json     @default("{}")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("system_settings")
 }

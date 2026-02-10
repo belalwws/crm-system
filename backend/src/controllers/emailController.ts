@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { sendEmail } from '../lib/email';
 import { logEmailSent } from './activityController';
+import { createAuditLog } from '../lib/auditLog';
 import { AuthRequest } from '../types';
 import logger from '../lib/logger';
 
@@ -41,7 +42,7 @@ export const sendEmailToCustomer = async (req: AuthRequest, res: Response) => {
     }
 
     if (result.success) {
-      res.json({ success: true, emailLog });
+      res.json({ success: true, data: emailLog });
     } else {
       res.status(500).json({ success: false, message: 'Failed to send email', details: result.error });
     }
@@ -51,44 +52,62 @@ export const sendEmailToCustomer = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Get email history
+// Get email history (with pagination)
 export const getEmailHistory = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { customerId, dealId } = req.query;
+    const { customerId, dealId, page = '1', limit = '20' } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 20));
 
     const where: any = { ownerId: userId };
     if (customerId) where.customerId = customerId;
     if (dealId) where.dealId = dealId;
 
-    const emails = await prisma.emailLog.findMany({
-      where,
-      orderBy: { sentAt: 'desc' },
-      take: 100,
-      include: {
-        customer: { select: { id: true, name: true, email: true } },
-        deal: { select: { id: true, title: true } },
-      },
-    });
+    const [emails, total] = await Promise.all([
+      prisma.emailLog.findMany({
+        where,
+        orderBy: { sentAt: 'desc' },
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+        include: {
+          customer: { select: { id: true, name: true, email: true } },
+          deal: { select: { id: true, title: true } },
+        },
+      }),
+      prisma.emailLog.count({ where }),
+    ]);
 
-    res.json(emails);
+    res.json({ success: true, data: emails, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
   } catch (error) {
     logger.error('Error fetching email history:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch email history' });
   }
 };
 
-// Get email templates
+// Get email templates (with pagination)
 export const getEmailTemplates = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
+    const { page = '1', limit = '20' } = req.query;
 
-    const templates = await prisma.emailTemplate.findMany({
-      where: { ownerId: userId },
-      orderBy: { name: 'asc' },
-    });
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 20));
 
-    res.json(templates);
+    const where = { ownerId: userId, deletedAt: null as Date | null };
+
+    const [templates, total] = await Promise.all([
+      prisma.emailTemplate.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+      }),
+      prisma.emailTemplate.count({ where }),
+    ]);
+
+    res.json({ success: true, data: templates, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
   } catch (error) {
     logger.error('Error fetching email templates:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch email templates' });
@@ -114,7 +133,15 @@ export const createEmailTemplate = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    res.status(201).json(template);
+    await createAuditLog({
+      userId,
+      action: 'CREATE',
+      entityType: 'EmailTemplate',
+      entityId: template.id,
+      entityName: name,
+    });
+
+    res.status(201).json({ success: true, data: template });
   } catch (error) {
     logger.error('Error creating email template:', error);
     res.status(500).json({ success: false, message: 'Failed to create email template' });
@@ -128,46 +155,62 @@ export const updateEmailTemplate = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { name, subject, body } = req.body;
 
-    const template = await prisma.emailTemplate.updateMany({
-      where: { id, ownerId: userId },
-      data: {
-        name,
-        subject,
-        body,
-        updatedAt: new Date(),
-      },
+    const existing = await prisma.emailTemplate.findFirst({
+      where: { id, ownerId: userId, deletedAt: null },
     });
 
-    if (template.count === 0) {
+    if (!existing) {
       return res.status(404).json({ success: false, message: 'Template not found' });
     }
 
-    const updatedTemplate = await prisma.emailTemplate.findUnique({
+    const updatedTemplate = await prisma.emailTemplate.update({
       where: { id },
+      data: { name, subject, body, updatedAt: new Date() },
     });
 
-    res.json(updatedTemplate);
+    await createAuditLog({
+      userId,
+      action: 'UPDATE',
+      entityType: 'EmailTemplate',
+      entityId: id,
+      entityName: updatedTemplate.name,
+    });
+
+    res.json({ success: true, data: updatedTemplate });
   } catch (error) {
     logger.error('Error updating email template:', error);
     res.status(500).json({ success: false, message: 'Failed to update email template' });
   }
 };
 
-// Delete email template
+// Soft delete email template
 export const deleteEmailTemplate = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
     const { id } = req.params;
 
-    const template = await prisma.emailTemplate.deleteMany({
-      where: { id, ownerId: userId },
+    const template = await prisma.emailTemplate.findFirst({
+      where: { id, ownerId: userId, deletedAt: null },
     });
 
-    if (template.count === 0) {
+    if (!template) {
       return res.status(404).json({ success: false, message: 'Template not found' });
     }
 
-    res.json({ success: true });
+    await prisma.emailTemplate.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    await createAuditLog({
+      userId,
+      action: 'DELETE',
+      entityType: 'EmailTemplate',
+      entityId: id,
+      entityName: template.name,
+    });
+
+    res.json({ success: true, message: 'Template deleted' });
   } catch (error) {
     logger.error('Error deleting email template:', error);
     res.status(500).json({ success: false, message: 'Failed to delete email template' });

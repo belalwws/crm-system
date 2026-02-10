@@ -56,6 +56,7 @@ export default function AdminPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [actionMenu, setActionMenu] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -96,12 +97,16 @@ export default function AdminPage() {
       api.setToken(token);
       const res = await api.updateUserRole(userId, newRole);
       if (res.success) {
+        setFeedback({ type: 'success', message: `Role updated to ${newRole}` });
         fetchData();
+      } else {
+        setFeedback({ type: 'error', message: 'Failed to update role' });
       }
     } catch {
-      // Error handled
+      setFeedback({ type: 'error', message: 'Failed to update role' });
     }
     setActionMenu(null);
+    setTimeout(() => setFeedback(null), 3000);
   };
 
   const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
@@ -109,11 +114,13 @@ export default function AdminPage() {
       const token = await getToken();
       api.setToken(token);
       await api.toggleUserStatus(userId, !currentStatus);
+      setFeedback({ type: 'success', message: `User ${currentStatus ? 'deactivated' : 'activated'} successfully` });
       fetchData();
     } catch {
-      // Error handled
+      setFeedback({ type: 'error', message: 'Failed to toggle user status' });
     }
     setActionMenu(null);
+    setTimeout(() => setFeedback(null), 3000);
   };
 
   if (error) {
@@ -155,6 +162,18 @@ export default function AdminPage() {
           </p>
         </div>
       </div>
+
+      {/* Feedback Banner */}
+      {feedback && (
+        <div className={`flex items-center gap-3 p-3 rounded-lg text-sm font-medium ${
+          feedback.type === 'success'
+            ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+            : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
+        }`}>
+          {feedback.message}
+          <button onClick={() => setFeedback(null)} className="ml-auto">&times;</button>
+        </div>
+      )}
 
       {/* Platform Stats */}
       {stats && (

@@ -2,7 +2,9 @@ import { Response } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../types';
 import { createAuditLog } from '../lib/auditLog';
+import { sendEmail } from '../lib/email';
 import logger from '../lib/logger';
+import bcrypt from 'bcryptjs';
 
 /**
  * @desc    Get all users (Admin only)
@@ -396,5 +398,153 @@ export const getPlatformStats = async (req: AuthRequest, res: Response): Promise
   } catch (error) {
     logger.error('Error fetching platform stats:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch platform stats' });
+  }
+};
+
+/**
+ * @desc    Invite a new user (Admin only)
+ * @route   POST /api/admin/invite
+ * @access  Admin
+ */
+export const inviteUser = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { email, name, role = 'USER' } = req.body;
+
+    if (!email || !name) {
+      res.status(400).json({ success: false, message: 'email and name are required' });
+      return;
+    }
+
+    // Check if user already exists
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      res.status(409).json({ success: false, message: 'A user with this email already exists' });
+      return;
+    }
+
+    // Generate a temporary password
+    const tempPassword = Math.random().toString(36).slice(-10) + 'A1!';
+    const hashedPassword = await bcrypt.hash(tempPassword, 12);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name,
+        role: role as any,
+        password: hashedPassword,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    // Send invitation email
+    await sendEmail(
+      email,
+      'You have been invited to the CRM Platform',
+      `Hello ${name},\n\nYou have been invited to join the CRM platform.\n\nYour temporary credentials:\nEmail: ${email}\nPassword: ${tempPassword}\n\nPlease log in and change your password immediately.\n\nBest regards,\nCRM Admin`
+    );
+
+    await createAuditLog({
+      userId: req.user!.id,
+      action: 'CREATE',
+      entityType: 'User',
+      entityId: user.id,
+      entityName: `Invited ${name} (${email})`,
+    });
+
+    logger.info(`Admin ${req.user!.id} invited user ${email} with role ${role}`);
+
+    res.status(201).json({ success: true, data: user, message: 'User invited successfully' });
+  } catch (error) {
+    logger.error('Error inviting user:', error);
+    res.status(500).json({ success: false, message: 'Failed to invite user' });
+  }
+};
+
+/**
+ * @desc    Get system settings (Admin only)
+ * @route   GET /api/admin/settings
+ * @access  Admin
+ */
+export const getSystemSettings = async (_req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    let settings = await prisma.systemSettings.findFirst();
+
+    if (!settings) {
+      settings = await prisma.systemSettings.create({
+        data: {
+          companyName: 'My CRM',
+          defaultCurrency: 'USD',
+          defaultTimezone: 'UTC',
+          maxUsersAllowed: 50,
+          features: {
+            aiInsights: true,
+            emailIntegration: true,
+            documentStorage: true,
+            workflows: true,
+          },
+        },
+      });
+    }
+
+    res.json({ success: true, data: settings });
+  } catch (error) {
+    logger.error('Error fetching system settings:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch system settings' });
+  }
+};
+
+/**
+ * @desc    Update system settings (Admin only)
+ * @route   PUT /api/admin/settings
+ * @access  Admin
+ */
+export const updateSystemSettings = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { companyName, defaultCurrency, defaultTimezone, maxUsersAllowed, features } = req.body;
+
+    let settings = await prisma.systemSettings.findFirst();
+
+    if (!settings) {
+      settings = await prisma.systemSettings.create({
+        data: {
+          companyName: companyName || 'My CRM',
+          defaultCurrency: defaultCurrency || 'USD',
+          defaultTimezone: defaultTimezone || 'UTC',
+          maxUsersAllowed: maxUsersAllowed || 50,
+          features: features || {},
+        },
+      });
+    } else {
+      settings = await prisma.systemSettings.update({
+        where: { id: settings.id },
+        data: {
+          ...(companyName && { companyName }),
+          ...(defaultCurrency && { defaultCurrency }),
+          ...(defaultTimezone && { defaultTimezone }),
+          ...(maxUsersAllowed && { maxUsersAllowed }),
+          ...(features && { features }),
+        },
+      });
+    }
+
+    await createAuditLog({
+      userId: req.user!.id,
+      action: 'UPDATE',
+      entityType: 'SystemSettings',
+      entityId: settings.id,
+      entityName: 'System settings updated',
+    });
+
+    res.json({ success: true, data: settings });
+  } catch (error) {
+    logger.error('Error updating system settings:', error);
+    res.status(500).json({ success: false, message: 'Failed to update system settings' });
   }
 };
