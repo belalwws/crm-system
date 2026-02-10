@@ -4,6 +4,7 @@ import {
   getRecentActivities,
 } from '../controllers/dashboardController';
 import { protect } from '../middleware/auth';
+import { cacheMiddleware } from '../lib/redis';
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ const router = express.Router();
  */
 router.use(protect);
 
-router.get('/stats', getDashboardStats);
-router.get('/activities', getRecentActivities);
+router.get('/stats', cacheMiddleware('dashboard-stats', 120), getDashboardStats);
+router.get('/activities', cacheMiddleware('dashboard-activities', 60), getRecentActivities);
 
 export default router;

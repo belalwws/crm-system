@@ -136,3 +136,109 @@ export const sendEmail = async (
 };
 
 export default resend;
+
+/**
+ * Send password reset email
+ */
+export const sendPasswordResetEmail = async (
+  email: string,
+  name: string,
+  resetUrl: string
+): Promise<void> => {
+  try {
+    await resend.emails.send({
+      from: 'CRM System <security@resend.dev>',
+      to: email,
+      subject: 'Reset Your Password',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f4f4f5;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+            <div style="background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); border-radius: 16px 16px 0 0; padding: 40px; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 28px;">Password Reset 🔒</h1>
+            </div>
+            <div style="background-color: white; padding: 40px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+              <p style="color: #374151; font-size: 18px; margin-bottom: 20px;">Hi <strong>${name}</strong>,</p>
+              <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                We received a request to reset your password. Click the button below to set a new password.
+              </p>
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">
+                This link will expire in <strong>1 hour</strong>. If you did not request a password reset, please ignore this email.
+              </p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" 
+                   style="display: inline-block; background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+                  Reset Password →
+                </a>
+              </div>
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+              <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                If the button doesn't work, copy and paste this URL into your browser:<br>
+                <a href="${resetUrl}" style="color: #2563eb; word-break: break-all;">${resetUrl}</a>
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    console.log(`🔒 Password reset email sent to ${email}`);
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+  }
+};
+
+/**
+ * Send email verification link
+ */
+export const sendVerificationEmail = async (
+  email: string,
+  name: string,
+  verifyUrl: string
+): Promise<void> => {
+  try {
+    await resend.emails.send({
+      from: 'CRM System <verify@resend.dev>',
+      to: email,
+      subject: 'Verify Your Email Address',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background-color: #f4f4f5;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+            <div style="background: linear-gradient(135deg, #059669 0%, #0d9488 100%); border-radius: 16px 16px 0 0; padding: 40px; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 28px;">Verify Your Email ✉️</h1>
+            </div>
+            <div style="background-color: white; padding: 40px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+              <p style="color: #374151; font-size: 18px; margin-bottom: 20px;">Hi <strong>${name}</strong>,</p>
+              <p style="color: #6b7280; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+                Please verify your email address to get full access to all CRM features.
+              </p>
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">
+                This link will expire in <strong>24 hours</strong>.
+              </p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${verifyUrl}" 
+                   style="display: inline-block; background: linear-gradient(135deg, #059669 0%, #0d9488 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+                  Verify Email →
+                </a>
+              </div>
+              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+              <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+                If the button doesn't work, copy and paste this URL:<br>
+                <a href="${verifyUrl}" style="color: #2563eb; word-break: break-all;">${verifyUrl}</a>
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    console.log(`✉️ Verification email sent to ${email}`);
+  } catch (error) {
+    console.error('Failed to send verification email:', error);
+  }
+};

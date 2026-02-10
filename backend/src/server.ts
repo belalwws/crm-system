@@ -4,11 +4,20 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
+import { doubleCsrf } from 'csrf-csrf';
+import { createServer } from 'http';
 import path from 'path';
 import prisma from './lib/prisma';
 import logger from './lib/logger';
 import { validateEnv } from './lib/validateEnv';
 import { protect } from './middleware/auth';
+import { sanitizeBody } from './middleware/sanitize';
+import { initializeSocket } from './lib/socket';
+import { initRedis } from './lib/redis';
+import { initWorkers, shutdownWorkers } from './lib/queue';
+import { apiVersionResponseHeader, apiInfo } from './lib/apiVersion';
+import { metricsMiddleware, metricsHandler } from './lib/monitoring';
 
 // Load environment variables
 dotenv.config();
@@ -38,6 +47,12 @@ import webhookRoutes from './routes/webhookRoutes';
 import adminRoutes from './routes/adminRoutes';
 import profileRoutes from './routes/profileRoutes';
 import bulkRoutes from './routes/bulkRoutes';
+import exportRoutes from './routes/exportRoutes';
+import contactRoutes from './routes/contactRoutes';
+import productRoutes from './routes/productRoutes';
+import quoteRoutes from './routes/quoteRoutes';
+import teamRoutes from './routes/teamRoutes';
+import customFieldRoutes from './routes/customFieldRoutes';
 
 // Initialize express app
 const app = express();
@@ -78,6 +93,18 @@ const aiLimiter = rateLimit({
 });
 app.use('/api/ai/', aiLimiter);
 
+// Strict rate limiter for sensitive endpoints
+const sensitiveLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, message: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/profile/change-password', sensitiveLimiter);
+app.use('/api/bulk/', sensitiveLimiter);
+app.use('/api/admin/', sensitiveLimiter);
+
 // CORS configuration
 const corsOptions = {
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -87,9 +114,57 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
+// Cookie parser (required for CSRF)
+app.use(cookieParser(process.env.CSRF_SECRET || process.env.JWT_SECRET || 'csrf-secret-change-me'));
+
+// CSRF Protection (double-submit cookie pattern)
+const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
+  getSecret: () => process.env.CSRF_SECRET || process.env.JWT_SECRET || 'csrf-secret-change-me',
+  getSessionIdentifier: (req: Request) => req.headers['authorization'] as string || 'anonymous',
+  cookieName: '__csrf',
+  cookieOptions: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+  },
+  getCsrfTokenFromRequest: (req: Request) => req.headers['x-csrf-token'] as string,
+});
+
+// CSRF token endpoint (GET requests are safe, return token for SPAs)
+app.get('/api/csrf-token', (req: Request, res: Response) => {
+  const token = generateCsrfToken(req, res);
+  res.json({ success: true, token });
+});
+
+// Apply CSRF protection to state-changing routes only
+// Skip for Bearer-token-only APIs (mobile clients / service-to-service)
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Skip CSRF for GET, HEAD, OPTIONS (safe methods)
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+  // Skip CSRF for API requests that use Bearer tokens (SPA clients)
+  // CSRF is mainly needed for cookie-based auth; Bearer tokens are immune to CSRF
+  if (req.headers.authorization?.startsWith('Bearer')) {
+    return next();
+  }
+  // Apply CSRF for cookie-based auth
+  doubleCsrfProtection(req, res, next);
+});
+
 // Body size limits (1mb default; uploads use multer with own limits)
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// XSS Sanitization - strip malicious HTML from all request bodies
+app.use(sanitizeBody);
+
+// API Version header on all responses
+app.use(apiVersionResponseHeader);
+
+// Performance monitoring
+app.use(metricsMiddleware);
 
 // Request logging
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -113,20 +188,22 @@ app.get('/', async (req: Request, res: Response) => {
     res.json({
       success: true,
       message: 'CRM API is running',
-      version: '3.1.0',
+      version: '4.0.0',
       database: 'PostgreSQL (connected)',
     });
   } catch {
     res.status(503).json({
       success: false,
       message: 'CRM API is degraded',
-      version: '3.1.0',
+      version: '4.0.0',
       database: 'PostgreSQL (disconnected)',
     });
   }
 });
 
 // API Routes
+app.get('/api/info', apiInfo);
+app.get('/api/metrics', protect, metricsHandler);
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/deals', dealRoutes);
@@ -148,6 +225,13 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/bulk', bulkRoutes);
+app.use('/api/export', exportRoutes);
+app.use('/api/import', exportRoutes);
+app.use('/api/contacts', contactRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/quotes', quoteRoutes);
+app.use('/api/teams', teamRoutes);
+app.use('/api/custom-fields', customFieldRoutes);
 
 // 404 Error handler
 app.use((req: Request, res: Response) => {
@@ -173,11 +257,23 @@ const PORT = env.PORT;
 prisma.$connect()
   .then(() => {
     logger.info('PostgreSQL Connected Successfully');
-    const server = app.listen(PORT, () => {
+
+    // Initialize Redis cache (optional — graceful fallback)
+    initRedis();
+
+    // Initialize job queue workers (optional — graceful fallback)
+    initWorkers();
+
+    // Create HTTP server and attach Socket.IO
+    const httpServer = createServer(app);
+    const io = initializeSocket(httpServer);
+
+    const server = httpServer.listen(PORT, () => {
       logger.info('=================================');
       logger.info(`Server running on port ${PORT}`);
       logger.info(`Environment: ${env.NODE_ENV}`);
       logger.info(`API URL: http://localhost:${PORT}`);
+      logger.info(`WebSocket: ws://localhost:${PORT}`);
       logger.info(`Database: PostgreSQL (Neon)`);
       logger.info('=================================');
     });
@@ -185,6 +281,8 @@ prisma.$connect()
     // Graceful shutdown
     const shutdown = async (signal: string) => {
       logger.info(`${signal} received. Starting graceful shutdown...`);
+      io.close();
+      await shutdownWorkers();
       server.close(async () => {
         logger.info('HTTP server closed');
         await prisma.$disconnect();

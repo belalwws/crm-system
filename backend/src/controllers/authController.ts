@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
 import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import prisma from '../lib/prisma';
 import { AuthRequest, RegisterInput, LoginInput } from '../types';
 import logger from '../lib/logger';
+import { sendPasswordResetEmail, sendVerificationEmail } from '../lib/email';
 
 /**
  * Generate JWT Token
@@ -175,5 +177,183 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
       success: false,
       message: 'Error getting user data',
     });
+  }
+};
+
+/**
+ * @desc    Request password reset
+ * @route   POST /api/auth/forgot-password
+ * @access  Public
+ */
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ success: false, message: 'Email is required' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      res.status(200).json({ success: true, message: 'If the email exists, a reset link has been sent' });
+      return;
+    }
+
+    // Generate secure reset token
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken: hashedToken,
+        resetTokenExp: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
+      },
+    });
+
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
+    await sendPasswordResetEmail(email, user.name, resetUrl);
+
+    res.status(200).json({ success: true, message: 'If the email exists, a reset link has been sent' });
+  } catch (error: any) {
+    logger.error('Forgot password error:', error);
+    res.status(500).json({ success: false, message: 'Error processing request' });
+  }
+};
+
+/**
+ * @desc    Reset password using token
+ * @route   POST /api/auth/reset-password
+ * @access  Public
+ */
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token, email, password } = req.body;
+    if (!token || !email || !password) {
+      res.status(400).json({ success: false, message: 'Token, email, and new password are required' });
+      return;
+    }
+
+    if (password.length < 8) {
+      res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+      return;
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+        resetToken: hashedToken,
+        resetTokenExp: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExp: null,
+      },
+    });
+
+    res.status(200).json({ success: true, message: 'Password reset successfully' });
+  } catch (error: any) {
+    logger.error('Reset password error:', error);
+    res.status(500).json({ success: false, message: 'Error resetting password' });
+  }
+};
+
+/**
+ * @desc    Send email verification
+ * @route   POST /api/auth/send-verification
+ * @access  Private
+ */
+export const sendVerification = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user?.id } });
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+
+    if (user.emailVerified) {
+      res.status(400).json({ success: false, message: 'Email is already verified' });
+      return;
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verifyToken: hashedToken,
+        verifyTokenExp: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+      },
+    });
+
+    const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
+    await sendVerificationEmail(user.email, user.name, verifyUrl);
+
+    res.status(200).json({ success: true, message: 'Verification email sent' });
+  } catch (error: any) {
+    logger.error('Send verification error:', error);
+    res.status(500).json({ success: false, message: 'Error sending verification email' });
+  }
+};
+
+/**
+ * @desc    Verify email with token
+ * @route   POST /api/auth/verify-email
+ * @access  Public
+ */
+export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token, email } = req.body;
+    if (!token || !email) {
+      res.status(400).json({ success: false, message: 'Token and email are required' });
+      return;
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await prisma.user.findFirst({
+      where: {
+        email,
+        verifyToken: hashedToken,
+        verifyTokenExp: { gt: new Date() },
+      },
+    });
+
+    if (!user) {
+      res.status(400).json({ success: false, message: 'Invalid or expired verification token' });
+      return;
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        verifyToken: null,
+        verifyTokenExp: null,
+      },
+    });
+
+    res.status(200).json({ success: true, message: 'Email verified successfully' });
+  } catch (error: any) {
+    logger.error('Verify email error:', error);
+    res.status(500).json({ success: false, message: 'Error verifying email' });
   }
 };

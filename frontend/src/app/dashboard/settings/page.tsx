@@ -76,14 +76,32 @@ export default function SettingsPage() {
     try {
       const token = await getToken();
       api.setToken(token);
-      const res = await api.getProfile() as { success: boolean; data?: UserProfile };
-      if (res.success && res.data) {
-        setProfile(res.data);
+      const [profileRes, prefsRes] = await Promise.all([
+        api.getProfile() as Promise<{ success: boolean; data?: UserProfile }>,
+        api.getPreferences() as Promise<{ success: boolean; data?: any }>,
+      ]);
+      if (profileRes.success && profileRes.data) {
+        setProfile(profileRes.data);
         setProfileForm({
-          name: res.data.name || '',
-          company: res.data.company || '',
-          phone: res.data.phone || '',
-          timezone: res.data.timezone || 'UTC',
+          name: profileRes.data.name || '',
+          company: profileRes.data.company || '',
+          phone: profileRes.data.phone || '',
+          timezone: profileRes.data.timezone || 'UTC',
+        });
+      }
+      if (prefsRes.success && prefsRes.data) {
+        setNotifications({
+          emailTaskReminders: prefsRes.data.emailTaskReminders ?? true,
+          emailDealUpdates: prefsRes.data.emailDealUpdates ?? true,
+          emailWeeklyDigest: prefsRes.data.emailWeeklyDigest ?? false,
+          pushTaskReminders: prefsRes.data.pushTaskReminders ?? true,
+          pushDealWon: prefsRes.data.pushDealWon ?? true,
+          pushNewCustomer: prefsRes.data.pushNewCustomer ?? false,
+        });
+        setEmailSettings({
+          signature: prefsRes.data.emailSignature || '',
+          defaultCc: prefsRes.data.defaultCc || '',
+          replyTo: prefsRes.data.replyTo || user?.emailAddresses[0]?.emailAddress || '',
         });
       }
     } catch {
@@ -153,9 +171,35 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveOther = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSaveOther = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const token = await getToken();
+      api.setToken(token);
+      const res = await api.updatePreferences({
+        emailTaskReminders: notifications.emailTaskReminders,
+        emailDealUpdates: notifications.emailDealUpdates,
+        emailWeeklyDigest: notifications.emailWeeklyDigest,
+        pushTaskReminders: notifications.pushTaskReminders,
+        pushDealWon: notifications.pushDealWon,
+        pushNewCustomer: notifications.pushNewCustomer,
+        emailSignature: emailSettings.signature,
+        defaultCc: emailSettings.defaultCc,
+        replyTo: emailSettings.replyTo,
+      });
+      if (res.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+        setMessage({ type: 'success', text: 'Preferences saved successfully' });
+      } else {
+        setMessage({ type: 'error', text: res.message || 'Failed to save preferences' });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to save preferences' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const tabs = [

@@ -1,0 +1,140 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "actions": "Actions",
+    "status": "Status",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "company": "Company",
+    "date": "Date",
+    "description": "Description",
+    "notes": "Notes",
+    "total": "Total",
+    "active": "Active",
+    "inactive": "Inactive",
+    "all": "All",
+    "export": "Export",
+    "import": "Import"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "customers": "Customers",
+    "deals": "Deals",
+    "tasks": "Tasks",
+    "calendar": "Calendar",
+    "documents": "Documents",
+    "emails": "Email Templates",
+    "analytics": "Analytics",
+    "reports": "Reports",
+    "settings": "Settings",
+    "workflows": "Workflows",
+    "webhooks": "Webhooks",
+    "auditLogs": "Audit Logs",
+    "ai": "Nexus AI",
+    "admin": "Admin Panel"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalCustomers": "Total Customers",
+    "totalDeals": "Total Deals",
+    "totalTasks": "Total Tasks",
+    "revenue": "Revenue",
+    "recentActivity": "Recent Activity",
+    "quickActions": "Quick Actions"
+  },
+  "customers": {
+    "title": "Customers",
+    "addCustomer": "Add Customer",
+    "editCustomer": "Edit Customer",
+    "customerName": "Customer Name",
+    "status": "Status",
+    "lead": "Lead",
+    "active": "Active",
+    "inactive": "Inactive",
+    "source": "Source",
+    "industry": "Industry"
+  },
+  "deals": {
+    "title": "Deals",
+    "addDeal": "Add Deal",
+    "pipeline": "Pipeline",
+    "value": "Value",
+    "stage": "Stage",
+    "probability": "Probability",
+    "expectedCloseDate": "Expected Close Date",
+    "stages": {
+      "lead": "Lead",
+      "qualified": "Qualified",
+      "proposal": "Proposal",
+      "negotiation": "Negotiation",
+      "closedWon": "Closed Won",
+      "closedLost": "Closed Lost"
+    }
+  },
+  "tasks": {
+    "title": "Tasks",
+    "addTask": "Add Task",
+    "dueDate": "Due Date",
+    "priority": "Priority",
+    "assignedTo": "Assigned To",
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "urgent": "Urgent"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "quotes": {
+    "title": "Quotes",
+    "createQuote": "Create Quote",
+    "quoteNumber": "Quote #",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "tax": "Tax",
+    "total": "Total",
+    "validUntil": "Valid Until",
+    "sendToCustomer": "Send to Customer",
+    "statuses": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "expired": "Expired"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "emailSettings": "Email Settings",
+    "appearance": "Appearance",
+    "language": "Language",
+    "timezone": "Timezone"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "verifyEmail": "Verify Email"
+  }
+}

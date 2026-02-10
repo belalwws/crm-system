@@ -472,6 +472,96 @@ class ApiClient {
   async changePassword(data: { currentPassword: string; newPassword: string }) {
     return this.request('/profile/change-password', { method: 'POST', body: JSON.stringify(data) });
   }
+
+  async getPreferences() {
+    return this.request('/profile/preferences');
+  }
+
+  async updatePreferences(data: any) {
+    return this.request('/profile/preferences', { method: 'PUT', body: JSON.stringify(data) });
+  }
+
+  // ==============================
+  // Export / Import
+  // ==============================
+  async exportCustomersCsv() {
+    const url = `${API_URL}/export/customers`;
+    const headers: HeadersInit = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    const res = await fetch(url, { headers });
+    return res.blob();
+  }
+
+  async exportDealsCsv() {
+    const url = `${API_URL}/export/deals`;
+    const headers: HeadersInit = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    const res = await fetch(url, { headers });
+    return res.blob();
+  }
+
+  async exportTasksCsv() {
+    const url = `${API_URL}/export/tasks`;
+    const headers: HeadersInit = {};
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    const res = await fetch(url, { headers });
+    return res.blob();
+  }
+
+  async importCustomers(data: any[]) {
+    return this.request('/import/customers', { method: 'POST', body: JSON.stringify({ data }) });
+  }
+
+  // Contacts
+  async getContacts(customerId?: string) {
+    const params = customerId ? `?customerId=${customerId}` : '';
+    return this.request(`/contacts${params}`);
+  }
+  async createContact(data: any) { return this.request('/contacts', { method: 'POST', body: JSON.stringify(data) }); }
+  async updateContact(id: string, data: any) { return this.request(`/contacts/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
+  async deleteContact(id: string) { return this.request(`/contacts/${id}`, { method: 'DELETE' }); }
+
+  // Products
+  async getProducts(params?: string) { return this.request(`/products${params ? `?${params}` : ''}`); }
+  async createProduct(data: any) { return this.request('/products', { method: 'POST', body: JSON.stringify(data) }); }
+  async updateProduct(id: string, data: any) { return this.request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
+  async deleteProduct(id: string) { return this.request(`/products/${id}`, { method: 'DELETE' }); }
+
+  // Quotes
+  async getQuotes(params?: string) { return this.request(`/quotes${params ? `?${params}` : ''}`); }
+  async getQuote(id: string) { return this.request(`/quotes/${id}`); }
+  async createQuote(data: any) { return this.request('/quotes', { method: 'POST', body: JSON.stringify(data) }); }
+  async updateQuote(id: string, data: any) { return this.request(`/quotes/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
+  async deleteQuote(id: string) { return this.request(`/quotes/${id}`, { method: 'DELETE' }); }
+  async sendQuote(id: string) { return this.request(`/quotes/${id}/send`, { method: 'POST' }); }
+
+  // Teams
+  async getTeams() { return this.request('/teams'); }
+  async createTeam(data: any) { return this.request('/teams', { method: 'POST', body: JSON.stringify(data) }); }
+  async addTeamMember(teamId: string, data: any) { return this.request(`/teams/${teamId}/members`, { method: 'POST', body: JSON.stringify(data) }); }
+  async removeTeamMember(teamId: string, userId: string) { return this.request(`/teams/${teamId}/members/${userId}`, { method: 'DELETE' }); }
+  async deleteTeam(id: string) { return this.request(`/teams/${id}`, { method: 'DELETE' }); }
+
+  // Custom Fields
+  async getCustomFields(entity?: string) {
+    const params = entity ? `?entity=${entity}` : '';
+    return this.request(`/custom-fields${params}`);
+  }
+  async createCustomField(data: any) { return this.request('/custom-fields', { method: 'POST', body: JSON.stringify(data) }); }
+  async updateCustomField(id: string, data: any) { return this.request(`/custom-fields/${id}`, { method: 'PUT', body: JSON.stringify(data) }); }
+  async deleteCustomField(id: string) { return this.request(`/custom-fields/${id}`, { method: 'DELETE' }); }
+  async getCustomFieldValues(entityId: string) { return this.request(`/custom-fields/values/${entityId}`); }
+  async setCustomFieldValues(entityId: string, values: any[]) {
+    return this.request(`/custom-fields/values/${entityId}`, { method: 'PUT', body: JSON.stringify({ values }) });
+  }
+
+  // Metrics
+  async getMetrics() { return this.request('/metrics'); }
+
+  // Notifications
+  async getNotifications() { return this.request('/notifications'); }
+  async markNotificationRead(id: string) { return this.request(`/notifications/${id}/read`, { method: 'PATCH' }); }
+  async markAllNotificationsRead() { return this.request('/notifications/read-all', { method: 'PATCH' }); }
 }
 
 export const api = new ApiClient();

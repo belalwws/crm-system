@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import { protect } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { validateFileType } from '../middleware/sanitize';
 import { uploadDocumentSchema } from '../lib/validators';
 import {
   getDocuments,
@@ -66,7 +67,7 @@ router.get('/:id', getDocument);
 router.post('/', validate(uploadDocumentSchema), uploadDocument);
 
 // POST /api/documents/upload - Upload file
-router.post('/upload', upload.single('file'), handleFileUpload);
+router.post('/upload', upload.single('file'), validateFileType, handleFileUpload);
 
 // DELETE /api/documents/:id - Delete document
 router.delete('/:id', deleteDocument);

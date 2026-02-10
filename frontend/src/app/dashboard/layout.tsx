@@ -90,11 +90,14 @@ export default function DashboardLayout({
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <aside
+        role="navigation"
+        aria-label="Main navigation"
         className={`fixed top-0 left-0 z-50 h-full w-60 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 transition-transform duration-200 flex flex-col
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
           lg:translate-x-0`}
@@ -110,13 +113,14 @@ export default function DashboardLayout({
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-white"
+            aria-label="Close sidebar"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="Dashboard navigation">
           {allNavItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -124,6 +128,7 @@ export default function DashboardLayout({
                 key={item.name}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
+                aria-current={isActive ? 'page' : undefined}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive
                     ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white font-medium"
@@ -183,8 +188,10 @@ export default function DashboardLayout({
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden p-2 -ml-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+            aria-label="Open navigation menu"
+            aria-expanded={sidebarOpen}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-5 h-5" aria-hidden="true" />
           </button>
 
           {/* Page Title - Mobile */}
@@ -214,7 +221,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Page Content */}
-        <main className="p-4 lg:p-6">
+        <main className="p-4 lg:p-6" role="main" aria-label="Page content">
           <ToastProvider>
             <ErrorBoundary>
               <div className="max-w-6xl mx-auto">{children}</div>

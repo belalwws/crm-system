@@ -114,8 +114,8 @@ function TaskCard({
 
   return (
     <div
-      className={`group bg-neutral-900 rounded-xl border transition-all hover:border-neutral-700 ${
-        isOverdue ? "border-red-500/30" : "border-neutral-800"
+      className={`group bg-neutral-50 dark:bg-neutral-900 rounded-xl border transition-all hover:border-neutral-300 dark:hover:border-neutral-700 ${
+        isOverdue ? "border-red-500/30" : "border-neutral-200 dark:border-neutral-800"
       }`}
     >
       <div className="p-4">
@@ -124,7 +124,7 @@ function TaskCard({
             onClick={() =>
               onStatusChange(task.id || task._id, isCompleted ? "pending" : "completed")
             }
-            className={`mt-1 p-1 rounded-full transition-colors ${statusColors[task.status]} hover:bg-neutral-800`}
+            className={`mt-1 p-1 rounded-full transition-colors ${statusColors[task.status]} hover:bg-neutral-100 dark:hover:bg-neutral-800`}
           >
             <StatusIcon className="w-5 h-5" />
           </button>
@@ -134,7 +134,7 @@ function TaskCard({
               <div className="flex-1">
                 <h3
                   className={`font-medium ${
-                    isCompleted ? "text-neutral-500 line-through" : "text-white"
+                    isCompleted ? "text-neutral-500 line-through" : "text-neutral-900 dark:text-white"
                   }`}
                 >
                   {task.title}
@@ -159,7 +159,7 @@ function TaskCard({
             </div>
 
             <div className="flex items-center flex-wrap gap-3 mt-3 text-sm">
-              <span className="text-neutral-500 capitalize bg-neutral-800/50 px-2 py-0.5 rounded">
+              <span className="text-neutral-500 capitalize bg-neutral-100 dark:bg-neutral-800/50 px-2 py-0.5 rounded">
                 {task.type.replace("-", " ")}
               </span>
               
@@ -184,7 +184,7 @@ function TaskCard({
       </div>
 
       {/* Quick Status Actions */}
-      <div className="border-t border-neutral-800 px-4 py-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="border-t border-neutral-200 dark:border-neutral-800 px-4 py-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         {statuses.map((status) => (
           <button
             key={status.value}
@@ -192,7 +192,7 @@ function TaskCard({
             className={`text-xs px-2 py-1 rounded-md transition-colors ${
               task.status === status.value
                 ? "bg-white text-neutral-900"
-                : "text-neutral-500 hover:text-white hover:bg-neutral-800"
+                : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800"
             }`}
           >
             {status.label}
@@ -410,7 +410,7 @@ export default function TasksPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-white">Tasks</h1>
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">Tasks</h1>
           <p className="text-neutral-500 mt-1">
             {tasks.length} total tasks • {pendingTasks.length} pending
           </p>
@@ -455,7 +455,7 @@ export default function TasksPage() {
             </div>
             <div>
               <p className="text-xs text-neutral-500">Pending</p>
-              <p className="text-xl font-semibold text-white">{pendingTasks.length}</p>
+              <p className="text-xl font-semibold text-neutral-900 dark:text-white">{pendingTasks.length}</p>
             </div>
           </div>
         </Card>
@@ -466,7 +466,7 @@ export default function TasksPage() {
             </div>
             <div>
               <p className="text-xs text-neutral-500">In Progress</p>
-              <p className="text-xl font-semibold text-white">{inProgressTasks.length}</p>
+              <p className="text-xl font-semibold text-neutral-900 dark:text-white">{inProgressTasks.length}</p>
             </div>
           </div>
         </Card>
@@ -477,7 +477,7 @@ export default function TasksPage() {
             </div>
             <div>
               <p className="text-xs text-neutral-500">Overdue</p>
-              <p className="text-xl font-semibold text-white">{overdueTasks.length}</p>
+              <p className="text-xl font-semibold text-neutral-900 dark:text-white">{overdueTasks.length}</p>
             </div>
           </div>
         </Card>
@@ -488,7 +488,7 @@ export default function TasksPage() {
             </div>
             <div>
               <p className="text-xs text-neutral-500">Completed</p>
-              <p className="text-xl font-semibold text-white">{completedTasks.length}</p>
+              <p className="text-xl font-semibold text-neutral-900 dark:text-white">{completedTasks.length}</p>
             </div>
           </div>
         </Card>
@@ -506,7 +506,7 @@ export default function TasksPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-neutral-500 transition-colors"
+          className="px-4 py-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
         >
           <option value="all">All Status</option>
           {statuses.map((status) => (
@@ -518,7 +518,7 @@ export default function TasksPage() {
         <select
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
-          className="px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-neutral-500 transition-colors"
+          className="px-4 py-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
         >
           <option value="all">All Priority</option>
           {priorities.map((priority) => (
@@ -602,13 +602,13 @@ export default function TasksPage() {
             onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
           />
           <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-2">
+            <label className="block text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">
               Related Customer (optional)
             </label>
             <select
               value={formData.customerId}
               onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-              className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-neutral-500 transition-colors"
+              className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
             >
               <option value="">Select a customer</option>
               {customers.map((customer) => (
@@ -619,13 +619,13 @@ export default function TasksPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-2">
+            <label className="block text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">
               Related Deal (optional)
             </label>
             <select
               value={formData.dealId}
               onChange={(e) => setFormData({ ...formData, dealId: e.target.value })}
-              className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-neutral-500 transition-colors"
+              className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
             >
               <option value="">Select a deal</option>
               {deals.map((deal) => (

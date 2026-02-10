@@ -112,6 +112,8 @@ export const deleteAllNotifications = async (req: AuthRequest, res: Response) =>
   }
 };
 
+import { emitToUser } from '../lib/socket';
+
 // Helper function to create a notification
 export const createNotification = async (
   userId: string,
@@ -130,6 +132,10 @@ export const createNotification = async (
         link,
       },
     });
+
+    // Real-time push via WebSocket
+    emitToUser(userId, 'notification:new', notification);
+
     return notification;
   } catch (error) {
     logger.error('Error creating notification:', error);

@@ -92,7 +92,7 @@ function KanbanView({
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${stage.color}`} />
-                <span className="text-sm font-medium text-white">{stage.label}</span>
+                <span className="text-sm font-medium text-neutral-900 dark:text-white">{stage.label}</span>
                 <Badge variant="neutral" size="sm">{stageDeals.length}</Badge>
               </div>
               <span className="text-xs text-neutral-500">{formatCurrency(stageValue)}</span>
@@ -101,12 +101,12 @@ function KanbanView({
               {stageDeals.map((deal, index) => (
                 <div
                   key={deal.id || deal._id}
-                  className="bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-700/50 rounded-xl p-4 cursor-pointer transition-all hover:border-neutral-600 animate-fade-in"
+                  className="bg-neutral-100 dark:bg-neutral-800/50 hover:bg-neutral-200 dark:hover:bg-neutral-800 border border-neutral-200 dark:border-neutral-700/50 rounded-xl p-4 cursor-pointer transition-all hover:border-neutral-300 dark:hover:border-neutral-600 animate-fade-in"
                   style={{ animationDelay: `${index * 0.05}s` }}
                   onClick={() => onView(deal)}
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h4 className="font-medium text-white text-sm line-clamp-2">{deal.title}</h4>
+                    <h4 className="font-medium text-neutral-900 dark:text-white text-sm line-clamp-2">{deal.title}</h4>
                     <Dropdown
                       items={[
                         { label: "Edit", icon: <Edit className="w-4 h-4" />, onClick: () => onEdit(deal) },
@@ -343,7 +343,7 @@ export default function DealsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-white">Deals</h1>
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">Deals</h1>
           <p className="text-neutral-500 mt-1">
             {deals.length} deals • {formatCurrency(totalValue)} pipeline
           </p>
@@ -368,7 +368,7 @@ export default function DealsPage() {
             </div>
             <div>
               <p className="text-xs text-neutral-500">Total Pipeline</p>
-              <p className="text-lg font-semibold text-white">{formatCurrency(totalValue)}</p>
+              <p className="text-lg font-semibold text-neutral-900 dark:text-white">{formatCurrency(totalValue)}</p>
             </div>
           </div>
         </Card>
@@ -379,7 +379,7 @@ export default function DealsPage() {
             </div>
             <div>
               <p className="text-xs text-neutral-500">Won This Month</p>
-              <p className="text-lg font-semibold text-white">{formatCurrency(wonValue)}</p>
+              <p className="text-lg font-semibold text-neutral-900 dark:text-white">{formatCurrency(wonValue)}</p>
             </div>
           </div>
         </Card>
@@ -390,7 +390,7 @@ export default function DealsPage() {
             </div>
             <div>
               <p className="text-xs text-neutral-500">Active Deals</p>
-              <p className="text-lg font-semibold text-white">{deals.length - wonDeals.length}</p>
+              <p className="text-lg font-semibold text-neutral-900 dark:text-white">{deals.length - wonDeals.length}</p>
             </div>
           </div>
         </Card>
@@ -408,7 +408,7 @@ export default function DealsPage() {
         <select
           value={stageFilter}
           onChange={(e) => setStageFilter(e.target.value)}
-          className="px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-neutral-500 transition-colors"
+          className="px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
         >
           <option value="all">All Stages</option>
           {stages.map((stage) => (
@@ -417,16 +417,16 @@ export default function DealsPage() {
             </option>
           ))}
         </select>
-        <div className="flex rounded-xl bg-neutral-800 border border-neutral-700 overflow-hidden">
+        <div className="flex rounded-xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 overflow-hidden">
           <button
             onClick={() => setViewMode("kanban")}
-            className={`p-3 transition-colors ${viewMode === "kanban" ? "bg-white text-neutral-900" : "text-neutral-400 hover:text-white"}`}
+            className={`p-3 transition-colors ${viewMode === "kanban" ? "bg-white text-neutral-900" : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"}`}
           >
             <LayoutGrid className="w-5 h-5" />
           </button>
           <button
             onClick={() => setViewMode("grid")}
-            className={`p-3 transition-colors ${viewMode === "grid" ? "bg-white text-neutral-900" : "text-neutral-400 hover:text-white"}`}
+            className={`p-3 transition-colors ${viewMode === "grid" ? "bg-white text-neutral-900" : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"}`}
           >
             <List className="w-5 h-5" />
           </button>
@@ -460,7 +460,7 @@ export default function DealsPage() {
               onClick={() => openViewModal(deal)}
             >
               <div className="flex items-start justify-between mb-3">
-                <h3 className="font-semibold text-white line-clamp-1">{deal.title}</h3>
+                <h3 className="font-semibold text-neutral-900 dark:text-white line-clamp-1">{deal.title}</h3>
                 <StatusBadge status={deal.stage} size="sm" />
               </div>
               {deal.customer && (
@@ -478,7 +478,7 @@ export default function DealsPage() {
                   </div>
                 )}
               </div>
-              <div className="mt-4 pt-3 border-t border-neutral-800 flex justify-between items-center">
+              <div className="mt-4 pt-3 border-t border-neutral-200 dark:border-neutral-800 flex justify-between items-center">
                 <div className="text-sm text-neutral-500">{deal.probability}% probability</div>
                 <Dropdown
                   items={[
@@ -511,14 +511,14 @@ export default function DealsPage() {
             placeholder="Deal title"
           />
           <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-2">
+            <label className="block text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">
               Customer <span className="text-red-400">*</span>
             </label>
             <select
               required
               value={formData.customerId}
               onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-              className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-neutral-500 transition-colors"
+              className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
             >
               <option value="">Select a customer</option>
               {customers.map((customer) => (
@@ -596,40 +596,40 @@ export default function DealsPage() {
         {selectedDeal && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-xl font-semibold text-white mb-2">{selectedDeal.title}</h3>
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-white mb-2">{selectedDeal.title}</h3>
               <StatusBadge status={selectedDeal.stage} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-neutral-800/50 rounded-xl p-4">
+              <div className="bg-neutral-100 dark:bg-neutral-800/50 rounded-xl p-4">
                 <p className="text-xs text-neutral-500 mb-1">Value</p>
                 <p className="text-xl font-bold text-emerald-400">{formatCurrency(selectedDeal.value)}</p>
               </div>
-              <div className="bg-neutral-800/50 rounded-xl p-4">
+              <div className="bg-neutral-100 dark:bg-neutral-800/50 rounded-xl p-4">
                 <p className="text-xs text-neutral-500 mb-1">Probability</p>
-                <p className="text-xl font-bold text-white">{selectedDeal.probability}%</p>
+                <p className="text-xl font-bold text-neutral-900 dark:text-white">{selectedDeal.probability}%</p>
               </div>
             </div>
 
             {selectedDeal.customer && (
-              <div className="flex items-center gap-3 p-4 bg-neutral-800/50 rounded-xl">
+              <div className="flex items-center gap-3 p-4 bg-neutral-100 dark:bg-neutral-800/50 rounded-xl">
                 <Avatar name={selectedDeal.customer.name} />
                 <div>
                   <p className="text-xs text-neutral-500">Customer</p>
-                  <p className="text-white font-medium">{selectedDeal.customer.name}</p>
+                  <p className="text-neutral-900 dark:text-white font-medium">{selectedDeal.customer.name}</p>
                 </div>
               </div>
             )}
 
             {selectedDeal.description && (
               <div>
-                <h4 className="text-sm font-medium text-neutral-400 mb-2">Description</h4>
-                <p className="text-neutral-300">{selectedDeal.description}</p>
+                <h4 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">Description</h4>
+                <p className="text-neutral-700 dark:text-neutral-300">{selectedDeal.description}</p>
               </div>
             )}
 
-            <div className="pt-4 border-t border-neutral-800">
-              <h4 className="text-sm font-medium text-neutral-400 mb-3">Move to Stage</h4>
+            <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800">
+              <h4 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">Move to Stage</h4>
               <div className="flex flex-wrap gap-2">
                 {stages.map((stage) => (
                   <button
@@ -641,7 +641,7 @@ export default function DealsPage() {
                     className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                       selectedDeal.stage === stage.value
                         ? "bg-white text-neutral-900"
-                        : "bg-neutral-800 text-neutral-400 hover:bg-neutral-700"
+                        : "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700"
                     }`}
                   >
                     {stage.label}

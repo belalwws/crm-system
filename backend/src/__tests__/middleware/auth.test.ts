@@ -1,141 +1,187 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { AuthRequest } from '../../types';
 
-// Mock jwt
+// Mock dependencies
 jest.mock('jsonwebtoken');
+jest.mock('@clerk/backend', () => ({
+  verifyToken: jest.fn(),
+}));
 
-// Create the middleware function to test (based on actual implementation pattern)
-const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access denied. No token provided.',
-      });
-    }
-
-    const token = authHeader.split(' ')[1];
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access denied. Invalid token format.',
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as { userId: string };
-    (req as any).user = { id: decoded.userId };
-    next();
-  } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid token.',
-    });
-  }
+const mockPrismaUser = {
+  findFirst: jest.fn(),
+  findUnique: jest.fn(),
+  create: jest.fn(),
 };
 
-describe('Auth Middleware', () => {
-  let mockRequest: Partial<Request>;
-  let mockResponse: Partial<Response>;
-  let nextFunction: jest.Mock;
+jest.mock('../../lib/prisma', () => {
+  const actual = {
+    user: mockPrismaUser,
+  };
+  return {
+    __esModule: true,
+    default: actual,
+    prisma: actual,
+    withRetry: (fn: () => any) => fn(),
+  };
+});
+
+jest.mock('../../lib/logger', () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
+// Import AFTER mocks
+import { protect } from '../../middleware/auth';
+import { verifyToken } from '@clerk/backend';
+
+describe('Auth Middleware (protect)', () => {
+  let req: Partial<AuthRequest>;
+  let res: Partial<Response>;
+  let next: jest.Mock<NextFunction>;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockRequest = {
-      headers: {},
-    };
-    mockResponse = {
-      json: jest.fn().mockReturnThis(),
+    process.env.JWT_SECRET = 'test-jwt-secret';
+    process.env.CLERK_SECRET_KEY = 'test-clerk-secret';
+
+    req = { headers: {} };
+    res = {
       status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
     };
-    nextFunction = jest.fn();
+    next = jest.fn();
   });
 
-  describe('Token validation', () => {
-    it('should reject requests without authorization header', async () => {
-      await authMiddleware(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
-      );
+  it('should reject requests without Authorization header', async () => {
+    await protect(req as AuthRequest, res as Response, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
+    expect(next).not.toHaveBeenCalled();
+  });
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success: false,
-          message: 'Access denied. No token provided.',
-        })
-      );
-      expect(nextFunction).not.toHaveBeenCalled();
+  it('should reject requests with empty Bearer token', async () => {
+    req.headers = { authorization: 'Bearer ' };
+    // jwt.decode will get '' which is falsy
+    (jwt.decode as jest.Mock).mockReturnValue(null);
+
+    await protect(req as AuthRequest, res as Response, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  describe('Local JWT tokens', () => {
+    const localPayload = { id: 'user-123', email: 'test@test.com' };
+    const mockUser = { id: 'user-123', email: 'test@test.com', role: 'USER', isActive: true, name: 'Test' };
+
+    beforeEach(() => {
+      req.headers = { authorization: 'Bearer local-token-123' };
+      // Not a Clerk token (no sub/azp/clerk issuer)
+      (jwt.decode as jest.Mock).mockReturnValue({
+        payload: { id: 'user-123', email: 'test@test.com' },
+      });
     });
 
-    it('should reject requests without Bearer prefix', async () => {
-      mockRequest.headers = { authorization: 'InvalidToken123' };
+    it('should authenticate valid local JWT and attach user', async () => {
+      (jwt.verify as jest.Mock).mockReturnValue(localPayload);
+      mockPrismaUser.findUnique.mockResolvedValue(mockUser);
 
-      await authMiddleware(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
-      );
+      await protect(req as AuthRequest, res as Response, next);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(nextFunction).not.toHaveBeenCalled();
+      expect(jwt.verify).toHaveBeenCalledWith('local-token-123', 'test-jwt-secret', { algorithms: ['HS256'] });
+      expect(req.user).toEqual({ id: 'user-123', email: 'test@test.com', role: 'USER', name: 'Test' });
+      expect(next).toHaveBeenCalled();
     });
 
-    it('should accept valid token and set user', async () => {
-      const userId = 'user-123';
-      mockRequest.headers = { authorization: 'Bearer valid-token' };
-      (jwt.verify as jest.Mock).mockReturnValue({ userId });
-
-      await authMiddleware(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
-      );
-
-      expect(jwt.verify).toHaveBeenCalledWith('valid-token', expect.any(String));
-      expect((mockRequest as any).user).toEqual({ id: userId });
-      expect(nextFunction).toHaveBeenCalled();
+    it('should reject if JWT_SECRET is missing', async () => {
+      delete process.env.JWT_SECRET;
+      await protect(req as AuthRequest, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(next).not.toHaveBeenCalled();
     });
 
-    it('should reject expired tokens', async () => {
-      mockRequest.headers = { authorization: 'Bearer expired-token' };
-      (jwt.verify as jest.Mock).mockImplementation(() => {
-        throw new Error('jwt expired');
+    it('should reject invalid local JWT', async () => {
+      (jwt.verify as jest.Mock).mockImplementation(() => { throw new Error('invalid'); });
+      await protect(req as AuthRequest, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should reject deactivated users', async () => {
+      (jwt.verify as jest.Mock).mockReturnValue(localPayload);
+      mockPrismaUser.findUnique.mockResolvedValue({ ...mockUser, isActive: false });
+
+      await protect(req as AuthRequest, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('should reject if user not found in DB', async () => {
+      (jwt.verify as jest.Mock).mockReturnValue(localPayload);
+      mockPrismaUser.findUnique.mockResolvedValue(null);
+
+      await protect(req as AuthRequest, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(next).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Clerk tokens', () => {
+    const mockUser = { id: 'clerk_user_123', email: 'clerk@test.com', role: 'USER', isActive: true, name: 'ClerkUser' };
+
+    beforeEach(() => {
+      req.headers = { authorization: 'Bearer clerk-jwt-token' };
+      // Clerk token has sub + azp
+      (jwt.decode as jest.Mock).mockReturnValue({
+        payload: { sub: 'clerk_user_123', azp: 'my-app', exp: 99999999999, iat: 1000000 },
+      });
+    });
+
+    it('should verify Clerk token cryptographically and attach user', async () => {
+      (verifyToken as jest.Mock).mockResolvedValue({
+        sub: 'clerk_user_123',
+        email: 'clerk@test.com',
+        name: 'ClerkUser',
+      });
+      mockPrismaUser.findFirst.mockResolvedValue(mockUser);
+
+      await protect(req as AuthRequest, res as Response, next);
+
+      expect(verifyToken).toHaveBeenCalledWith('clerk-jwt-token', { secretKey: 'test-clerk-secret' });
+      expect(req.user).toEqual({ id: 'clerk_user_123', email: 'clerk@test.com', role: 'USER', name: 'ClerkUser' });
+      expect(next).toHaveBeenCalled();
+    });
+
+    it('should auto-create user from Clerk if not found', async () => {
+      (verifyToken as jest.Mock).mockResolvedValue({
+        sub: 'new_clerk_user',
+        email: 'new@clerk.com',
+        name: 'New Clerk',
+      });
+      mockPrismaUser.findFirst.mockResolvedValue(null);
+      mockPrismaUser.create.mockResolvedValue({
+        id: 'new_clerk_user', email: 'new@clerk.com', role: 'USER', isActive: true, name: 'New Clerk',
       });
 
-      await authMiddleware(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
-      );
-
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          success: false,
-          message: 'Invalid token.',
-        })
-      );
-      expect(nextFunction).not.toHaveBeenCalled();
+      await protect(req as AuthRequest, res as Response, next);
+      expect(mockPrismaUser.create).toHaveBeenCalled();
+      expect(next).toHaveBeenCalled();
     });
 
-    it('should reject malformed tokens', async () => {
-      mockRequest.headers = { authorization: 'Bearer malformed-token' };
-      (jwt.verify as jest.Mock).mockImplementation(() => {
-        throw new Error('jwt malformed');
-      });
+    it('should reject if Clerk signature verification fails', async () => {
+      (verifyToken as jest.Mock).mockRejectedValue(new Error('Invalid signature'));
 
-      await authMiddleware(
-        mockRequest as Request,
-        mockResponse as Response,
-        nextFunction
-      );
+      await protect(req as AuthRequest, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(next).not.toHaveBeenCalled();
+    });
 
-      expect(mockResponse.status).toHaveBeenCalledWith(401);
-      expect(nextFunction).not.toHaveBeenCalled();
+    it('should reject if CLERK_SECRET_KEY is missing', async () => {
+      delete process.env.CLERK_SECRET_KEY;
+      await protect(req as AuthRequest, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(next).not.toHaveBeenCalled();
     });
   });
 });
+

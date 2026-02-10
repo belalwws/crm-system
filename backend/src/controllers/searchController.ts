@@ -72,6 +72,35 @@ export const globalSearch = async (
       });
     }
 
+    // Search contacts
+    if (!entity || entity === 'contacts') {
+      results.contacts = await prisma.contact.findMany({
+        where: {
+          ownerId: req.user?.id,
+          OR: [
+            { firstName: { contains: q, mode: 'insensitive' } },
+            { lastName: { contains: q, mode: 'insensitive' } },
+            { email: { contains: q, mode: 'insensitive' } },
+            { title: { contains: q, mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true, firstName: true, lastName: true, email: true, title: true, customerId: true },
+        take: maxResults,
+      });
+    }
+
+    // Search notes
+    if (!entity || entity === 'notes') {
+      results.notes = await prisma.note.findMany({
+        where: {
+          ownerId: req.user?.id,
+          content: { contains: q, mode: 'insensitive' },
+        },
+        select: { id: true, content: true, customerId: true, dealId: true, createdAt: true },
+        take: maxResults,
+      });
+    }
+
     // Count total
     const totalResults = Object.values(results).reduce((sum: number, arr: any) => sum + (arr?.length || 0), 0);
 

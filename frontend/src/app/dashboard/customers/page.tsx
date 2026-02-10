@@ -213,8 +213,8 @@ export default function CustomersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-white">Customers</h1>
-          <p className="text-neutral-500 mt-1">
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">Customers</h1>
+          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
             {customers.length} total customers • {filteredCustomers.length} showing
           </p>
         </div>
@@ -241,7 +241,7 @@ export default function CustomersPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white focus:outline-none focus:border-neutral-500 transition-colors"
+          className="px-4 py-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500 transition-colors"
         >
           <option value="all">All Status</option>
           <option value="lead">Lead</option>
@@ -284,13 +284,13 @@ export default function CustomersPage() {
                     <div className="flex items-center gap-3">
                       <Avatar name={customer.name} size="md" />
                       <div>
-                        <p className="font-medium text-white">{customer.name}</p>
-                        <div className="flex items-center gap-2 text-sm text-neutral-500 mt-0.5">
+                        <p className="font-medium text-neutral-900 dark:text-white">{customer.name}</p>
+                        <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
                           <Mail className="w-3.5 h-3.5" />
                           {customer.email}
                         </div>
                         {customer.phone && (
-                          <div className="flex items-center gap-2 text-sm text-neutral-500">
+                          <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
                             <Phone className="w-3.5 h-3.5" />
                             {customer.phone}
                           </div>
@@ -300,7 +300,7 @@ export default function CustomersPage() {
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {customer.company && (
-                      <div className="flex items-center gap-2 text-neutral-400">
+                      <div className="flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
                         <Building className="w-4 h-4" />
                         {customer.company}
                       </div>
@@ -309,7 +309,7 @@ export default function CustomersPage() {
                   <TableCell className="hidden sm:table-cell">
                     <StatusBadge status={customer.status} />
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell text-neutral-500">
+                  <TableCell className="hidden lg:table-cell text-neutral-500 dark:text-neutral-400">
                     {formatDate(customer.createdAt)}
                   </TableCell>
                   <TableCell align="right">
@@ -427,39 +427,39 @@ export default function CustomersPage() {
             <div className="flex items-center gap-4">
               <Avatar name={selectedCustomer.name} size="xl" />
               <div>
-                <h3 className="text-xl font-semibold text-white">{selectedCustomer.name}</h3>
+                <h3 className="text-xl font-semibold text-neutral-900 dark:text-white">{selectedCustomer.name}</h3>
                 <StatusBadge status={selectedCustomer.status} />
               </div>
             </div>
             
-            <div className="space-y-4 pt-4 border-t border-neutral-800">
-              <div className="flex items-center gap-3 text-neutral-300">
-                <Mail className="w-5 h-5 text-neutral-500" />
+            <div className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center gap-3 text-neutral-700 dark:text-neutral-300">
+                <Mail className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                 <span>{selectedCustomer.email}</span>
               </div>
               {selectedCustomer.phone && (
-                <div className="flex items-center gap-3 text-neutral-300">
-                  <Phone className="w-5 h-5 text-neutral-500" />
+                <div className="flex items-center gap-3 text-neutral-700 dark:text-neutral-300">
+                  <Phone className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                   <span>{selectedCustomer.phone}</span>
                 </div>
               )}
               {selectedCustomer.company && (
-                <div className="flex items-center gap-3 text-neutral-300">
-                  <Building className="w-5 h-5 text-neutral-500" />
+                <div className="flex items-center gap-3 text-neutral-700 dark:text-neutral-300">
+                  <Building className="w-5 h-5 text-neutral-500 dark:text-neutral-400" />
                   <span>{selectedCustomer.company}</span>
                 </div>
               )}
             </div>
 
             {selectedCustomer.notes && (
-              <div className="pt-4 border-t border-neutral-800">
-                <h4 className="text-sm font-medium text-neutral-400 mb-2">Notes</h4>
-                <p className="text-neutral-300">{selectedCustomer.notes}</p>
+              <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                <h4 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">Notes</h4>
+                <p className="text-neutral-700 dark:text-neutral-300">{selectedCustomer.notes}</p>
               </div>
             )}
 
-            <div className="pt-4 border-t border-neutral-800">
-              <p className="text-sm text-neutral-500">
+            <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
                 Added on {formatDate(selectedCustomer.createdAt)}
               </p>
             </div>

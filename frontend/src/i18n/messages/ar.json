@@ -1,0 +1,140 @@
+{
+  "common": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "create": "إنشاء",
+    "search": "بحث",
+    "loading": "جاري التحميل...",
+    "noResults": "لا توجد نتائج",
+    "confirm": "تأكيد",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "actions": "إجراءات",
+    "status": "الحالة",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "company": "الشركة",
+    "date": "التاريخ",
+    "description": "الوصف",
+    "notes": "ملاحظات",
+    "total": "المجموع",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "all": "الكل",
+    "export": "تصدير",
+    "import": "استيراد"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "customers": "العملاء",
+    "deals": "الصفقات",
+    "tasks": "المهام",
+    "calendar": "التقويم",
+    "documents": "المستندات",
+    "emails": "قوالب البريد",
+    "analytics": "التحليلات",
+    "reports": "التقارير",
+    "settings": "الإعدادات",
+    "workflows": "سير العمل",
+    "webhooks": "الويب هوكس",
+    "auditLogs": "سجل التدقيق",
+    "ai": "نيكسس AI",
+    "admin": "لوحة الإدارة"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "totalCustomers": "إجمالي العملاء",
+    "totalDeals": "إجمالي الصفقات",
+    "totalTasks": "إجمالي المهام",
+    "revenue": "الإيرادات",
+    "recentActivity": "النشاط الأخير",
+    "quickActions": "إجراءات سريعة"
+  },
+  "customers": {
+    "title": "العملاء",
+    "addCustomer": "إضافة عميل",
+    "editCustomer": "تعديل عميل",
+    "customerName": "اسم العميل",
+    "status": "الحالة",
+    "lead": "محتمل",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "source": "المصدر",
+    "industry": "الصناعة"
+  },
+  "deals": {
+    "title": "الصفقات",
+    "addDeal": "إضافة صفقة",
+    "pipeline": "خط الأنابيب",
+    "value": "القيمة",
+    "stage": "المرحلة",
+    "probability": "الاحتمالية",
+    "expectedCloseDate": "تاريخ الإغلاق المتوقع",
+    "stages": {
+      "lead": "محتمل",
+      "qualified": "مؤهل",
+      "proposal": "عرض",
+      "negotiation": "تفاوض",
+      "closedWon": "تم الفوز",
+      "closedLost": "تم الخسارة"
+    }
+  },
+  "tasks": {
+    "title": "المهام",
+    "addTask": "إضافة مهمة",
+    "dueDate": "تاريخ الاستحقاق",
+    "priority": "الأولوية",
+    "assignedTo": "مسند إلى",
+    "priorities": {
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "عالي",
+      "urgent": "عاجل"
+    },
+    "statuses": {
+      "pending": "قيد الانتظار",
+      "inProgress": "قيد التنفيذ",
+      "completed": "مكتملة",
+      "cancelled": "ملغية"
+    }
+  },
+  "quotes": {
+    "title": "عروض الأسعار",
+    "createQuote": "إنشاء عرض سعر",
+    "quoteNumber": "رقم العرض",
+    "subtotal": "المجموع الفرعي",
+    "discount": "الخصم",
+    "tax": "الضريبة",
+    "total": "المجموع الكلي",
+    "validUntil": "صالح حتى",
+    "sendToCustomer": "إرسال للعميل",
+    "statuses": {
+      "draft": "مسودة",
+      "sent": "مرسل",
+      "accepted": "مقبول",
+      "rejected": "مرفوض",
+      "expired": "منتهي"
+    }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "profile": "الملف الشخصي",
+    "notifications": "الإشعارات",
+    "emailSettings": "إعدادات البريد",
+    "appearance": "المظهر",
+    "language": "اللغة",
+    "timezone": "المنطقة الزمنية"
+  },
+  "auth": {
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "signOut": "تسجيل الخروج",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "verifyEmail": "تأكيد البريد الإلكتروني"
+  }
+}

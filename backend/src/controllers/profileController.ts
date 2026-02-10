@@ -139,3 +139,84 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
     res.status(500).json({ success: false, message: 'Failed to change password' });
   }
 };
+
+/**
+ * @desc    Get user preferences
+ * @route   GET /api/profile/preferences
+ * @access  Private
+ */
+export const getPreferences = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    let prefs = await prisma.userPreferences.findUnique({
+      where: { userId: req.user!.id },
+    });
+
+    if (!prefs) {
+      // Create defaults
+      prefs = await prisma.userPreferences.create({
+        data: { userId: req.user!.id },
+      });
+    }
+
+    res.json({ success: true, data: prefs });
+  } catch (error) {
+    logger.error('Error fetching preferences:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch preferences' });
+  }
+};
+
+/**
+ * @desc    Update user preferences
+ * @route   PUT /api/profile/preferences
+ * @access  Private
+ */
+export const updatePreferences = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const {
+      emailTaskReminders,
+      emailDealUpdates,
+      emailWeeklyDigest,
+      pushTaskReminders,
+      pushDealWon,
+      pushNewCustomer,
+      emailSignature,
+      defaultCc,
+      replyTo,
+      displayDensity,
+    } = req.body;
+
+    const prefs = await prisma.userPreferences.upsert({
+      where: { userId: req.user!.id },
+      create: {
+        userId: req.user!.id,
+        ...(emailTaskReminders !== undefined && { emailTaskReminders }),
+        ...(emailDealUpdates !== undefined && { emailDealUpdates }),
+        ...(emailWeeklyDigest !== undefined && { emailWeeklyDigest }),
+        ...(pushTaskReminders !== undefined && { pushTaskReminders }),
+        ...(pushDealWon !== undefined && { pushDealWon }),
+        ...(pushNewCustomer !== undefined && { pushNewCustomer }),
+        ...(emailSignature !== undefined && { emailSignature }),
+        ...(defaultCc !== undefined && { defaultCc }),
+        ...(replyTo !== undefined && { replyTo }),
+        ...(displayDensity !== undefined && { displayDensity }),
+      },
+      update: {
+        ...(emailTaskReminders !== undefined && { emailTaskReminders }),
+        ...(emailDealUpdates !== undefined && { emailDealUpdates }),
+        ...(emailWeeklyDigest !== undefined && { emailWeeklyDigest }),
+        ...(pushTaskReminders !== undefined && { pushTaskReminders }),
+        ...(pushDealWon !== undefined && { pushDealWon }),
+        ...(pushNewCustomer !== undefined && { pushNewCustomer }),
+        ...(emailSignature !== undefined && { emailSignature }),
+        ...(defaultCc !== undefined && { defaultCc }),
+        ...(replyTo !== undefined && { replyTo }),
+        ...(displayDensity !== undefined && { displayDensity }),
+      },
+    });
+
+    res.json({ success: true, data: prefs, message: 'Preferences saved successfully' });
+  } catch (error) {
+    logger.error('Error updating preferences:', error);
+    res.status(500).json({ success: false, message: 'Failed to update preferences' });
+  }
+};

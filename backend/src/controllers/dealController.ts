@@ -333,7 +333,7 @@ export const updateDeal = async (
 
       // Notify on won/lost
       if (isClosedWon || isClosedLost) {
-        await prisma.notification.create({
+        const notification = await prisma.notification.create({
           data: {
             userId: req.user?.id as string,
             type: isClosedWon ? 'DEAL_WON' : 'DEAL_LOST',
@@ -342,6 +342,10 @@ export const updateDeal = async (
             link: `/dashboard/deals/${deal.id}`,
           },
         });
+
+        // Real-time push
+        const { emitToUser } = await import('../lib/socket');
+        emitToUser(req.user?.id as string, 'notification:new', notification);
 
         fireWebhooks(req.user?.id as string, isClosedWon ? 'deal.won' : 'deal.lost', { deal: formatDeal(deal) });
       }

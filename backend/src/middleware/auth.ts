@@ -1,12 +1,13 @@
 import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { verifyToken } from '@clerk/backend';
 import { AuthRequest } from '../types';
 import prisma, { withRetry } from '../lib/prisma';
 import logger from '../lib/logger';
 
 /**
- * Authentication Middleware v2.0
- * - Clerk tokens: verified with strict claim checks (sub, exp, iat)
+ * Authentication Middleware v3.0
+ * - Clerk tokens: cryptographically verified via @clerk/backend verifyToken()
  * - Local tokens: verified with JWT_SECRET (HS256)
  * - Auto-creates user from Clerk if not found
  * - Attaches role to request for RBAC
@@ -34,41 +35,35 @@ export const protect = async (
       return;
     }
 
-    try {
-      // Decode to determine token type
-      const decoded = jwt.decode(token, { complete: true }) as any;
+    // Peek at the token to determine type (Clerk vs local)
+    const decoded = jwt.decode(token, { complete: true }) as any;
+    if (!decoded || !decoded.payload) {
+      res.status(401).json({ success: false, message: 'Invalid token format' });
+      return;
+    }
 
-      if (!decoded || !decoded.payload) {
-        res.status(401).json({ success: false, message: 'Invalid token format' });
-        return;
-      }
+    const payload = decoded.payload;
+    const isClerkToken = payload.sub && (payload.azp || payload.iss?.includes('clerk'));
 
-      const payload = decoded.payload;
-
-      // Clerk token: contains 'sub' + ('azp' or Clerk issuer)
-      if (payload.sub && (payload.azp || payload.iss?.includes('clerk'))) {
-        // Strict claim validation
-        if (!payload.exp || !payload.iat) {
-          res.status(401).json({ success: false, message: 'Token missing required claims' });
-          return;
-        }
-        if (payload.exp * 1000 < Date.now()) {
-          res.status(401).json({ success: false, message: 'Token expired' });
-          return;
-        }
-        if (payload.iat * 1000 > Date.now() + 30000) {
-          res.status(401).json({ success: false, message: 'Token issued in the future' });
-          return;
-        }
-        if (payload.nbf && payload.nbf * 1000 > Date.now() + 30000) {
-          res.status(401).json({ success: false, message: 'Token not yet valid' });
+    if (isClerkToken) {
+      // ===== Clerk token: cryptographic verification =====
+      try {
+        const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+        if (!clerkSecretKey) {
+          logger.error('CLERK_SECRET_KEY not configured');
+          res.status(500).json({ success: false, message: 'Server configuration error' });
           return;
         }
 
-        const clerkUserId = payload.sub;
-        const email = payload.email ||
-          payload.primary_email_address ||
-          (payload.email_addresses && payload.email_addresses[0]) ||
+        // Cryptographically verify the JWT signature using Clerk's JWKS
+        const verifiedPayload = await verifyToken(token, {
+          secretKey: clerkSecretKey,
+        });
+
+        const clerkUserId = verifiedPayload.sub;
+        const email = (verifiedPayload as any).email ||
+          (verifiedPayload as any).primary_email_address ||
+          ((verifiedPayload as any).email_addresses && (verifiedPayload as any).email_addresses[0]) ||
           `${clerkUserId}@clerk.user`;
 
         let user = await withRetry(() => prisma.user.findFirst({
@@ -86,7 +81,7 @@ export const protect = async (
             data: {
               id: clerkUserId,
               email: email,
-              name: payload.name || payload.first_name || payload.username || 'User',
+              name: (verifiedPayload as any).name || (verifiedPayload as any).first_name || (verifiedPayload as any).username || 'User',
               password: 'clerk_managed',
             },
             select: { id: true, email: true, role: true, isActive: true, name: true },
@@ -106,59 +101,57 @@ export const protect = async (
         };
         next();
         return;
-      }
-
-      // Local tokens: verify with JWT_SECRET (HS256)
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        logger.error('JWT_SECRET not configured');
-        res.status(500).json({ success: false, message: 'Server configuration error' });
+      } catch (clerkError) {
+        logger.warn('Clerk token verification failed:', clerkError);
+        res.status(401).json({ success: false, message: 'Invalid or expired Clerk token' });
         return;
       }
-
-      try {
-        const verified = jwt.verify(token, jwtSecret, {
-          algorithms: ['HS256'],
-        }) as { id: string; email: string };
-
-        const user = await withRetry(() => prisma.user.findUnique({
-          where: { id: verified.id },
-          select: { id: true, email: true, role: true, isActive: true, name: true },
-        }));
-
-        if (!user) {
-          res.status(401).json({ success: false, message: 'User not found' });
-          return;
-        }
-
-        if (!user.isActive) {
-          res.status(403).json({ success: false, message: 'Account is deactivated' });
-          return;
-        }
-
-        req.user = {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          name: user.name,
-        };
-        next();
-        return;
-      } catch {
-        // Token verification failed
-      }
-
-      res.status(401).json({
-        success: false,
-        message: 'Not authorized, invalid token',
-      });
-    } catch (error) {
-      logger.error('Auth error:', error);
-      res.status(401).json({
-        success: false,
-        message: 'Not authorized, token failed',
-      });
     }
+
+    // ===== Local tokens: verify with JWT_SECRET (HS256) =====
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      logger.error('JWT_SECRET not configured');
+      res.status(500).json({ success: false, message: 'Server configuration error' });
+      return;
+    }
+
+    try {
+      const verified = jwt.verify(token, jwtSecret, {
+        algorithms: ['HS256'],
+      }) as { id: string; email: string };
+
+      const user = await withRetry(() => prisma.user.findUnique({
+        where: { id: verified.id },
+        select: { id: true, email: true, role: true, isActive: true, name: true },
+      }));
+
+      if (!user) {
+        res.status(401).json({ success: false, message: 'User not found' });
+        return;
+      }
+
+      if (!user.isActive) {
+        res.status(403).json({ success: false, message: 'Account is deactivated' });
+        return;
+      }
+
+      req.user = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+      };
+      next();
+      return;
+    } catch {
+      // Token verification failed
+    }
+
+    res.status(401).json({
+      success: false,
+      message: 'Not authorized, invalid token',
+    });
   } catch (error) {
     logger.error('Server auth error:', error);
     res.status(500).json({

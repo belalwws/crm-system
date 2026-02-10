@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Bell, Check, Trash2, CheckCheck, Filter } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Bell, Check, Trash2, CheckCheck } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
+import api from '@/lib/api';
 
 interface Notification {
   id: string;
@@ -21,31 +22,29 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const token = await getToken();
-      const url = filter === 'unread' 
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications?unreadOnly=true`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/notifications`;
-      
-      const res = await fetch(url, {
+      api.setToken(token);
+      const url = filter === 'unread' ? '/notifications?unreadOnly=true' : '/notifications';
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}${url}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications || []);
+        setNotifications(data.data || []);
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [getToken, filter]);
 
   useEffect(() => {
     fetchNotifications();
-  }, [filter]);
+  }, [fetchNotifications]);
 
   const markAsRead = async (id: string) => {
     try {

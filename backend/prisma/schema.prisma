@@ -25,6 +25,11 @@ model User {
   phone     String?
   timezone  String?  @default("UTC")
   isActive  Boolean  @default(true)
+  emailVerified   Boolean  @default(false)
+  verifyToken     String?
+  verifyTokenExp  DateTime?
+  resetToken      String?
+  resetTokenExp   DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -45,6 +50,11 @@ model User {
   workflowsCreated   WorkflowRule[]
   webhooks           Webhook[]
   assignmentRules    AssignmentRule[]
+  contacts           Contact[]
+  products           Product[]
+  quotes             Quote[]
+  teamMemberships    TeamMember[]
+  customFields       CustomField[]
 
   @@map("users")
 }
@@ -89,6 +99,8 @@ model Customer {
   notes           Note[]
   meetings        Meeting[]
   timelineEvents  TimelineEvent[]
+  contacts        Contact[]
+  quotes          Quote[]
 
   @@index([ownerId])
   @@index([email])
@@ -152,6 +164,7 @@ model Deal {
   notes           Note[]
   meetings        Meeting[]
   timelineEvents  TimelineEvent[]
+  quotes          Quote[]
 
   @@index([ownerId])
   @@index([customerId])
@@ -657,4 +670,242 @@ model SystemSettings {
   updatedAt        DateTime @updatedAt
 
   @@map("system_settings")
+}
+
+// =============================================
+// User Preferences - تفضيلات المستخدم
+// =============================================
+model UserPreferences {
+  id                   String  @id @default(cuid())
+  userId               String  @unique
+  // Notification preferences
+  emailTaskReminders   Boolean @default(true)
+  emailDealUpdates     Boolean @default(true)
+  emailWeeklyDigest    Boolean @default(false)
+  pushTaskReminders    Boolean @default(true)
+  pushDealWon          Boolean @default(true)
+  pushNewCustomer      Boolean @default(false)
+  // Email settings
+  emailSignature       String  @default("")
+  defaultCc            String  @default("")
+  replyTo              String  @default("")
+  // Display
+  displayDensity       String  @default("comfortable") // 'comfortable' | 'compact'
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
+// =============================================
+// Contact Model - جهات الاتصال
+// Separate from Customer - a Customer (company) can have multiple Contacts
+// =============================================
+model Contact {
+  id         String   @id @default(cuid())
+  firstName  String
+  lastName   String
+  email      String?
+  phone      String?
+  title      String?  // Job title
+  department String?
+  isPrimary  Boolean  @default(false)
+  linkedIn   String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([ownerId])
+  @@index([email])
+  @@map("contacts")
+}
+
+// =============================================
+// Product Model - المنتجات
+// =============================================
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  sku         String?
+  description String?
+  unitPrice   Float    @default(0)
+  currency    String   @default("USD")
+  category    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Multi-tenant
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Relations
+  lineItems LineItem[]
+
+  @@index([ownerId])
+  @@index([sku])
+  @@map("products")
+}
+
+// =============================================
+// Quote Model - عروض الأسعار
+// =============================================
+model Quote {
+  id             String      @id @default(cuid())
+  quoteNumber    String      @unique
+  title          String
+  status         QuoteStatus @default(DRAFT)
+  subtotal       Float       @default(0)
+  discount       Float       @default(0)
+  discountType   String      @default("PERCENTAGE") // "PERCENTAGE" or "FIXED"
+  tax            Float       @default(0)
+  total          Float       @default(0)
+  validUntil     DateTime?
+  notes          String?
+  terms          String?
+  sentAt         DateTime?
+  acceptedAt     DateTime?
+  rejectedAt     DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // Relations
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  dealId     String?
+  deal       Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  ownerId    String
+  owner      User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  lineItems  LineItem[]
+
+  @@index([ownerId])
+  @@index([customerId])
+  @@index([dealId])
+  @@index([status])
+  @@map("quotes")
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+// =============================================
+// Line Item Model - بنود الفاتورة
+// =============================================
+model LineItem {
+  id          String   @id @default(cuid())
+  description String?
+  quantity    Float    @default(1)
+  unitPrice   Float    @default(0)
+  discount    Float    @default(0)
+  total       Float    @default(0)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  quoteId   String
+  quote     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([quoteId])
+  @@map("line_items")
+}
+
+// =============================================
+// Team Model - الفرق
+// =============================================
+model Team {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  members     TeamMember[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id        String         @id @default(cuid())
+  role      TeamRole       @default(MEMBER)
+  joinedAt  DateTime       @default(now())
+
+  teamId    String
+  team      Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// =============================================
+// Custom Field - الحقول المخصصة
+// =============================================
+model CustomField {
+  id          String          @id @default(cuid())
+  name        String
+  label       String
+  fieldType   CustomFieldType
+  entity      String          // 'customer', 'deal', 'task', 'contact'
+  isRequired  Boolean         @default(false)
+  options     Json?           // For SELECT/MULTI_SELECT types
+  defaultValue String?
+  sortOrder   Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  ownerId     String
+  owner       User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  values      CustomFieldValue[]
+
+  @@index([ownerId, entity])
+  @@map("custom_fields")
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  BOOLEAN
+  SELECT
+  MULTI_SELECT
+  URL
+  EMAIL
+  PHONE
+}
+
+model CustomFieldValue {
+  id          String      @id @default(cuid())
+  value       String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  fieldId     String
+  field       CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  entityId    String      // ID of the customer/deal/task/contact
+
+  @@unique([fieldId, entityId])
+  @@index([entityId])
+  @@map("custom_field_values")
 }
