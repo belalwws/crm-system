@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import {
   Briefcase,
@@ -316,6 +316,7 @@ function RecentTasks({ tasks, loading }: { tasks: RecentTask[]; loading: boolean
 }
 
 export default function DashboardPage() {
+  const { getToken } = useAuth();
   const { user } = useUser();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
@@ -327,6 +328,8 @@ export default function DashboardPage() {
   const fetchData = useCallback(async () => {
     try {
       setError(null);
+      const token = await getToken();
+      api.setToken(token);
       const [statsData, dealsData, tasksData] = await Promise.all([
         api.getDashboardStats(),
         api.getDeals({ limit: 5 }),
@@ -352,7 +355,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getToken]);
 
   useEffect(() => {
     fetchData();
