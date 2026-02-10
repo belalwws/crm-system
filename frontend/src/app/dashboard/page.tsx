@@ -46,7 +46,6 @@ interface MonthlyData {
 
 interface RecentDeal {
   id: string;
-  _id: string;
   title: string;
   value: number;
   stage: string;
@@ -56,7 +55,6 @@ interface RecentDeal {
 
 interface RecentTask {
   id: string;
-  _id: string;
   title: string;
   status: string;
   priority: string;
@@ -223,7 +221,7 @@ function RecentDeals({ deals, loading }: { deals: RecentDeal[]; loading: boolean
       {deals.length > 0 ? (
         <div className="space-y-3">
           {deals.slice(0, 5).map((deal) => (
-            <div key={deal.id || deal._id} className="flex items-center justify-between py-2 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
+            <div key={deal.id} className="flex items-center justify-between py-2 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-sm font-medium text-neutral-600 dark:text-neutral-400 flex-shrink-0">
                   {deal.title.charAt(0)}
@@ -291,7 +289,7 @@ function RecentTasks({ tasks, loading }: { tasks: RecentTask[]; loading: boolean
       {tasks.length > 0 ? (
         <div className="space-y-2">
           {tasks.filter(t => t.status !== 'completed').slice(0, 5).map((task) => (
-            <div key={task.id || task._id} className="flex items-start gap-3 py-2">
+            <div key={task.id} className="flex items-start gap-3 py-2">
               <div className={`w-1.5 h-1.5 rounded-full mt-2 ${priorityColors[task.priority] || priorityColors.low}`} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-neutral-900 dark:text-white truncate">{task.title}</p>

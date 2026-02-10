@@ -1,7 +1,6 @@
 // Mock Prisma
-jest.mock('./src/lib/prisma', () => ({
-  __esModule: true,
-  default: {
+jest.mock('./src/lib/prisma', () => {
+  const mockPrisma = {
     customer: {
       findMany: jest.fn(),
       findFirst: jest.fn(),
@@ -34,16 +33,89 @@ jest.mock('./src/lib/prisma', () => ({
     user: {
       findFirst: jest.fn(),
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
+    },
+    notification: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+      delete: jest.fn(),
+      deleteMany: jest.fn(),
+      count: jest.fn(),
+    },
+    activity: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      count: jest.fn(),
+    },
+    note: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    contact: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    meeting: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    document: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+    savedView: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    userPreference: {
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
     },
     $connect: jest.fn(),
     $disconnect: jest.fn(),
-  },
-  withRetry: jest.fn((fn) => fn()),
-}));
+  };
+  return {
+    __esModule: true,
+    default: mockPrisma,
+    prisma: mockPrisma,
+    withRetry: jest.fn((fn: Function) => fn()),
+  };
+});
 
 // Clear mocks before each test
 beforeEach(() => {
   jest.clearAllMocks();
 });
+
+// Mock audit log lib
+jest.mock('./src/lib/auditLog', () => ({
+  createAuditLog: jest.fn(),
+  createTimelineEvent: jest.fn(),
+  computeDiff: jest.fn().mockReturnValue({}),
+}));

@@ -1,334 +1,374 @@
-# 🚀 CRM System - Customer Relationship Management
+# Nexus CRM — Enterprise Customer Relationship Management
 
 <div align="center">
-  
-  ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-  ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-  ![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
-  ![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)
-  ![Express.js](https://img.shields.io/badge/Express.js-404D59?style=for-the-badge)
-  ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-  **A modern, full-stack CRM application built with cutting-edge technologies**
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-000?style=for-the-badge&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-  [Features](#-features) • [Tech Stack](#-tech-stack) • [Installation](#-installation) • [Architecture](#-architecture) • [Screenshots](#-screenshots)
+**A modern, enterprise-grade CRM platform with AI-powered insights, real-time collaboration, and a beautiful dark-mode-first UI.**
+
+[Features](#features) · [Tech Stack](#tech-stack) · [Getting Started](#getting-started) · [Architecture](#architecture) · [API Reference](#api-reference)
 
 </div>
 
 ---
 
-## 📌 Features
+## Features
 
-### 👥 Customer Management
-- Complete CRUD operations (Create, Read, Update, Delete)
-- Customer status tracking (Lead, Active, Inactive)
-- Contact information management
-- Search and filter capabilities
+### Core CRM
+- **Customer Management** — Full CRUD, status tracking (Lead / Active / Inactive), tagging, notes, contact history
+- **Deal Pipeline** — Kanban board + list view, 6-stage pipeline, value & probability tracking, expected close dates
+- **Task Management** — Multi-type tasks (Call, Email, Meeting, Follow-up), priority levels, status board, overdue alerts
+- **Quotes & Products** — Create quotes with line items, discount/tax support, PDF-ready, link to deals
 
-### 💼 Deal Pipeline
-- Track sales opportunities
-- Multiple deal stages (Lead → Qualified → Proposal → Negotiation → Closed)
-- Deal value and probability tracking
-- Link deals to customers
-- Win rate analytics
+### Enterprise Features
+- **AI Insights (Nexus AI)** — Powered by NVIDIA NIM (Llama 3.3 70B) for dashboard insights, task prioritization, email composition
+- **Real-time Notifications** — Socket.IO push notifications with in-app notification center
+- **Email Templates** — Create, edit, and manage reusable email templates
+- **Document Management** — Upload and attach files to customers/deals
+- **Calendar & Meetings** — Schedule and track meetings linked to customers and deals
+- **Activity Timeline** — Full audit trail of all CRM interactions per customer/deal
+- **Workflow Automation** — Rule-based triggers with configurable conditions and actions
+- **Webhooks** — Event-driven external integrations
+- **Audit Logs** — Complete platform-wide action logging
+- **Bulk Operations** — Bulk delete, status updates, and stage changes
 
-### ✅ Task Management
-- Create and assign tasks
-- Priority levels (Low, Medium, High)
-- Task types (Call, Email, Meeting, Follow-up)
-- Due date tracking
-- Status management (Pending, In Progress, Completed)
+### Admin & Platform
+- **Admin Panel** — User management with role changes, invite system, platform settings
+- **Role-Based Access** — Admin / Manager / User roles with granular permissions
+- **Analytics Dashboard** — Revenue overview, pipeline stats, customer growth charts
+- **Reports** — Conversion funnel, deal aging, revenue forecast, activity heatmap
+- **Search** — Global search across customers, deals, and tasks
+- **Export** — CSV export for customers, deals, and tasks
+- **i18n** — English and Arabic language support with RTL layout
+- **Dark / Light Mode** — System-aware theme with manual toggle
 
-### 📊 Dashboard & Analytics
-- Real-time statistics
-- Customer metrics (Total, Active, Inactive)
-- Deal analytics (Total value, Won deals, Win rate)
-- Task overview (Pending, Completed)
-- Recent activities feed
-- Visual data representation
+### Developer Experience
+- **Fully Typed** — End-to-end TypeScript with shared types across frontend and backend
+- **29 Prisma Models** — Comprehensive relational data model
+- **~130 API Endpoints** — RESTful API with consistent response format
+- **Shared UI Components** — StatCard, Pagination, ConfirmDialog, StatusBadges, and 20+ primitives
+- **Test Suite** — Jest + React Testing Library for controllers, middleware, and components
 
-### 🔐 Security
-- JWT-based authentication
-- Password hashing with bcrypt
-- Protected API routes
-- Secure token storage
-- Role-based access control
+---
 
-### 📱 User Experience
-- Fully responsive design
-- Modern, clean UI with Tailwind CSS
-- Smooth animations and transitions
-- Mobile-friendly sidebar navigation
-- Real-time form validation
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
-- **React 18** - Modern UI library with Hooks
-- **TypeScript** - Type-safe JavaScript
-- **Vite** - Lightning-fast build tool
-- **Tailwind CSS** - Utility-first styling
-- **React Router v6** - Client-side routing
-- **Axios** - HTTP client with interceptors
-- **React Icons** - Beautiful icon library
-- **date-fns** - Modern date utility library
+| Technology | Purpose |
+|---|---|
+| **Next.js 16** | React meta-framework with App Router |
+| **React 19** | UI library |
+| **TypeScript 5** | Static type safety |
+| **Tailwind CSS 4** | Utility-first styling |
+| **Clerk** | Authentication & user management |
+| **Zustand** | Lightweight state management |
+| **Lucide React** | Icon library |
+| **Recharts** | Chart & data visualization |
 
 ### Backend
-- **Node.js** - JavaScript runtime
-- **Express** - Fast, minimalist web framework
-- **TypeScript** - Static type checking
-- **MongoDB** - NoSQL database
-- **Mongoose** - Elegant MongoDB object modeling
-- **JWT** - Secure authentication tokens
-- **bcrypt** - Password hashing
-- **CORS** - Cross-origin resource sharing
+| Technology | Purpose |
+|---|---|
+| **Node.js + Express 4** | HTTP server & REST API |
+| **TypeScript 5** | Static type safety |
+| **Prisma 5** | ORM with type-safe queries |
+| **PostgreSQL** | Relational database (Neon serverless) |
+| **Socket.IO** | Real-time WebSocket communication |
+| **Redis (ioredis)** | Caching with in-memory fallback |
+| **BullMQ** | Background job queue |
+| **Clerk SDK** | JWT verification & user sync |
+| **Resend** | Transactional email delivery |
+| **Multer** | File upload handling |
 
-## 📦 Installation
+---
+
+## Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher) - [Download](https://nodejs.org/)
-- MongoDB (local or Atlas) - [Setup Guide](https://www.mongodb.com/docs/manual/installation/)
-- npm or yarn package manager
-- Git (for cloning)
+- **Node.js** v18+ — [Download](https://nodejs.org/)
+- **PostgreSQL** database (local or [Neon](https://neon.tech/) serverless)
+- **Clerk** account — [clerk.com](https://clerk.com/) (free tier)
+- (Optional) **Redis** for caching — falls back to in-memory if unavailable
 
-### Quick Start
+### 1. Clone & Install
 
-1. **Clone the repository**
 ```bash
-git clone <your-repo-url>
-cd crm
-```
+git clone https://github.com/belalwws/crm-system.git
+cd crm-system
 
-2. **Backend Setup**
-```bash
+# Backend
 cd backend
 npm install
-cp .env.example .env
-# Edit .env with your MongoDB URI
-npm run dev
+cp .env.example .env    # Configure your variables
+
+# Frontend
+cd ../frontend
+npm install --legacy-peer-deps
+cp .env.example .env    # Configure your variables
 ```
 
-3. **Frontend Setup** (in a new terminal)
+### 2. Configure Environment
+
+**Backend** (`backend/.env`):
+```env
+DATABASE_URL="postgresql://user:password@host:5432/crm?sslmode=require"
+CLERK_SECRET_KEY="sk_test_..."
+CLERK_PUBLISHABLE_KEY="pk_test_..."
+FRONTEND_URL="http://localhost:3000"
+REDIS_URL="redis://localhost:6379"          # Optional
+RESEND_API_KEY="re_..."                     # Optional, for emails
+NVIDIA_API_KEY="nvapi-..."                  # Optional, for AI features
+```
+
+**Frontend** (`frontend/.env`):
+```env
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_API_URL="http://localhost:5000/api"
+```
+
+### 3. Set Up Database
+
 ```bash
+cd backend
+npx prisma db push      # Create tables
+npx prisma generate     # Generate client
+```
+
+### 4. Run Development Servers
+
+```bash
+# Terminal 1 — Backend
+cd backend
+npm run dev              # http://localhost:5000
+
+# Terminal 2 — Frontend
 cd frontend
-npm install
-npm run dev
+npm run dev              # http://localhost:3000
 ```
 
-4. **Access the application**
-- Frontend: http://localhost:3000
-- Backend: http://localhost:5000
+---
 
-📖 **Detailed setup instructions available in [SETUP_GUIDE.md](SETUP_GUIDE.md)**
-
-## �️ Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     CRM Application                         │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                        Nexus CRM                                 │
+└──────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────┐          ┌─────────────────────┐
-│      Frontend       │          │      Backend        │
-│   React + Vite      │  ◄────►  │  Express + Node.js  │
-│   TypeScript        │   REST   │   TypeScript        │
-│   Tailwind CSS      │   API    │   JWT Auth          │
-└─────────────────────┘          └──────────┬──────────┘
+┌────────────────────┐           ┌──────────────────────┐
+│     Frontend       │           │      Backend         │
+│  Next.js 16 (App)  │  ◄─────► │  Express + Node.js   │
+│  React 19 + TS     │   REST   │  TypeScript          │
+│  Tailwind CSS 4    │   API    │  Clerk JWT verify     │
+│  Clerk Auth        │          │  Socket.IO            │
+└────────────────────┘           └──────────┬───────────┘
                                             │
-                                            ▼
-                                 ┌────────────────────┐
-                                 │     MongoDB        │
-                                 │  + Mongoose ODM    │
-                                 └────────────────────┘
+                              ┌─────────────┼─────────────┐
+                              ▼             ▼             ▼
+                     ┌──────────────┐ ┌──────────┐ ┌──────────┐
+                     │  PostgreSQL  │ │  Redis   │ │ NVIDIA   │
+                     │  (Prisma)    │ │  Cache   │ │ NIM API  │
+                     └──────────────┘ └──────────┘ └──────────┘
 ```
 
-## 🌟 Project Structure
+### Project Structure
 
 ```
 crm/
-├── backend/                    # Node.js Backend
+├── backend/
+│   ├── prisma/
+│   │   └── schema.prisma          # 29 data models
 │   ├── src/
-│   │   ├── config/            # Database connection
-│   │   ├── controllers/       # Business logic
+│   │   ├── controllers/           # 27 controllers (~130 endpoints)
 │   │   │   ├── authController.ts
 │   │   │   ├── customerController.ts
 │   │   │   ├── dealController.ts
 │   │   │   ├── taskController.ts
-│   │   │   └── dashboardController.ts
-│   │   ├── middleware/        # Authentication
-│   │   │   └── auth.ts
-│   │   ├── models/            # Mongoose schemas
-│   │   │   ├── User.ts
-│   │   │   ├── Customer.ts
-│   │   │   ├── Deal.ts
-│   │   │   └── Task.ts
-│   │   ├── routes/            # API endpoints
-│   │   │   ├── authRoutes.ts
-│   │   │   ├── customerRoutes.ts
-│   │   │   ├── dealRoutes.ts
-│   │   │   ├── taskRoutes.ts
-│   │   │   └── dashboardRoutes.ts
-│   │   ├── types/             # TypeScript types
-│   │   └── server.ts          # Entry point
-│   ├── .env                   # Environment variables
-│   ├── package.json
-│   └── tsconfig.json
+│   │   │   ├── dashboardController.ts
+│   │   │   ├── aiController.ts
+│   │   │   ├── notificationController.ts
+│   │   │   ├── documentController.ts
+│   │   │   ├── emailController.ts
+│   │   │   ├── workflowController.ts
+│   │   │   └── ...
+│   │   ├── middleware/
+│   │   │   └── auth.ts            # Clerk JWT verification
+│   │   ├── routes/                # Route definitions
+│   │   ├── lib/
+│   │   │   ├── prisma.ts          # Prisma client
+│   │   │   └── email.ts           # Resend integration
+│   │   ├── types/
+│   │   └── server.ts              # Entry point + Socket.IO
+│   └── uploads/                   # File upload storage
 │
-├── frontend/                   # React Frontend
+├── frontend/
 │   ├── src/
-│   │   ├── components/        # Reusable components
-│   │   │   ├── Layout.tsx
-│   │   │   ├── ProtectedRoute.tsx
-│   │   │   ├── Loading.tsx
-│   │   │   └── StatCard.tsx
-│   │   ├── context/           # React Context
-│   │   │   └── AuthContext.tsx
-│   │   ├── pages/             # Page components
-│   │   │   ├── Login.tsx
-│   │   │   ├── Register.tsx
-│   │   │   ├── Dashboard.tsx
-│   │   │   ├── Customers.tsx
-│   │   │   ├── Deals.tsx
-│   │   │   └── Tasks.tsx
-│   │   ├── services/          # API integration
-│   │   │   ├── api.ts
-│   │   │   ├── authService.ts
-│   │   │   ├── customerService.ts
-│   │   │   ├── dealService.ts
-│   │   │   ├── taskService.ts
-│   │   │   └── dashboardService.ts
-│   │   ├── types/             # TypeScript interfaces
-│   │   ├── App.tsx            # Main app component
-│   │   ├── main.tsx           # Entry point
-│   │   └── index.css          # Global styles
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tailwind.config.js
-│   └── tsconfig.json
+│   │   ├── app/                   # Next.js App Router pages
+│   │   │   ├── dashboard/
+│   │   │   │   ├── page.tsx       # Main dashboard
+│   │   │   │   ├── customers/     # Customer management
+│   │   │   │   ├── deals/         # Deal pipeline
+│   │   │   │   ├── tasks/         # Task management
+│   │   │   │   ├── calendar/      # Meeting calendar
+│   │   │   │   ├── documents/     # File management
+│   │   │   │   ├── emails/        # Email templates
+│   │   │   │   ├── analytics/     # Analytics & reports
+│   │   │   │   ├── notifications/ # Notification center
+│   │   │   │   ├── settings/      # User preferences
+│   │   │   │   └── admin/         # Admin panel
+│   │   │   ├── sign-in/
+│   │   │   └── sign-up/
+│   │   ├── components/
+│   │   │   ├── ui/                # Shared UI primitives
+│   │   │   ├── ai/                # AI insight components
+│   │   │   ├── deals/             # Deal-specific components
+│   │   │   ├── tasks/             # Task-specific components
+│   │   │   ├── activity/          # Activity timeline
+│   │   │   ├── documents/         # File upload
+│   │   │   ├── email/             # Email compose
+│   │   │   ├── notifications/     # Notification dropdown
+│   │   │   └── search/            # Global search
+│   │   ├── lib/
+│   │   │   ├── api.ts             # Typed API client
+│   │   │   ├── types.ts           # Shared TypeScript types
+│   │   │   ├── hooks.ts           # Custom hooks & formatters
+│   │   │   └── stores.ts          # Zustand stores
+│   │   └── i18n/                  # Internationalization
+│   │       ├── index.ts
+│   │       └── messages/
+│   │           ├── en.json
+│   │           └── ar.json
+│   └── public/
 │
-├── README.md                   # This file
-├── SETUP_GUIDE.md             # Detailed setup instructions
-├── ARCHITECTURE_EXPLAINED.md  # Architecture deep dive
-└── .gitignore
+├── README.md
+├── SETUP_GUIDE.md
+├── ARCHITECTURE_EXPLAINED.md
+├── QUICK_START.md
+└── TROUBLESHOOTING.md
 ```
 
-## 🎯 Learning Outcomes
+---
 
-This project demonstrates mastery of:
+## API Reference
 
-### Full-Stack Development
-- ✅ Building RESTful APIs with Express
-- ✅ Frontend-Backend integration
-- ✅ Authentication & Authorization
-- ✅ Database design and relationships
-
-### TypeScript
-- ✅ Type-safe code in both frontend and backend
-- ✅ Interfaces and type definitions
-- ✅ Generic types and utility types
-
-### React Ecosystem
-- ✅ Modern React with Hooks
-- ✅ Context API for state management
-- ✅ React Router for navigation
-- ✅ Component composition patterns
-
-### Database & Backend
-- ✅ MongoDB schema design
-- ✅ Mongoose ODM usage
-- ✅ Data validation and relationships
-- ✅ Aggregation pipelines
-
-### Security
-- ✅ JWT token authentication
-- ✅ Password hashing with bcrypt
-- ✅ Protected API routes
-- ✅ Input validation
-
-### DevOps & Tools
-- ✅ Environment variables management
-- ✅ Git version control
-- ✅ Modern build tools (Vite)
-- ✅ Package management
-
-## 📚 Documentation
-
-- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Step-by-step installation guide
-- **[ARCHITECTURE_EXPLAINED.md](ARCHITECTURE_EXPLAINED.md)** - In-depth architecture explanation
-
-## 🔗 API Endpoints
+All endpoints are prefixed with `/api` and require a valid Clerk JWT token via `Authorization: Bearer <token>` header.
 
 ### Authentication
 ```
-POST   /api/auth/register    - Register new user
-POST   /api/auth/login       - Login user
-GET    /api/auth/me          - Get current user
+POST   /api/auth/register         Register / sync user from Clerk
+GET    /api/auth/me               Get current user profile
 ```
 
 ### Customers
 ```
-GET    /api/customers        - Get all customers
-GET    /api/customers/:id    - Get single customer
-POST   /api/customers        - Create customer
-PUT    /api/customers/:id    - Update customer
-DELETE /api/customers/:id    - Delete customer
+GET    /api/customers             List customers (paginated, filterable)
+GET    /api/customers/:id         Get customer details
+POST   /api/customers             Create customer
+PUT    /api/customers/:id         Update customer
+DELETE /api/customers/:id         Delete customer
 ```
 
 ### Deals
 ```
-GET    /api/deals           - Get all deals
-GET    /api/deals/:id       - Get single deal
-POST   /api/deals           - Create deal
-PUT    /api/deals/:id       - Update deal
-DELETE /api/deals/:id       - Delete deal
-GET    /api/deals/stats     - Get deal statistics
+GET    /api/deals                 List deals (paginated, filterable)
+GET    /api/deals/:id             Get deal details
+POST   /api/deals                 Create deal
+PUT    /api/deals/:id             Update deal
+DELETE /api/deals/:id             Delete deal
 ```
 
 ### Tasks
 ```
-GET    /api/tasks           - Get all tasks
-GET    /api/tasks/:id       - Get single task
-POST   /api/tasks           - Create task
-PUT    /api/tasks/:id       - Update task
-DELETE /api/tasks/:id       - Delete task
+GET    /api/tasks                 List tasks (paginated, filterable)
+POST   /api/tasks                 Create task
+PUT    /api/tasks/:id             Update task
+DELETE /api/tasks/:id             Delete task
 ```
 
-### Dashboard
+### Dashboard & Analytics
 ```
-GET    /api/dashboard/stats      - Get dashboard statistics
-GET    /api/dashboard/activities - Get recent activities
+GET    /api/dashboard/stats       Dashboard statistics & monthly data
+GET    /api/dashboard/activities  Recent activities feed
 ```
 
-## 🚀 Deployment
+### Notifications
+```
+GET    /api/notifications         List notifications
+POST   /api/notifications/mark-all-read    Mark all as read
+PATCH  /api/notifications/:id/read         Mark one as read
+DELETE /api/notifications/:id              Delete notification
+```
 
-### Backend (Heroku/Railway/Render)
-1. Set environment variables
-2. Push to deployment platform
-3. Ensure MongoDB connection
+### Additional Endpoints
+```
+/api/documents       Document upload & management
+/api/emails          Email template CRUD
+/api/meetings        Meeting scheduling
+/api/notes           Note management
+/api/activities      Activity timeline
+/api/admin/*         Admin user & settings management
+/api/ai/*            AI insights & chat
+/api/search          Global search
+/api/export          CSV export
+/api/bulk/*          Bulk operations
+/api/webhooks        Webhook management
+/api/workflows       Workflow automation
+/api/reports         Report generation
+```
 
-### Frontend (Vercel/Netlify)
-1. Build: `npm run build`
-2. Deploy `dist` folder
-3. Set API base URL
+---
 
-## 🤝 Contributing
+## Scripts
 
-This is a portfolio project, but suggestions and feedback are welcome!
+### Backend
+```bash
+npm run dev          # Start with ts-node-dev (hot reload)
+npm run build        # Compile TypeScript
+npm start            # Run compiled output
+npm test             # Run Jest test suite
+```
 
-## 📄 License
+### Frontend
+```bash
+npm run dev          # Start Next.js dev server
+npm run build        # Production build
+npm start            # Start production server
+npm test             # Run Jest + RTL tests
+npm run lint         # ESLint check
+```
 
-MIT License - feel free to use this project for learning purposes
+---
 
-## 📧 Contact
+## Deployment
 
-Created as a portfolio project to demonstrate full-stack development skills
+### Backend — Railway / Render / Fly.io
+1. Set all environment variables from `.env.example`
+2. Build command: `npm run build`
+3. Start command: `npm start`
+4. Ensure PostgreSQL connection (Neon recommended for serverless)
+
+### Frontend — Vercel
+1. Connect GitHub repository
+2. Framework preset: **Next.js**
+3. Set environment variables
+4. Install command: `npm install --legacy-peer-deps`
+5. Deploy
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
 <div align="center">
-  
-**⭐ If you found this project helpful, please consider giving it a star! ⭐**
 
-Built with ❤️ using React, TypeScript, Node.js, and MongoDB
+Built with TypeScript, Next.js, PostgreSQL, and Prisma
 
 </div>

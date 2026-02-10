@@ -44,7 +44,6 @@ import { formatDate } from "@/lib/hooks";
 
 interface Customer {
   id: string;
-  _id: string;
   name: string;
   email: string;
   phone?: string;
@@ -141,7 +140,7 @@ export default function CustomersPage() {
     try {
       const token = await getToken();
       const url = isEditing
-        ? `${process.env.NEXT_PUBLIC_API_URL}/customers/${selectedCustomer?.id || selectedCustomer?._id}`
+        ? `${process.env.NEXT_PUBLIC_API_URL}/customers/${selectedCustomer?.id}`
         : `${process.env.NEXT_PUBLIC_API_URL}/customers`;
       
       const response = await fetch(url, {
@@ -276,7 +275,7 @@ export default function CustomersPage() {
             <TableBody>
               {filteredCustomers.map((customer, index) => (
                 <TableRow
-                  key={customer.id || customer._id}
+                  key={customer.id}
                   className={`animate-slide-up`}
                   style={{ animationDelay: `${index * 0.03}s` }}
                 >
@@ -328,7 +327,7 @@ export default function CustomersPage() {
                         {
                           label: "Delete",
                           icon: <Trash2 className="w-4 h-4" />,
-                          onClick: () => handleDelete(customer.id || customer._id),
+                          onClick: () => handleDelete(customer.id),
                           danger: true,
                         },
                       ]}
@@ -480,7 +479,7 @@ export default function CustomersPage() {
                 variant="danger"
                 onClick={() => {
                   setShowViewModal(false);
-                  handleDelete(selectedCustomer.id || selectedCustomer._id);
+                  handleDelete(selectedCustomer.id);
                 }}
                 className="flex-1"
                 icon={<Trash2 className="w-4 h-4" />}

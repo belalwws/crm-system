@@ -123,8 +123,8 @@ export default function SettingsPage() {
       api.setToken(token);
       const res = await api.updateProfile({
         name: profileForm.name,
-        company: profileForm.company || null,
-        phone: profileForm.phone || null,
+        company: profileForm.company || undefined,
+        phone: profileForm.phone || undefined,
         timezone: profileForm.timezone,
       });
       if (res.success) {

@@ -1,19 +1,10 @@
 import { create } from 'zustand';
 import { api } from './api';
+import type { Notification, DashboardStats } from './types';
 
 // ===========================
 // Notification Store
 // ===========================
-interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  link?: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
 interface NotificationStore {
   notifications: Notification[];
   unreadCount: number;
@@ -81,15 +72,6 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
 // ===========================
 // Dashboard Stats Store
 // ===========================
-interface DashboardStats {
-  totalCustomers: number;
-  totalDeals: number;
-  totalTasks: number;
-  revenue: number;
-  dealsByStage: any[];
-  recentActivities: any[];
-}
-
 interface DashboardStore {
   stats: DashboardStats | null;
   isLoading: boolean;
