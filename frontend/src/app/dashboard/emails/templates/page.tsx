@@ -35,7 +35,7 @@ export default function EmailTemplatesPage() {
       );
       if (res.ok) {
         const data = await res.json();
-        setTemplates(data);
+        setTemplates(Array.isArray(data) ? data : (data.data || []));
       }
     } catch (error) {
       console.error('Failed to fetch templates:', error);

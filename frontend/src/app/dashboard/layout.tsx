@@ -180,7 +180,6 @@ export default function DashboardLayout({
         <div className="p-3 border-t border-neutral-200 dark:border-neutral-800">
           <div className="flex items-center gap-3 px-3 py-2">
             <UserButton
-              afterSignOutUrl="/"
               appearance={{
                 elements: {
                   avatarBox: "w-8 h-8",

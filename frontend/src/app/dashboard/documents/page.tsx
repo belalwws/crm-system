@@ -65,7 +65,7 @@ export default function DocumentsPage() {
       );
       if (res.ok) {
         const data = await res.json();
-        setDocuments(data);
+        setDocuments(Array.isArray(data) ? data : (data.data || []));
       }
     } catch (error) {
       console.error('Failed to fetch documents:', error);

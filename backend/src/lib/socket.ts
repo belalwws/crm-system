@@ -1,7 +1,9 @@
 import { Server as HTTPServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import jwt, { Secret } from 'jsonwebtoken';
+import { verifyToken } from '@clerk/backend';
 import logger from './logger';
+import prisma from './prisma';
 
 let io: Server | null = null;
 
@@ -29,23 +31,65 @@ export const initializeSocket = (httpServer: HTTPServer): Server => {
     pingTimeout: 10000,
   });
 
-  // Authenticate socket connections
-  io.use((socket: Socket, next) => {
+  // Authenticate socket connections (supports both Clerk and local JWT)
+  io.use(async (socket: Socket, next) => {
     const token = socket.handshake.auth?.token || socket.handshake.query?.token;
     if (!token) {
       return next(new Error('Authentication required'));
     }
 
     try {
-      const secret = process.env.JWT_SECRET;
-      if (!secret) {
-        return next(new Error('Server configuration error'));
+      // Peek at token to determine type
+      const decoded = jwt.decode(token as string, { complete: true }) as any;
+      if (!decoded || !decoded.payload) {
+        return next(new Error('Invalid token format'));
       }
-      const decoded = jwt.verify(token as string, secret as Secret) as { id: string; email: string };
-      (socket as any).userId = decoded.id;
-      (socket as any).userEmail = decoded.email;
-      next();
-    } catch {
+
+      const payload = decoded.payload;
+      const isClerkToken = payload.sub && (payload.azp || payload.iss?.includes('clerk'));
+
+      if (isClerkToken) {
+        // Clerk token verification
+        const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+        if (!clerkSecretKey) {
+          return next(new Error('Server configuration error'));
+        }
+        const verifiedPayload = await verifyToken(token as string, { secretKey: clerkSecretKey });
+        const clerkUserId = verifiedPayload.sub;
+
+        // Look up or auto-create user
+        let user = await prisma.user.findFirst({
+          where: { id: clerkUserId },
+          select: { id: true, email: true },
+        });
+
+        if (!user) {
+          // Try by email from Clerk payload
+          const email = (verifiedPayload as any).email ||
+            (verifiedPayload as any).primary_email_address ||
+            `${clerkUserId}@clerk.user`;
+          user = await prisma.user.findFirst({
+            where: { email },
+            select: { id: true, email: true },
+          });
+        }
+
+        (socket as any).userId = user?.id || clerkUserId;
+        (socket as any).userEmail = user?.email || 'unknown';
+        next();
+      } else {
+        // Local JWT verification
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+          return next(new Error('Server configuration error'));
+        }
+        const verified = jwt.verify(token as string, secret as Secret) as { id: string; email: string };
+        (socket as any).userId = verified.id;
+        (socket as any).userEmail = verified.email;
+        next();
+      }
+    } catch (err: any) {
+      logger.warn(`Socket auth failed: ${err.message}`);
       next(new Error('Invalid token'));
     }
   });
