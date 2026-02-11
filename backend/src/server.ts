@@ -59,7 +59,41 @@ import customFieldRoutes from './routes/customFieldRoutes';
 // Initialize express app
 const app = express();
 
-// Security: Helmet for HTTP headers
+// ── CORS must be the FIRST middleware ─────────────────────────────
+// Build allowed origins from env + hardcoded production URL
+const envOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
+// Always include the Vercel production URL as a safety net
+const PRODUCTION_FRONTEND = 'https://crm-system-weld.vercel.app';
+const allowedOrigins = [...new Set([...envOrigins, PRODUCTION_FRONTEND])];
+
+logger.info(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (mobile apps, curl, server-to-server, health checks)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // Don't throw — just reject silently so the response still gets basic headers
+    logger.warn(`CORS blocked origin: ${origin}`);
+    callback(null, false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+};
+
+// Handle preflight OPTIONS for all routes FIRST
+app.options('*', cors(corsOptions));
+// Then apply CORS to all other requests
+app.use(cors(corsOptions));
+
+// Security: Helmet for HTTP headers (AFTER cors so CORS headers are set first)
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin for uploads
 }));
@@ -109,26 +143,6 @@ const sensitiveLimiter = rateLimit({
 app.use('/api/profile/change-password', sensitiveLimiter);
 app.use('/api/bulk/', sensitiveLimiter);
 app.use('/api/admin/', sensitiveLimiter);
-
-// CORS configuration - supports comma-separated origins in FRONTEND_URL
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
-  .split(',')
-  .map(o => o.trim());
-
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Allow requests with no origin (mobile apps, curl, server-to-server)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    callback(new Error(`CORS: Origin ${origin} not allowed`));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-};
-app.use(cors(corsOptions));
 
 // Cookie parser (required for CSRF)
 const csrfSecret = process.env.CSRF_SECRET || process.env.JWT_SECRET;

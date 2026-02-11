@@ -12,9 +12,12 @@ const userSockets = new Map<string, Set<string>>();
  * Initialize Socket.IO server
  */
 export const initializeSocket = (httpServer: HTTPServer): Server => {
-  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  const envOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
     .split(',')
-    .map(o => o.trim());
+    .map(o => o.trim())
+    .filter(Boolean);
+  const PRODUCTION_FRONTEND = 'https://crm-system-weld.vercel.app';
+  const allowedOrigins = [...new Set([...envOrigins, PRODUCTION_FRONTEND])];
 
   io = new Server(httpServer, {
     cors: {
