@@ -12,9 +12,13 @@ const userSockets = new Map<string, Set<string>>();
  * Initialize Socket.IO server
  */
 export const initializeSocket = (httpServer: HTTPServer): Server => {
+  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map(o => o.trim());
+
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+      origin: allowedOrigins,
       methods: ['GET', 'POST'],
       credentials: true,
     },
