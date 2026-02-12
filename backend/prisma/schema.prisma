@@ -57,6 +57,8 @@ model User {
   teamMemberships    TeamMember[]
   customFields       CustomField[]
   chatSessions       ChatSession[]
+  subscription       Subscription?
+  pushTokens         PushToken[]
 
   @@map("users")
 }
@@ -953,4 +955,93 @@ model ChatMessage {
   @@index([sessionId])
   @@index([sessionId, createdAt])
   @@map("chat_messages")
+}
+
+// =============================================
+// Subscription Model - الاشتراكات (Stripe)
+// =============================================
+model Subscription {
+  id                  String             @id @default(cuid())
+  userId              String             @unique
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                PlanTier           @default(FREE)
+  status              SubscriptionStatus @default(TRIALING)
+  stripeCustomerId    String?            @unique
+  stripeSubscriptionId String?           @unique
+  stripePriceId       String?
+  currentPeriodStart  DateTime?
+  currentPeriodEnd    DateTime?
+  trialStart          DateTime?          @default(now())
+  trialEnd            DateTime?
+  cancelAtPeriodEnd   Boolean            @default(false)
+  canceledAt          DateTime?
+  // Usage tracking
+  customersUsed       Int                @default(0)
+  dealsUsed           Int                @default(0)
+  usersUsed           Int                @default(1)
+  storageUsedMB       Int                @default(0)
+  aiRequestsUsed      Int                @default(0)
+  aiRequestsResetAt   DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([stripeCustomerId])
+  @@index([status])
+  @@index([plan])
+  @@index([trialEnd])
+  @@map("subscriptions")
+}
+
+enum PlanTier {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  PAUSED
+}
+
+// =============================================
+// Push Token Model - توكنات الإشعارات (Mobile)
+// =============================================
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String   // "ios" | "android" | "web"
+  deviceName String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([token])
+  @@map("push_tokens")
+}
+
+// =============================================
+// Push Notification Log - سجل الاشعارات المرسلة
+// =============================================
+model PushNotificationLog {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  data      Json?
+  target    String   // "all" | "plan:STARTER" | "user:userId" | "platform:ios"
+  sentBy    String   // admin userId
+  sentCount Int      @default(0)
+  failCount Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([sentBy])
+  @@index([createdAt])
+  @@map("push_notification_logs")
 }

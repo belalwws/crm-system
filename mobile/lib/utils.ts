@@ -1,5 +1,5 @@
 import { useColorScheme } from 'react-native';
-import { Colors } from './theme';
+import { Colors, SemanticColors } from './theme';
 import { useAppStore } from './store';
 
 export function useThemeColors() {
@@ -16,6 +16,31 @@ export function useIsDark() {
   const systemScheme = useColorScheme();
   const themeSetting = useAppStore((s) => s.theme);
   return themeSetting === 'dark' || (themeSetting === 'system' && systemScheme === 'dark');
+}
+
+// Get semantic badge colors (dot, text, bg) matching frontend StatusBadge
+export function useStageBadge(stage: string) {
+  const isDark = useIsDark();
+  const mode = isDark ? 'dark' : 'light';
+  const s = SemanticColors.stage[stage as keyof typeof SemanticColors.stage];
+  if (!s) return { dot: '#737373', text: isDark ? '#a3a3a3' : '#525252', bg: isDark ? 'rgba(38,38,38,0.5)' : '#f5f5f5' };
+  return { dot: s.dot, text: s.text[mode], bg: s.bg[mode] };
+}
+
+export function useStatusBadge(status: string) {
+  const isDark = useIsDark();
+  const mode = isDark ? 'dark' : 'light';
+  const s = SemanticColors.status[status as keyof typeof SemanticColors.status];
+  if (!s) return { dot: '#737373', text: isDark ? '#a3a3a3' : '#525252', bg: isDark ? 'rgba(38,38,38,0.5)' : '#f5f5f5' };
+  return { dot: s.dot, text: s.text[mode], bg: s.bg[mode] };
+}
+
+export function usePriorityBadge(priority: string) {
+  const isDark = useIsDark();
+  const mode = isDark ? 'dark' : 'light';
+  const s = SemanticColors.priority[priority as keyof typeof SemanticColors.priority];
+  if (!s) return { dot: '#737373', text: isDark ? '#a3a3a3' : '#525252', bg: isDark ? 'rgba(38,38,38,0.5)' : '#f5f5f5' };
+  return { dot: s.dot, text: s.text[mode], bg: s.bg[mode] };
 }
 
 // Format currency
@@ -50,41 +75,44 @@ export function formatDate(dateString: string): string {
   });
 }
 
-// Stage colors
+// Stage dot colors
 export function getStageColor(stage: string): string {
   const map: Record<string, string> = {
-    LEAD: '#6366f1',
+    LEAD: '#3b82f6',
     QUALIFIED: '#3b82f6',
     PROPOSAL: '#f59e0b',
     NEGOTIATION: '#f97316',
-    CLOSED_WON: '#22c55e',
+    CLOSED_WON: '#10b981',
     CLOSED_LOST: '#ef4444',
   };
-  return map[stage] || '#94a3b8';
+  return map[stage] || '#737373';
 }
 
-// Priority colors
+// Priority dot colors
 export function getPriorityColor(priority: string): string {
   const map: Record<string, string> = {
     HIGH: '#ef4444',
+    URGENT: '#ef4444',
     MEDIUM: '#f59e0b',
     LOW: '#22c55e',
   };
-  return map[priority] || '#94a3b8';
+  return map[priority] || '#737373';
 }
 
-// Status colors
+// Status dot colors
 export function getStatusColor(status: string): string {
   const map: Record<string, string> = {
     PENDING: '#f59e0b',
     IN_PROGRESS: '#3b82f6',
-    COMPLETED: '#22c55e',
-    CANCELLED: '#94a3b8',
-    ACTIVE: '#22c55e',
-    INACTIVE: '#94a3b8',
-    LEAD: '#6366f1',
+    TODO: '#3b82f6',
+    COMPLETED: '#10b981',
+    CANCELLED: '#737373',
+    ACTIVE: '#10b981',
+    INACTIVE: '#737373',
+    LEAD: '#3b82f6',
+    PROSPECT: '#3b82f6',
   };
-  return map[status] || '#94a3b8';
+  return map[status] || '#737373';
 }
 
 // Truncate

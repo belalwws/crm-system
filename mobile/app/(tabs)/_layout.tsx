@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/lib/utils';
-import { FontSize } from '@/lib/theme';
+import { FontSize, FontWeight } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { View, Text } from 'react-native';
 
@@ -30,17 +30,26 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.tabBar,
           borderTopColor: colors.tabBarBorder,
+          borderTopWidth: 1,
           height: 85,
           paddingBottom: 25,
           paddingTop: 8,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         tabBarActiveTintColor: colors.tabBarActive,
         tabBarInactiveTintColor: colors.tabBarInactive,
-        tabBarLabelStyle: { fontSize: FontSize.xs, fontWeight: '500' },
-        headerStyle: { backgroundColor: colors.background },
+        tabBarLabelStyle: { fontSize: FontSize.xs, fontWeight: FontWeight.medium },
+        headerStyle: {
+          backgroundColor: colors.card,
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        },
         headerTintColor: colors.text,
         headerShadowVisible: false,
-        headerTitleStyle: { fontWeight: '700', fontSize: FontSize.lg },
+        headerTitleStyle: { fontWeight: FontWeight.semibold, fontSize: FontSize.lg },
       }}
     >
       <Tabs.Screen

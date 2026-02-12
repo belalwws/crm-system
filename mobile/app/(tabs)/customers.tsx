@@ -4,15 +4,16 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
-import { useThemeColors, formatCurrency, timeAgo, getStatusColor, truncate } from '@/lib/utils';
-import { SearchBar, FAB, Badge, Card, Avatar, EmptyState, LoadingScreen, Chip } from '@/components/ui';
-import { FontSize, Spacing, BorderRadius } from '@/lib/theme';
+import { useThemeColors, formatCurrency, getStatusColor, truncate, useIsDark } from '@/lib/utils';
+import { SearchBar, FAB, StatusBadge, Avatar, EmptyState, LoadingScreen, Chip } from '@/components/ui';
+import { FontSize, Spacing, BorderRadius, FontWeight, SemanticColors } from '@/lib/theme';
 import type { Customer } from '@/lib/types';
 
 const STATUSES = ['ALL', 'LEAD', 'PROSPECT', 'ACTIVE', 'INACTIVE'];
 
 export default function CustomersScreen() {
   const colors = useThemeColors();
+  const isDark = useIsDark();
   const { getToken } = useAuth();
   const router = useRouter();
 
@@ -53,88 +54,98 @@ export default function CustomersScreen() {
     fetchCustomers();
   }, [fetchCustomers]);
 
-  const statusColors: Record<string, string> = {
-    LEAD: '#f59e0b',
-    PROSPECT: '#3b82f6',
-    ACTIVE: '#22c55e',
-    INACTIVE: '#6b7280',
+  const getBadgeColors = (status: string) => {
+    const mode = isDark ? 'dark' : 'light';
+    const s = SemanticColors.status[status as keyof typeof SemanticColors.status];
+    if (!s) return { dot: '#737373', text: isDark ? '#a3a3a3' : '#525252', bg: isDark ? 'rgba(38,38,38,0.5)' : '#f5f5f5' };
+    return { dot: s.dot, text: s.text[mode], bg: s.bg[mode] };
   };
 
-  const renderCustomer = ({ item }: { item: Customer }) => (
-    <TouchableOpacity
-      onPress={() => router.push(`/customer/${item.id}`)}
-      activeOpacity={0.7}
-      style={{
-        backgroundColor: colors.card,
-        borderRadius: BorderRadius.lg,
-        padding: Spacing.lg,
-        marginBottom: Spacing.md,
-        borderWidth: 1,
-        borderColor: colors.border,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Avatar name={item.name} size={48} color={statusColors[item.status] || colors.primary} />
-        <View style={{ flex: 1, marginLeft: Spacing.md }}>
-          <Text style={{ fontSize: FontSize.lg, fontWeight: '600', color: colors.text }} numberOfLines={1}>
-            {item.name}
-          </Text>
-          {item.company && (
-            <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, marginTop: 2 }} numberOfLines={1}>
-              {item.company}
+  const renderCustomer = ({ item }: { item: Customer }) => {
+    const badge = getBadgeColors(item.status);
+    return (
+      <TouchableOpacity
+        onPress={() => router.push(`/customer/${item.id}`)}
+        activeOpacity={0.7}
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: BorderRadius.lg,
+          padding: Spacing.lg,
+          marginBottom: Spacing.md,
+          borderWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Avatar name={item.name} size={44} />
+          <View style={{ flex: 1, marginLeft: Spacing.md }}>
+            <Text style={{ fontSize: FontSize.base, fontWeight: FontWeight.medium, color: colors.text }} numberOfLines={1}>
+              {item.name}
             </Text>
-          )}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 }}>
-            {item.email && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Ionicons name="mail-outline" size={12} color={colors.textSecondary} />
-                <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }} numberOfLines={1}>
-                  {truncate(item.email, 24)}
-                </Text>
-              </View>
-            )}
-            {item.phone && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Ionicons name="call-outline" size={12} color={colors.textSecondary} />
-                <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
-                  {item.phone}
-                </Text>
-              </View>
+            {item.company && (
+              <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, marginTop: 2 }} numberOfLines={1}>
+                {item.company}
+              </Text>
             )}
           </View>
+          <StatusBadge
+            label={item.status}
+            dotColor={badge.dot}
+            textColor={badge.text}
+            bgColor={badge.bg}
+          />
         </View>
-        <Badge label={item.status} color={statusColors[item.status] || '#6b7280'} />
-      </View>
 
-      {/* Quick stats row */}
-      <View style={{ flexDirection: 'row', marginTop: Spacing.md, gap: Spacing.lg }}>
-        {item._count && (
-          <>
+        {/* Contact info */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.md, gap: 12 }}>
+          {item.email && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Ionicons name="briefcase-outline" size={14} color={colors.textSecondary} />
-              <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
-                {item._count.deals || 0} deals
+              <Ionicons name="mail-outline" size={12} color={colors.textTertiary} />
+              <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }} numberOfLines={1}>
+                {truncate(item.email, 24)}
               </Text>
             </View>
+          )}
+          {item.phone && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Ionicons name="document-text-outline" size={14} color={colors.textSecondary} />
+              <Ionicons name="call-outline" size={12} color={colors.textTertiary} />
               <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
-                {item._count.notes || 0} notes
+                {item.phone}
               </Text>
             </View>
-          </>
-        )}
-        {item.totalValue !== undefined && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Ionicons name="cash-outline" size={14} color={colors.textSecondary} />
-            <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
-              {formatCurrency(item.totalValue)}
-            </Text>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+          )}
+        </View>
+
+        {/* Quick stats */}
+        <View style={{ flexDirection: 'row', marginTop: Spacing.md, gap: Spacing.lg }}>
+          {item._count && (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ionicons name="briefcase-outline" size={13} color={colors.textTertiary} />
+                <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
+                  {item._count.deals || 0} deals
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ionicons name="document-text-outline" size={13} color={colors.textTertiary} />
+                <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
+                  {item._count.notes || 0} notes
+                </Text>
+              </View>
+            </>
+          )}
+          {item.totalValue !== undefined && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Ionicons name="cash-outline" size={13} color={colors.textTertiary} />
+              <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
+                {formatCurrency(item.totalValue)}
+              </Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) return <LoadingScreen />;
 
@@ -157,7 +168,6 @@ export default function CustomersScreen() {
               label={item}
               active={statusFilter === item}
               onPress={() => setStatusFilter(item)}
-              color={item === 'ALL' ? colors.primary : statusColors[item]}
             />
           )}
         />
@@ -168,9 +178,9 @@ export default function CustomersScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderCustomer}
         contentContainerStyle={{ padding: Spacing.lg, paddingTop: 0 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />}
         ListEmptyComponent={
-          <EmptyState icon="people" title="No customers found" message="Add your first customer to get started" />
+          <EmptyState icon="people" title="No customers found" description="Add your first customer to get started" />
         }
       />
 

@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, RefreshControl, Dimensions } from 'react-native';
+import { View, Text, ScrollView, RefreshControl } from 'react-native';
 import { useAuth, useUser } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
 import { useAppStore } from '@/lib/store';
-import { useThemeColors, formatCurrency, timeAgo, getStageColor, getStatusColor } from '@/lib/utils';
-import { StatCard, Card, Section, Badge, Avatar, LoadingScreen, ListItem } from '@/components/ui';
-import { FontSize, Spacing, BorderRadius } from '@/lib/theme';
+import { useThemeColors, formatCurrency, getStageColor, getStatusColor } from '@/lib/utils';
+import { StatCard, Card, Section, StatusBadge, Avatar, LoadingScreen, ListItem, ProgressBar } from '@/components/ui';
+import { FontSize, Spacing, BorderRadius, FontWeight, AccentColors, SemanticColors } from '@/lib/theme';
 import type { DashboardStats, Deal, Task } from '@/lib/types';
 
 export default function DashboardScreen() {
@@ -69,12 +69,12 @@ export default function DashboardScreen() {
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ padding: Spacing.lg, paddingBottom: 100 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />}
     >
       {/* Greeting */}
-      <View style={{ marginBottom: Spacing.xl }}>
-        <Text style={{ fontSize: FontSize.xxl, fontWeight: '800', color: colors.text }}>
-          Hello, {user?.firstName || 'there'} 👋
+      <View style={{ marginBottom: Spacing.xxl }}>
+        <Text style={{ fontSize: FontSize.xxl, fontWeight: FontWeight.semibold, color: colors.text }}>
+          Hello, {user?.firstName || 'there'}
         </Text>
         <Text style={{ fontSize: FontSize.md, color: colors.textSecondary, marginTop: 4 }}>
           Here's your business overview
@@ -82,45 +82,45 @@ export default function DashboardScreen() {
       </View>
 
       {/* Stats Grid */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.lg }}>
         <StatCard
           title="Customers"
           value={stats?.totalCustomers || 0}
           icon="people"
-          color="#6366f1"
+          color={AccentColors.indigo}
           onPress={() => router.push('/(tabs)/customers')}
         />
         <StatCard
           title="Deals"
           value={stats?.totalDeals || 0}
           icon="trending-up"
-          color="#3b82f6"
+          color={AccentColors.blue}
           onPress={() => router.push('/(tabs)/deals')}
         />
         <StatCard
           title="Revenue"
           value={formatCurrency(stats?.revenue || 0)}
           icon="cash"
-          color="#22c55e"
+          color={AccentColors.emerald}
         />
         <StatCard
           title="Pipeline"
           value={formatCurrency(stats?.pipelineValue || 0)}
           icon="analytics"
-          color="#f59e0b"
+          color={AccentColors.amber}
         />
         <StatCard
           title="Tasks"
           value={stats?.totalTasks || 0}
           icon="checkmark-circle"
-          color="#06b6d4"
+          color={AccentColors.cyan}
           onPress={() => router.push('/(tabs)/tasks')}
         />
         <StatCard
           title="Pending"
           value={stats?.pendingTasks || 0}
           icon="time"
-          color="#ef4444"
+          color={AccentColors.red}
         />
       </View>
 
@@ -133,25 +133,25 @@ export default function DashboardScreen() {
                 key={s.stage}
                 style={{
                   flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                  paddingVertical: 10,
+                  paddingVertical: 12,
                   borderBottomWidth: i < stats.dealsByStage.length - 1 ? 1 : 0,
                   borderBottomColor: colors.border,
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <View style={{
-                    width: 10, height: 10, borderRadius: 5,
+                    width: 8, height: 8, borderRadius: 4,
                     backgroundColor: getStageColor(s.stage),
                   }} />
-                  <Text style={{ fontSize: FontSize.md, color: colors.text, fontWeight: '500' }}>
+                  <Text style={{ fontSize: FontSize.md, color: colors.text, fontWeight: FontWeight.medium }}>
                     {s.stage.replace('_', ' ')}
                   </Text>
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                   <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary }}>
                     {s.count} deals
                   </Text>
-                  <Text style={{ fontSize: FontSize.sm, fontWeight: '600', color: colors.text }}>
+                  <Text style={{ fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: colors.text }}>
                     {formatCurrency(s.value)}
                   </Text>
                 </View>
@@ -176,9 +176,13 @@ export default function DashboardScreen() {
               <ListItem
                 key={deal.id}
                 title={deal.title}
-                subtitle={`${deal.customer?.name || 'No customer'} • ${formatCurrency(deal.value)}`}
+                subtitle={`${deal.customer?.name || 'No customer'} · ${formatCurrency(deal.value)}`}
                 left={<Avatar name={deal.title} size={36} color={getStageColor(deal.stage)} />}
-                right={<Badge label={deal.stage.replace('_', ' ')} color={getStageColor(deal.stage)} />}
+                right={
+                  <Text style={{ fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: getStageColor(deal.stage) }}>
+                    {deal.stage.replace('_', ' ')}
+                  </Text>
+                }
                 onPress={() => router.push(`/deal/${deal.id}`)}
                 bottomBorder={i < recentDeals.length - 1}
               />
@@ -202,11 +206,11 @@ export default function DashboardScreen() {
               <ListItem
                 key={task.id}
                 title={task.title}
-                subtitle={`${task.priority} priority • ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}`}
+                subtitle={`${task.priority} priority · ${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}`}
                 left={
                   <View style={{
-                    width: 36, height: 36, borderRadius: 18,
-                    backgroundColor: getStatusColor(task.status) + '20',
+                    width: 36, height: 36, borderRadius: BorderRadius.md,
+                    backgroundColor: getStatusColor(task.status) + '15',
                     alignItems: 'center', justifyContent: 'center',
                   }}>
                     <Ionicons
@@ -216,7 +220,12 @@ export default function DashboardScreen() {
                     />
                   </View>
                 }
-                right={<Badge label={task.status.replace('_', ' ')} color={getStatusColor(task.status)} />}
+                right={
+                  <View style={{
+                    width: 8, height: 8, borderRadius: 4,
+                    backgroundColor: getStatusColor(task.status),
+                  }} />
+                }
                 onPress={() => router.push(`/task/${task.id}`)}
                 bottomBorder={i < recentTasks.length - 1}
               />

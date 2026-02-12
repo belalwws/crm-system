@@ -28,6 +28,7 @@ import {
   Receipt,
   UsersRound,
   SlidersHorizontal,
+  CreditCard,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { ToastProvider } from "@/components/ui/toast";
@@ -37,6 +38,7 @@ import { GlobalSearch } from "@/components/search/global-search";
 import { AIChatButton } from "@/components/ai/ai-chat";
 import ErrorBoundary from "@/components/error-boundary";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
+import { TrialBanner } from "@/components/billing/trial-banner";
 import api from "@/lib/api";
 
 const navigation = [
@@ -58,6 +60,7 @@ const navigation = [
   { name: "Audit Logs", href: "/dashboard/audit-logs", icon: Shield },
   { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { name: "Custom Fields", href: "/dashboard/custom-fields", icon: SlidersHorizontal },
+  { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -200,6 +203,9 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <div className="lg:pl-60">
+        {/* Trial Banner */}
+        <TrialBanner />
+
         {/* Top Header */}
         <header className="sticky top-0 z-30 h-14 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between px-4">
           {/* Mobile Menu Button */}

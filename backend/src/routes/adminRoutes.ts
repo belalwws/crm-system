@@ -15,6 +15,15 @@ import {
   getSystemSettings,
   updateSystemSettings,
 } from '../controllers/adminController';
+import {
+  getAdminDashboard,
+  getSubscriptions,
+  updateSubscription,
+  getSubscriptionStats,
+  getPushTokens,
+  sendPushNotification,
+  getPushNotificationHistory,
+} from '../controllers/adminExtendedController';
 
 const router = express.Router();
 
@@ -22,7 +31,10 @@ const router = express.Router();
 router.use(protect);
 router.use(requireRole('ADMIN'));
 
-// Platform stats
+// Enhanced dashboard
+router.get('/dashboard', getAdminDashboard);
+
+// Platform stats (legacy)
 router.get('/stats', getPlatformStats);
 
 // User management
@@ -35,6 +47,16 @@ router.delete('/users/:id', deleteUser);
 
 // Invite user
 router.post('/invite', validate(inviteUserSchema), inviteUser);
+
+// Subscription management
+router.get('/subscriptions/stats', getSubscriptionStats);
+router.get('/subscriptions', getSubscriptions);
+router.put('/subscriptions/:userId', updateSubscription);
+
+// Push notification management
+router.get('/push-tokens', getPushTokens);
+router.post('/notifications/push', sendPushNotification);
+router.get('/notifications/push/history', getPushNotificationHistory);
 
 // System settings
 router.get('/settings', getSystemSettings);

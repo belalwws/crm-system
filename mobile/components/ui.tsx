@@ -4,10 +4,41 @@ import {
   StyleSheet, ViewStyle, TextStyle, RefreshControl, FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useThemeColors } from '@/lib/utils';
-import { BorderRadius, FontSize, Spacing } from '@/lib/theme';
+import { useThemeColors, useIsDark } from '@/lib/utils';
+import { BorderRadius, FontSize, Spacing, FontWeight } from '@/lib/theme';
 
-// ── Badge ────────────────────────────────────────────────
+// ── StatusBadge (matches frontend StatusBadge with dot) ──
+interface StatusBadgeProps {
+  label: string;
+  dotColor: string;
+  textColor: string;
+  bgColor: string;
+  size?: 'sm' | 'md';
+}
+export function StatusBadge({ label, dotColor, textColor, bgColor, size = 'sm' }: StatusBadgeProps) {
+  return (
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: bgColor,
+      borderRadius: BorderRadius.full,
+      paddingHorizontal: size === 'sm' ? 8 : 12,
+      paddingVertical: size === 'sm' ? 3 : 5,
+      alignSelf: 'flex-start',
+    }}>
+      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: dotColor }} />
+      <Text style={{
+        fontSize: size === 'sm' ? FontSize.xs : FontSize.sm,
+        fontWeight: FontWeight.medium,
+        color: textColor,
+        textTransform: 'capitalize',
+      }}>{label}</Text>
+    </View>
+  );
+}
+
+// ── Badge (simple variant) ───────────────────────────────
 interface BadgeProps {
   label: string;
   color: string;
@@ -17,8 +48,8 @@ interface BadgeProps {
 export function Badge({ label, color, bgColor, size = 'sm' }: BadgeProps) {
   return (
     <View style={[styles.badge, {
-      backgroundColor: bgColor || color + '20',
-      paddingHorizontal: size === 'sm' ? 8 : 10,
+      backgroundColor: bgColor || color + '15',
+      paddingHorizontal: size === 'sm' ? 8 : 12,
       paddingVertical: size === 'sm' ? 2 : 4,
     }]}>
       <Text style={[styles.badgeText, {
@@ -39,8 +70,8 @@ export function Card({ children, style, onPress }: CardProps) {
   const colors = useThemeColors();
   const cardStyle: ViewStyle = {
     backgroundColor: colors.card,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,    // rounded-xl (12)
+    padding: Spacing.xxl,             // p-6 (24)
     borderWidth: 1,
     borderColor: colors.border,
     ...style,
@@ -56,7 +87,7 @@ export function Card({ children, style, onPress }: CardProps) {
   return <View style={cardStyle}>{children}</View>;
 }
 
-// ── StatCard ─────────────────────────────────────────────
+// ── StatCard (matches frontend stat card with icon bg) ───
 interface StatCardProps {
   title: string;
   value: string | number;
@@ -67,24 +98,29 @@ interface StatCardProps {
 export function StatCard({ title, value, icon, color, onPress }: StatCardProps) {
   const colors = useThemeColors();
   return (
-    <Card onPress={onPress} style={{ flex: 1, minWidth: 140 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={{
-          width: 40, height: 40, borderRadius: BorderRadius.md,
-          backgroundColor: color + '15', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Ionicons name={icon} size={20} color={color} />
-        </View>
+    <Card onPress={onPress} style={{ flex: 1, minWidth: 140, padding: Spacing.lg }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>{title}</Text>
-          <Text style={{ fontSize: FontSize.xl, fontWeight: '700', color: colors.text }}>{value}</Text>
+          <Text style={{ fontSize: FontSize.sm, fontWeight: FontWeight.normal, color: colors.textSecondary }}>
+            {title}
+          </Text>
+          <Text style={{ fontSize: FontSize.xxl, fontWeight: FontWeight.semibold, color: colors.text, marginTop: 4 }}>
+            {value}
+          </Text>
+        </View>
+        <View style={{
+          width: 44, height: 44, borderRadius: BorderRadius.md,
+          backgroundColor: colors.iconBg,
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Ionicons name={icon} size={22} color={color} />
         </View>
       </View>
     </Card>
   );
 }
 
-// ── Button ───────────────────────────────────────────────
+// ── Button (matches frontend: neutral-900/white primary) ─
 interface ButtonProps {
   title: string;
   onPress: () => void;
@@ -100,17 +136,18 @@ export function Button({
   icon, loading, disabled, style,
 }: ButtonProps) {
   const colors = useThemeColors();
+
   const bgMap = {
-    primary: colors.primary,
-    secondary: colors.surface,
+    primary: colors.primary,            // neutral-900 / white
+    secondary: colors.card,             // white / neutral-900
     danger: colors.danger,
     ghost: 'transparent',
   };
   const textMap = {
-    primary: '#fff',
+    primary: colors.primaryText,        // white / neutral-900
     secondary: colors.text,
-    danger: '#fff',
-    ghost: colors.primary,
+    danger: '#ffffff',
+    ghost: colors.text,
   };
   const heightMap = { sm: 34, md: 44, lg: 52 };
   const fontMap = { sm: FontSize.sm, md: FontSize.md, lg: FontSize.base };
@@ -123,11 +160,11 @@ export function Button({
       style={[{
         backgroundColor: bgMap[variant],
         height: heightMap[size],
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.lg,     // rounded-xl
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: Spacing.lg,
+        paddingHorizontal: size === 'lg' ? Spacing.xxl : Spacing.lg,
         gap: 6,
         opacity: disabled ? 0.5 : 1,
         borderWidth: variant === 'secondary' ? 1 : 0,
@@ -139,7 +176,7 @@ export function Button({
       ) : (
         <>
           {icon && <Ionicons name={icon} size={size === 'sm' ? 16 : 18} color={textMap[variant]} />}
-          <Text style={{ color: textMap[variant], fontSize: fontMap[size], fontWeight: '600' }}>
+          <Text style={{ color: textMap[variant], fontSize: fontMap[size], fontWeight: FontWeight.medium }}>
             {title}
           </Text>
         </>
@@ -148,7 +185,7 @@ export function Button({
   );
 }
 
-// ── Input ────────────────────────────────────────────────
+// ── Input (matches frontend input style) ─────────────────
 interface InputProps {
   label?: string;
   value: string;
@@ -167,21 +204,22 @@ export function Input({
 }: InputProps) {
   const colors = useThemeColors();
   return (
-    <View style={{ gap: 4 }}>
+    <View style={{ gap: 6 }}>
       {label && (
-        <Text style={{ fontSize: FontSize.sm, fontWeight: '500', color: colors.textSecondary }}>
+        <Text style={{ fontSize: FontSize.sm, fontWeight: FontWeight.medium, color: colors.textSecondary }}>
           {label}
         </Text>
       )}
       <View style={{
         flexDirection: 'row', alignItems: 'center',
-        backgroundColor: colors.inputBg, borderRadius: BorderRadius.md,
+        backgroundColor: colors.inputBg,
+        borderRadius: BorderRadius.lg,     // rounded-xl
         borderWidth: error ? 1.5 : 1,
         borderColor: error ? colors.danger : colors.border,
-        paddingHorizontal: Spacing.md,
-        minHeight: multiline ? 100 : 44,
+        paddingHorizontal: Spacing.lg,
+        minHeight: multiline ? 100 : 48,
       }}>
-        {icon && <Ionicons name={icon} size={18} color={colors.textTertiary} style={{ marginRight: 8 }} />}
+        {icon && <Ionicons name={icon} size={18} color={colors.textTertiary} style={{ marginRight: 10 }} />}
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -216,10 +254,13 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search...' }: Se
   return (
     <View style={{
       flexDirection: 'row', alignItems: 'center',
-      backgroundColor: colors.inputBg, borderRadius: BorderRadius.full,
-      paddingHorizontal: Spacing.lg, height: 42,
+      backgroundColor: colors.inputBg,
+      borderRadius: BorderRadius.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: Spacing.lg, height: 44,
     }}>
-      <Ionicons name="search" size={18} color={colors.textTertiary} />
+      <Ionicons name="search" size={16} color={colors.textTertiary} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -227,7 +268,7 @@ export function SearchBar({ value, onChangeText, placeholder = 'Search...' }: Se
         placeholderTextColor={colors.textTertiary}
         style={{
           flex: 1,
-          marginLeft: 8,
+          marginLeft: 10,
           color: colors.text,
           fontSize: FontSize.md,
         }}
@@ -246,24 +287,32 @@ interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description?: string;
+  message?: string;
   actionLabel?: string;
   onAction?: () => void;
 }
-export function EmptyState({ icon, title, description, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, message, actionLabel, onAction }: EmptyStateProps) {
   const colors = useThemeColors();
+  const desc = description || message;
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 60, paddingHorizontal: 40 }}>
-      <Ionicons name={icon} size={56} color={colors.textTertiary} />
-      <Text style={{ fontSize: FontSize.lg, fontWeight: '600', color: colors.text, marginTop: 16, textAlign: 'center' }}>
+    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 64, paddingHorizontal: 40 }}>
+      <View style={{
+        width: 64, height: 64, borderRadius: BorderRadius.xl,
+        backgroundColor: colors.iconBg,
+        alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+      }}>
+        <Ionicons name={icon} size={28} color={colors.textTertiary} />
+      </View>
+      <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.semibold, color: colors.text, marginBottom: 8, textAlign: 'center' }}>
         {title}
       </Text>
-      {description && (
-        <Text style={{ fontSize: FontSize.md, color: colors.textSecondary, marginTop: 8, textAlign: 'center' }}>
-          {description}
+      {desc && (
+        <Text style={{ fontSize: FontSize.md, color: colors.textSecondary, textAlign: 'center', maxWidth: 280 }}>
+          {desc}
         </Text>
       )}
       {actionLabel && onAction && (
-        <Button title={actionLabel} onPress={onAction} style={{ marginTop: 20 }} icon="add" />
+        <Button title={actionLabel} onPress={onAction} style={{ marginTop: 24 }} icon="add" />
       )}
     </View>
   );
@@ -274,16 +323,17 @@ export function LoadingScreen() {
   const colors = useThemeColors();
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }}>
-      <ActivityIndicator size="large" color={colors.primary} />
+      <ActivityIndicator size="large" color={colors.text} />
     </View>
   );
 }
 
-// ── Chip / Filter ────────────────────────────────────────
+// ── Chip / Filter (matches frontend Tabs active/inactive) ─
 interface ChipProps {
   label: string;
   active: boolean;
   onPress: () => void;
+  color?: string;
 }
 export function Chip({ label, active, onPress }: ChipProps) {
   const colors = useThemeColors();
@@ -293,16 +343,16 @@ export function Chip({ label, active, onPress }: ChipProps) {
       style={{
         paddingHorizontal: 14,
         paddingVertical: 7,
-        borderRadius: BorderRadius.full,
+        borderRadius: BorderRadius.md,
         backgroundColor: active ? colors.primary : colors.surface,
-        borderWidth: 1,
-        borderColor: active ? colors.primary : colors.border,
+        borderWidth: active ? 0 : 1,
+        borderColor: colors.border,
       }}
     >
       <Text style={{
         fontSize: FontSize.sm,
-        fontWeight: active ? '600' : '400',
-        color: active ? '#fff' : colors.textSecondary,
+        fontWeight: active ? FontWeight.medium : FontWeight.normal,
+        color: active ? colors.primaryText : colors.textSecondary,
       }}>{label}</Text>
     </TouchableOpacity>
   );
@@ -321,7 +371,7 @@ export function FAB({ icon = 'add', onPress }: FABProps) {
       activeOpacity={0.8}
       style={{
         position: 'absolute',
-        bottom: 20,
+        bottom: 24,
         right: 20,
         width: 56,
         height: 56,
@@ -331,12 +381,12 @@ export function FAB({ icon = 'add', onPress }: FABProps) {
         justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.2,
         shadowRadius: 8,
         elevation: 8,
       }}
     >
-      <Ionicons name={icon} size={28} color="#fff" />
+      <Ionicons name={icon} size={26} color={colors.primaryText} />
     </TouchableOpacity>
   );
 }
@@ -350,12 +400,12 @@ interface SectionProps {
 export function Section({ title, action, children }: SectionProps) {
   const colors = useThemeColors();
   return (
-    <View style={{ marginTop: Spacing.xl }}>
+    <View style={{ marginTop: Spacing.xxl }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md }}>
-        <Text style={{ fontSize: FontSize.lg, fontWeight: '700', color: colors.text }}>{title}</Text>
+        <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.semibold, color: colors.text }}>{title}</Text>
         {action && (
           <TouchableOpacity onPress={action.onPress}>
-            <Text style={{ fontSize: FontSize.sm, color: colors.primary, fontWeight: '500' }}>{action.label}</Text>
+            <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, fontWeight: FontWeight.medium }}>{action.label}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -396,7 +446,7 @@ export function ListItem({ title, subtitle, left, right, onPress, bottomBorder =
     >
       {left}
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: FontSize.md, fontWeight: '500', color: colors.text }}>{title}</Text>
+        <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.medium, color: colors.text }}>{title}</Text>
         {subtitle && <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, marginTop: 2 }}>{subtitle}</Text>}
       </View>
       {right || (onPress && <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />)}
@@ -404,31 +454,59 @@ export function ListItem({ title, subtitle, left, right, onPress, bottomBorder =
   );
 }
 
-// ── Avatar ───────────────────────────────────────────────
+// ── Avatar (matching frontend colored initials) ──────────
 interface AvatarProps {
   name: string;
   size?: number;
   color?: string;
 }
 export function Avatar({ name, size = 40, color }: AvatarProps) {
-  const colors = useThemeColors();
   const initials = name
     .split(' ')
     .map((n) => n[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
-  const bgColor = color || colors.primary;
+
+  // Generate consistent color from name if no color provided
+  const bgColor = color || generateAvatarColor(name);
 
   return (
     <View style={{
       width: size, height: size, borderRadius: size / 2,
-      backgroundColor: bgColor + '20',
+      backgroundColor: bgColor,
       alignItems: 'center', justifyContent: 'center',
     }}>
-      <Text style={{ fontSize: size * 0.38, fontWeight: '700', color: bgColor }}>
+      <Text style={{ fontSize: size * 0.36, fontWeight: FontWeight.semibold, color: '#ffffff' }}>
         {initials}
       </Text>
+    </View>
+  );
+}
+
+// Generate consistent avatar bg color (matching frontend dynamic colors)
+function generateAvatarColor(name: string): string {
+  const avatarColors = ['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return avatarColors[Math.abs(hash) % avatarColors.length];
+}
+
+// ── ProgressBar (matching frontend) ──────────────────────
+interface ProgressBarProps {
+  value: number;
+  color?: string;
+  height?: number;
+}
+export function ProgressBar({ value, color, height = 4 }: ProgressBarProps) {
+  const colors = useThemeColors();
+  return (
+    <View style={{ height, backgroundColor: colors.border, borderRadius: height / 2 }}>
+      <View style={{
+        height, borderRadius: height / 2,
+        backgroundColor: color || colors.primary,
+        width: `${Math.min(Math.max(value, 0), 100)}%`,
+      }} />
     </View>
   );
 }
@@ -439,7 +517,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   badgeText: {
-    fontWeight: '600',
+    fontWeight: FontWeight.medium,
     textTransform: 'capitalize',
   },
 });

@@ -288,6 +288,40 @@ class ApiClient {
     return this.request('/admin/settings', { method: 'PUT', body: JSON.stringify(data) });
   }
 
+  // Admin - Enhanced Dashboard
+  async getAdminDashboard() { return this.request('/admin/dashboard'); }
+
+  // Admin - Subscriptions
+  async getAdminSubscriptions(params?: Record<string, unknown>) {
+    return this.request(`/admin/subscriptions${this.buildQuery(params || {})}`);
+  }
+  async getAdminSubscriptionStats() { return this.request('/admin/subscriptions/stats'); }
+  async updateAdminSubscription(userId: string, data: { plan?: string; status?: string }) {
+    return this.request(`/admin/subscriptions/${userId}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+
+  // Admin - Push Notifications
+  async getAdminPushTokens(params?: Record<string, unknown>) {
+    return this.request(`/admin/push-tokens${this.buildQuery(params || {})}`);
+  }
+  async sendAdminPushNotification(data: { title: string; body: string; data?: Record<string, unknown>; target?: string }) {
+    return this.request('/admin/notifications/push', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async getAdminPushHistory(params?: Record<string, unknown>) {
+    return this.request(`/admin/notifications/push/history${this.buildQuery(params || {})}`);
+  }
+
+  // ==============================
+  // Billing
+  // ==============================
+  async getSubscription() { return this.request('/billing/subscription'); }
+  async getPlans() { return this.request('/billing/plans'); }
+  async createCheckout(data: { plan: string; priceId?: string; interval?: string }) {
+    return this.request('/billing/checkout', { method: 'POST', body: JSON.stringify(data) });
+  }
+  async createBillingPortal() { return this.request('/billing/portal', { method: 'POST' }); }
+  async getInvoices() { return this.request('/billing/invoices'); }
+
   // ==============================
   // Profile
   // ==============================

@@ -4,9 +4,9 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
-import { useThemeColors, formatDate, getPriorityColor, getStatusColor } from '@/lib/utils';
-import { SearchBar, FAB, Badge, EmptyState, LoadingScreen, Chip } from '@/components/ui';
-import { FontSize, Spacing, BorderRadius } from '@/lib/theme';
+import { useThemeColors, formatDate, getPriorityColor, getStatusColor, useIsDark } from '@/lib/utils';
+import { SearchBar, FAB, StatusBadge, EmptyState, LoadingScreen, Chip } from '@/components/ui';
+import { FontSize, Spacing, BorderRadius, FontWeight, SemanticColors } from '@/lib/theme';
 import type { Task } from '@/lib/types';
 
 const STATUS_FILTERS = ['ALL', 'TODO', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
@@ -14,6 +14,7 @@ const PRIORITY_FILTERS = ['ALL', 'LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
 export default function TasksScreen() {
   const colors = useThemeColors();
+  const isDark = useIsDark();
   const { getToken } = useAuth();
   const router = useRouter();
 
@@ -57,72 +58,95 @@ export default function TasksScreen() {
 
   const isOverdue = (task: Task) => task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'COMPLETED';
 
-  const renderTask = ({ item }: { item: Task }) => (
-    <TouchableOpacity
-      onPress={() => router.push(`/task/${item.id}`)}
-      activeOpacity={0.7}
-      style={{
-        backgroundColor: colors.card,
-        borderRadius: BorderRadius.lg,
-        padding: Spacing.lg,
-        marginBottom: Spacing.md,
-        borderWidth: 1,
-        borderColor: isOverdue(item) ? '#ef4444' : colors.border,
-        opacity: item.status === 'COMPLETED' ? 0.7 : 1,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-        <TouchableOpacity
-          onPress={() => toggleStatus(item)}
-          style={{ marginRight: Spacing.md, marginTop: 2 }}
-        >
-          <Ionicons
-            name={item.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'}
-            size={26}
-            color={item.status === 'COMPLETED' ? '#22c55e' : colors.textSecondary}
-          />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={{
-            fontSize: FontSize.lg, fontWeight: '600', color: colors.text,
-            textDecorationLine: item.status === 'COMPLETED' ? 'line-through' : 'none',
-          }} numberOfLines={2}>
-            {item.title}
-          </Text>
-          {item.description && (
-            <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, marginTop: 2 }} numberOfLines={2}>
-              {item.description}
+  const getBadge = (type: 'status' | 'priority', key: string) => {
+    const mode = isDark ? 'dark' : 'light';
+    const map = type === 'status' ? SemanticColors.status : SemanticColors.priority;
+    const s = map[key as keyof typeof map];
+    if (!s) return { dot: '#737373', text: isDark ? '#a3a3a3' : '#525252', bg: isDark ? 'rgba(38,38,38,0.5)' : '#f5f5f5' };
+    return { dot: s.dot, text: s.text[mode], bg: s.bg[mode] };
+  };
+
+  const renderTask = ({ item }: { item: Task }) => {
+    const priorityBadge = getBadge('priority', item.priority);
+    const statusBadge = getBadge('status', item.status);
+
+    return (
+      <TouchableOpacity
+        onPress={() => router.push(`/task/${item.id}`)}
+        activeOpacity={0.7}
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: BorderRadius.lg,
+          padding: Spacing.lg,
+          marginBottom: Spacing.md,
+          borderWidth: 1,
+          borderColor: isOverdue(item) ? '#ef4444' + '40' : colors.border,
+          opacity: item.status === 'COMPLETED' ? 0.7 : 1,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+          <TouchableOpacity
+            onPress={() => toggleStatus(item)}
+            style={{ marginRight: Spacing.md, marginTop: 2 }}
+          >
+            <Ionicons
+              name={item.status === 'COMPLETED' ? 'checkmark-circle' : 'ellipse-outline'}
+              size={24}
+              color={item.status === 'COMPLETED' ? '#10b981' : colors.textTertiary}
+            />
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              fontSize: FontSize.base, fontWeight: FontWeight.medium, color: colors.text,
+              textDecorationLine: item.status === 'COMPLETED' ? 'line-through' : 'none',
+            }} numberOfLines={2}>
+              {item.title}
             </Text>
-          )}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.sm, gap: Spacing.sm, flexWrap: 'wrap' }}>
-            <Badge label={item.priority} color={getPriorityColor(item.priority)} />
-            <Badge label={item.status.replace('_', ' ')} color={getStatusColor(item.status)} />
-            {item.dueDate && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Ionicons
-                  name="calendar-outline" size={12}
-                  color={isOverdue(item) ? '#ef4444' : colors.textSecondary}
-                />
-                <Text style={{
-                  fontSize: FontSize.xs,
-                  color: isOverdue(item) ? '#ef4444' : colors.textSecondary,
-                  fontWeight: isOverdue(item) ? '600' : '400',
-                }}>
-                  {formatDate(item.dueDate)}
-                </Text>
+            {item.description && (
+              <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, marginTop: 4 }} numberOfLines={2}>
+                {item.description}
+              </Text>
+            )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.sm, gap: Spacing.sm, flexWrap: 'wrap' }}>
+              <StatusBadge
+                label={item.priority}
+                dotColor={priorityBadge.dot}
+                textColor={priorityBadge.text}
+                bgColor={priorityBadge.bg}
+              />
+              <StatusBadge
+                label={item.status.replace('_', ' ')}
+                dotColor={statusBadge.dot}
+                textColor={statusBadge.text}
+                bgColor={statusBadge.bg}
+              />
+              {item.dueDate && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons
+                    name="calendar-outline" size={12}
+                    color={isOverdue(item) ? '#ef4444' : colors.textTertiary}
+                  />
+                  <Text style={{
+                    fontSize: FontSize.xs,
+                    color: isOverdue(item) ? '#ef4444' : colors.textSecondary,
+                    fontWeight: isOverdue(item) ? FontWeight.semibold : FontWeight.normal,
+                  }}>
+                    {formatDate(item.dueDate)}
+                  </Text>
+                </View>
+              )}
+            </View>
+            {item.customer && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.sm }}>
+                <Ionicons name="person-outline" size={12} color={colors.textTertiary} />
+                <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>{item.customer.name}</Text>
               </View>
             )}
           </View>
-          {item.customer && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: Spacing.sm }}>
-              <Ionicons name="person-outline" size={12} color={colors.textSecondary} />
-              <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>{item.customer.name}</Text>
-            </View>
-          )}
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) return <LoadingScreen />;
 
@@ -146,8 +170,7 @@ export default function TasksScreen() {
           contentContainerStyle={{ gap: Spacing.sm, paddingBottom: Spacing.sm }}
           renderItem={({ item }) => (
             <Chip label={item} active={priorityFilter === item}
-              onPress={() => setPriorityFilter(item)}
-              color={item === 'ALL' ? undefined : getPriorityColor(item)} />
+              onPress={() => setPriorityFilter(item)} />
           )}
         />
       </View>
@@ -157,9 +180,9 @@ export default function TasksScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderTask}
         contentContainerStyle={{ padding: Spacing.lg, paddingTop: 0 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />}
         ListEmptyComponent={
-          <EmptyState icon="checkmark-circle" title="No tasks found" message="Add your first task to stay organized" />
+          <EmptyState icon="checkmark-circle" title="No tasks found" description="Add your first task to stay organized" />
         }
       />
 

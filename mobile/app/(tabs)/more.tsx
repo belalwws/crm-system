@@ -5,8 +5,8 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/lib/store';
 import { useThemeColors } from '@/lib/utils';
-import { Card, Avatar, Divider, Badge } from '@/components/ui';
-import { FontSize, Spacing, BorderRadius } from '@/lib/theme';
+import { Card, Avatar, Badge } from '@/components/ui';
+import { FontSize, Spacing, BorderRadius, FontWeight, AccentColors } from '@/lib/theme';
 
 type MenuItem = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -25,35 +25,35 @@ export default function MoreScreen() {
 
   const menuSections: { title: string; items: MenuItem[] }[] = [
     {
-      title: 'Communication',
+      title: 'COMMUNICATION',
       items: [
-        { icon: 'notifications', label: 'Notifications', route: '/notifications', color: '#ef4444', badge: unreadNotifications },
-        { icon: 'chatbubbles', label: 'AI Assistant', route: '/ai-chat', color: '#8b5cf6' },
-        { icon: 'mail', label: 'Emails', route: '/emails', color: '#3b82f6' },
+        { icon: 'notifications', label: 'Notifications', route: '/notifications', color: AccentColors.red, badge: unreadNotifications },
+        { icon: 'chatbubbles', label: 'AI Assistant', route: '/ai-chat', color: AccentColors.violet },
+        { icon: 'mail', label: 'Emails', route: '/emails', color: AccentColors.blue },
       ],
     },
     {
-      title: 'Management',
+      title: 'MANAGEMENT',
       items: [
-        { icon: 'calendar', label: 'Meetings', route: '/meetings', color: '#f59e0b' },
-        { icon: 'people', label: 'Contacts', route: '/contacts', color: '#06b6d4' },
-        { icon: 'cube', label: 'Products', route: '/products', color: '#22c55e' },
-        { icon: 'receipt', label: 'Quotes', route: '/quotes', color: '#ec4899' },
-        { icon: 'people-circle', label: 'Teams', route: '/teams', color: '#6366f1' },
+        { icon: 'calendar', label: 'Meetings', route: '/meetings', color: AccentColors.amber },
+        { icon: 'people', label: 'Contacts', route: '/contacts', color: AccentColors.cyan },
+        { icon: 'cube', label: 'Products', route: '/products', color: AccentColors.emerald },
+        { icon: 'receipt', label: 'Quotes', route: '/quotes', color: AccentColors.pink },
+        { icon: 'people-circle', label: 'Teams', route: '/teams', color: AccentColors.indigo },
       ],
     },
     {
-      title: 'Insights',
+      title: 'INSIGHTS',
       items: [
-        { icon: 'bar-chart', label: 'Reports', route: '/reports', color: '#14b8a6' },
-        { icon: 'search', label: 'Search', route: '/search', color: '#64748b' },
+        { icon: 'bar-chart', label: 'Reports', route: '/reports', color: AccentColors.teal },
+        { icon: 'search', label: 'Search', route: '/search', color: AccentColors.neutral },
       ],
     },
     {
-      title: 'Account',
+      title: 'ACCOUNT',
       items: [
-        { icon: 'person-circle', label: 'Profile', route: '/profile', color: '#6366f1' },
-        { icon: 'settings', label: 'Settings', route: '/settings', color: '#64748b' },
+        { icon: 'person-circle', label: 'Profile', route: '/profile', color: AccentColors.indigo },
+        { icon: 'settings', label: 'Settings', route: '/settings', color: AccentColors.neutral },
       ],
     },
   ];
@@ -69,29 +69,29 @@ export default function MoreScreen() {
           onPress={() => router.push('/profile')}
           style={{ flexDirection: 'row', alignItems: 'center' }}
         >
-          <Avatar name={`${user?.firstName || ''} ${user?.lastName || ''}`} size={56} color={colors.primary} />
+          <Avatar name={`${user?.firstName || ''} ${user?.lastName || ''}`} size={52} />
           <View style={{ flex: 1, marginLeft: Spacing.lg }}>
-            <Text style={{ fontSize: FontSize.xl, fontWeight: '700', color: colors.text }}>
+            <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.semibold, color: colors.text }}>
               {user?.firstName} {user?.lastName}
             </Text>
-            <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary }}>
+            <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, marginTop: 2 }}>
               {user?.primaryEmailAddress?.emailAddress}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+          <Ionicons name="chevron-forward" size={18} color={colors.textTertiary} />
         </TouchableOpacity>
       </Card>
 
       {/* Menu Sections */}
       {menuSections.map((section) => (
-        <View key={section.title} style={{ marginBottom: Spacing.lg }}>
+        <View key={section.title} style={{ marginBottom: Spacing.xl }}>
           <Text style={{
-            fontSize: FontSize.xs, fontWeight: '600', color: colors.textSecondary,
-            textTransform: 'uppercase', letterSpacing: 1, marginBottom: Spacing.sm, marginLeft: Spacing.sm,
+            fontSize: FontSize.xs, fontWeight: FontWeight.semibold, color: colors.textSecondary,
+            letterSpacing: 1, marginBottom: Spacing.sm, marginLeft: 4,
           }}>
             {section.title}
           </Text>
-          <Card>
+          <Card style={{ padding: 0 }}>
             {section.items.map((item, i) => (
               <TouchableOpacity
                 key={item.route}
@@ -105,17 +105,17 @@ export default function MoreScreen() {
               >
                 <View style={{
                   width: 36, height: 36, borderRadius: BorderRadius.md,
-                  backgroundColor: item.color + '18', alignItems: 'center', justifyContent: 'center',
+                  backgroundColor: item.color + '15', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <Ionicons name={item.icon} size={20} color={item.color} />
+                  <Ionicons name={item.icon} size={18} color={item.color} />
                 </View>
-                <Text style={{ flex: 1, fontSize: FontSize.md, color: colors.text, fontWeight: '500', marginLeft: Spacing.md }}>
+                <Text style={{ flex: 1, fontSize: FontSize.md, color: colors.text, fontWeight: FontWeight.medium, marginLeft: Spacing.md }}>
                   {item.label}
                 </Text>
                 {item.badge ? (
                   <Badge label={String(item.badge)} color="#ef4444" />
                 ) : null}
-                <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} style={{ marginLeft: Spacing.sm }} />
+                <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} style={{ marginLeft: Spacing.sm }} />
               </TouchableOpacity>
             ))}
           </Card>
@@ -127,8 +127,10 @@ export default function MoreScreen() {
         onPress={() => signOut()}
         activeOpacity={0.6}
         style={{
-          backgroundColor: '#ef444415',
+          backgroundColor: colors.card,
           borderRadius: BorderRadius.lg,
+          borderWidth: 1,
+          borderColor: '#ef4444' + '30',
           padding: Spacing.lg,
           flexDirection: 'row',
           alignItems: 'center',
@@ -136,8 +138,8 @@ export default function MoreScreen() {
           gap: Spacing.sm,
         }}
       >
-        <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-        <Text style={{ fontSize: FontSize.md, fontWeight: '600', color: '#ef4444' }}>Sign Out</Text>
+        <Ionicons name="log-out-outline" size={18} color="#ef4444" />
+        <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.medium, color: '#ef4444' }}>Sign Out</Text>
       </TouchableOpacity>
     </ScrollView>
   );

@@ -4,15 +4,16 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
-import { useThemeColors, formatCurrency, getStageColor, truncate } from '@/lib/utils';
-import { SearchBar, FAB, Badge, Avatar, EmptyState, LoadingScreen, Chip } from '@/components/ui';
-import { FontSize, Spacing, BorderRadius } from '@/lib/theme';
+import { useThemeColors, formatCurrency, getStageColor, truncate, useIsDark } from '@/lib/utils';
+import { SearchBar, FAB, StatusBadge, EmptyState, LoadingScreen, Chip, ProgressBar, Avatar } from '@/components/ui';
+import { FontSize, Spacing, BorderRadius, FontWeight, SemanticColors } from '@/lib/theme';
 import type { Deal } from '@/lib/types';
 
 const STAGES = ['ALL', 'LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'];
 
 export default function DealsScreen() {
   const colors = useThemeColors();
+  const isDark = useIsDark();
   const { getToken } = useAuth();
   const router = useRouter();
 
@@ -50,63 +51,73 @@ export default function DealsScreen() {
 
   const onRefresh = useCallback(() => { setRefreshing(true); fetchDeals(); }, [fetchDeals]);
 
-  const renderDeal = ({ item }: { item: Deal }) => (
-    <TouchableOpacity
-      onPress={() => router.push(`/deal/${item.id}`)}
-      activeOpacity={0.7}
-      style={{
-        backgroundColor: colors.card,
-        borderRadius: BorderRadius.lg,
-        padding: Spacing.lg,
-        marginBottom: Spacing.md,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderLeftWidth: 4,
-        borderLeftColor: getStageColor(item.stage),
-      }}
-    >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <View style={{ flex: 1, marginRight: Spacing.md }}>
-          <Text style={{ fontSize: FontSize.lg, fontWeight: '600', color: colors.text }} numberOfLines={1}>
-            {item.title}
-          </Text>
-          <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, marginTop: 2 }}>
-            {item.customer?.name || 'No customer'}
-          </Text>
-        </View>
-        <Text style={{ fontSize: FontSize.lg, fontWeight: '700', color: '#22c55e' }}>
-          {formatCurrency(item.value)}
-        </Text>
-      </View>
+  const getStageBadge = (stage: string) => {
+    const mode = isDark ? 'dark' : 'light';
+    const s = SemanticColors.stage[stage as keyof typeof SemanticColors.stage];
+    if (!s) return { dot: '#737373', text: isDark ? '#a3a3a3' : '#525252', bg: isDark ? 'rgba(38,38,38,0.5)' : '#f5f5f5' };
+    return { dot: s.dot, text: s.text[mode], bg: s.bg[mode] };
+  };
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.md, gap: Spacing.md }}>
-        <Badge label={item.stage.replace('_', ' ')} color={getStageColor(item.stage)} />
-        {item.probability !== undefined && (
-          <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
-            {item.probability}% probability
-          </Text>
-        )}
-        {item.expectedCloseDate && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Ionicons name="calendar-outline" size={12} color={colors.textSecondary} />
-            <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
-              {new Date(item.expectedCloseDate).toLocaleDateString()}
+  const renderDeal = ({ item }: { item: Deal }) => {
+    const badge = getStageBadge(item.stage);
+    return (
+      <TouchableOpacity
+        onPress={() => router.push(`/deal/${item.id}`)}
+        activeOpacity={0.7}
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: BorderRadius.lg,
+          padding: Spacing.lg,
+          marginBottom: Spacing.md,
+          borderWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View style={{ flex: 1, marginRight: Spacing.md }}>
+            <Text style={{ fontSize: FontSize.base, fontWeight: FontWeight.medium, color: colors.text }} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary, marginTop: 2 }}>
+              {item.customer?.name || 'No customer'}
             </Text>
           </View>
-        )}
-      </View>
-
-      {/* Progress bar */}
-      {item.probability !== undefined && (
-        <View style={{ marginTop: Spacing.md, height: 4, backgroundColor: colors.border, borderRadius: 2 }}>
-          <View style={{
-            height: 4, borderRadius: 2, backgroundColor: getStageColor(item.stage),
-            width: `${Math.min(item.probability, 100)}%`,
-          }} />
+          <Text style={{ fontSize: FontSize.base, fontWeight: FontWeight.semibold, color: colors.text }}>
+            {formatCurrency(item.value)}
+          </Text>
         </View>
-      )}
-    </TouchableOpacity>
-  );
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.md, gap: Spacing.md }}>
+          <StatusBadge
+            label={item.stage.replace('_', ' ')}
+            dotColor={badge.dot}
+            textColor={badge.text}
+            bgColor={badge.bg}
+          />
+          {item.probability !== undefined && (
+            <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
+              {item.probability}%
+            </Text>
+          )}
+          {item.expectedCloseDate && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Ionicons name="calendar-outline" size={12} color={colors.textTertiary} />
+              <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>
+                {new Date(item.expectedCloseDate).toLocaleDateString()}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Progress bar */}
+        {item.probability !== undefined && (
+          <View style={{ marginTop: Spacing.md }}>
+            <ProgressBar value={item.probability} color={getStageColor(item.stage)} />
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) return <LoadingScreen />;
 
@@ -125,7 +136,6 @@ export default function DealsScreen() {
               label={item.replace('_', ' ')}
               active={stageFilter === item}
               onPress={() => setStageFilter(item)}
-              color={item === 'ALL' ? colors.primary : getStageColor(item)}
             />
           )}
         />
@@ -136,9 +146,9 @@ export default function DealsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderDeal}
         contentContainerStyle={{ padding: Spacing.lg, paddingTop: 0 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />}
         ListEmptyComponent={
-          <EmptyState icon="trending-up" title="No deals found" message="Create your first deal to track your pipeline" />
+          <EmptyState icon="trending-up" title="No deals found" description="Create your first deal to track your pipeline" />
         }
       />
 

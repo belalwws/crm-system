@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/lib/utils';
 import { Input, Button } from '@/components/ui';
-import { FontSize, Spacing, BorderRadius } from '@/lib/theme';
+import { FontSize, Spacing, BorderRadius, FontWeight } from '@/lib/theme';
 
 export default function SignInScreen() {
   const colors = useThemeColors();
@@ -46,18 +46,18 @@ export default function SignInScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Logo */}
-        <View style={{ alignItems: 'center', marginBottom: 40 }}>
+        <View style={{ alignItems: 'center', marginBottom: 48 }}>
           <View style={{
             width: 64, height: 64, borderRadius: BorderRadius.xl,
             backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
-            marginBottom: 16,
+            marginBottom: 20,
           }}>
-            <Ionicons name="business" size={32} color="#fff" />
+            <Ionicons name="business" size={32} color={colors.primaryText} />
           </View>
-          <Text style={{ fontSize: FontSize.xxl, fontWeight: '800', color: colors.text }}>
+          <Text style={{ fontSize: FontSize.xxxl, fontWeight: FontWeight.semibold, color: colors.text }}>
             Nexus CRM
           </Text>
-          <Text style={{ fontSize: FontSize.md, color: colors.textSecondary, marginTop: 4 }}>
+          <Text style={{ fontSize: FontSize.md, color: colors.textSecondary, marginTop: 8 }}>
             Sign in to your account
           </Text>
         </View>
@@ -66,8 +66,9 @@ export default function SignInScreen() {
         <View style={{ gap: Spacing.lg }}>
           {error !== '' && (
             <View style={{
-              backgroundColor: colors.dangerLight, padding: Spacing.md,
-              borderRadius: BorderRadius.md, flexDirection: 'row', alignItems: 'center', gap: 8,
+              backgroundColor: colors.dangerLight, padding: Spacing.lg,
+              borderRadius: BorderRadius.lg, flexDirection: 'row', alignItems: 'center', gap: 10,
+              borderWidth: 1, borderColor: colors.danger + '30',
             }}>
               <Ionicons name="alert-circle" size={18} color={colors.danger} />
               <Text style={{ color: colors.danger, fontSize: FontSize.sm, flex: 1 }}>{error}</Text>
@@ -101,12 +102,12 @@ export default function SignInScreen() {
         </View>
 
         {/* Sign up link */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 32 }}>
           <Text style={{ color: colors.textSecondary, fontSize: FontSize.md }}>
             Don't have an account?{' '}
           </Text>
           <TouchableOpacity onPress={() => router.push('/(auth)/sign-up')}>
-            <Text style={{ color: colors.primary, fontWeight: '600', fontSize: FontSize.md }}>
+            <Text style={{ color: colors.text, fontWeight: FontWeight.semibold, fontSize: FontSize.md }}>
               Sign Up
             </Text>
           </TouchableOpacity>

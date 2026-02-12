@@ -55,6 +55,8 @@ import productRoutes from './routes/productRoutes';
 import quoteRoutes from './routes/quoteRoutes';
 import teamRoutes from './routes/teamRoutes';
 import customFieldRoutes from './routes/customFieldRoutes';
+import billingRoutes from './routes/billingRoutes';
+import pushTokenRoutes from './routes/pushTokenRoutes';
 
 // Initialize express app
 const app = express();
@@ -266,6 +268,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/custom-fields', customFieldRoutes);
+app.use('/api/billing', billingRoutes);
+app.use('/api/push-tokens', pushTokenRoutes);
 
 // 404 Error handler
 app.use((req: Request, res: Response) => {
