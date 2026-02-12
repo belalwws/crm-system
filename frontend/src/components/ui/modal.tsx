@@ -53,15 +53,15 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`relative bg-neutral-900 border border-neutral-800 rounded-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden animate-scale-in`}
+        className={`relative bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-hidden animate-scale-in`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
-          <h2 id={titleId} className="text-xl font-semibold text-white">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+          <h2 id={titleId} className="text-xl font-semibold text-neutral-900 dark:text-white">{title}</h2>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors"
+            className="p-2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

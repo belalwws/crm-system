@@ -24,8 +24,8 @@
                                                    │
                                                    ▼
                                             ┌─────────────┐
-                                            │   MongoDB   │
-                                            │  Database   │
+                                            │ PostgreSQL  │
+                                            │  (Prisma)   │
                                             └─────────────┘
 ```
 
