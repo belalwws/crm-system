@@ -5,6 +5,8 @@ import { useAuth } from '@clerk/nextjs';
 import { Plus, Search, Edit, Trash2, Package, DollarSign, Tag } from 'lucide-react';
 import { Card, Badge, Modal, Input, Textarea, Button, EmptyState } from '@/components/ui';
 import { useToast } from '@/components/ui/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/hooks';
 
@@ -23,6 +25,7 @@ interface Product {
 export default function ProductsPage() {
   const { getToken } = useAuth();
   const toast = useToast();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -100,7 +103,8 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this product?')) return;
+    const ok = await confirm({ title: 'Delete Product', message: 'Delete this product?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     try {
       const token = await getToken();
       api.setToken(token);
@@ -246,6 +250,7 @@ export default function ProductsPage() {
           </div>
         </div>
       </Modal>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

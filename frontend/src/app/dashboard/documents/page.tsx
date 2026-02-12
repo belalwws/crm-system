@@ -18,6 +18,8 @@ import {
   Eye
 } from 'lucide-react';
 import FileUpload from '@/components/documents/file-upload';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 
 interface Document {
   id: string;
@@ -49,6 +51,7 @@ const formatFileSize = (bytes: number) => {
 
 export default function DocumentsPage() {
   const { getToken } = useAuth();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
@@ -79,7 +82,8 @@ export default function DocumentsPage() {
   }, []);
 
   const deleteDocument = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) return;
+    const ok = await confirm({ title: 'Delete Document', message: 'Are you sure you want to delete this document?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
 
     try {
       const token = await getToken();
@@ -303,6 +307,7 @@ export default function DocumentsPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

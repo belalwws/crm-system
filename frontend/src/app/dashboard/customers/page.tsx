@@ -44,6 +44,8 @@ import {
 } from "@/components/ui";
 import { Pagination } from "@/components/ui/pagination";
 import { BulkActionsBar } from "@/components/ui/bulk-actions-bar";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 import { formatDate, useDebounce } from "@/lib/hooks";
 import api from "@/lib/api";
 
@@ -68,6 +70,7 @@ const statusOptions = [
 export default function CustomersPage() {
   const { getToken } = useAuth();
   const toast = useToast();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -187,23 +190,15 @@ export default function CustomersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this customer?")) return;
+    const ok = await confirm({ title: 'Delete Customer', message: 'Are you sure you want to delete this customer? This action cannot be undone.', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     
     try {
       const token = await getToken();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/customers/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      
-      if (response.ok) {
-        toast.success("Customer deleted successfully");
-        fetchCustomers();
-      } else {
-        toast.error("Failed to delete customer");
-      }
+      api.setToken(token);
+      await api.deleteCustomer(id);
+      toast.success("Customer deleted successfully");
+      fetchCustomers();
     } catch (error) {
       console.error("Error deleting customer:", error);
       toast.error("Failed to delete customer");
@@ -225,7 +220,8 @@ export default function CustomersPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${selectedIds.size} customers?`)) return;
+    const ok = await confirm({ title: 'Bulk Delete', message: `Delete ${selectedIds.size} customers? This cannot be undone.`, variant: 'danger', confirmLabel: 'Delete All' });
+    if (!ok) return;
     try {
       const token = await getToken();
       api.setToken(token);
@@ -279,7 +275,8 @@ export default function CustomersPage() {
   };
 
   const handleMerge = async (primaryId: string, secondaryId: string) => {
-    if (!confirm('Merge these customers? The secondary customer will be removed.')) return;
+    const ok = await confirm({ title: 'Merge Customers', message: 'Merge these customers? The secondary customer will be removed.', variant: 'warning', confirmLabel: 'Merge' });
+    if (!ok) return;
     try {
       const token = await getToken();
       api.setToken(token);
@@ -639,6 +636,7 @@ export default function CustomersPage() {
           </div>
         )}
       </Modal>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

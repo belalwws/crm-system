@@ -30,6 +30,8 @@ import EmailComposer from '@/components/email/email-composer';
 import { AICustomerInsights } from '@/components/ai/ai-insights';
 import { AIEmailComposer } from '@/components/ai/ai-email-composer';
 import { api } from '@/lib/api';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 
 function CustomerTimeline({ customerId }: { customerId: string }) {
   const { getToken } = useAuth();
@@ -168,6 +170,7 @@ export default function CustomerDetailPage() {
   const params = useParams();
   const router = useRouter();
   const customerId = params.id as string;
+  const { confirm, dialogProps } = useConfirmDialog();
   
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -216,7 +219,8 @@ export default function CustomerDetailPage() {
   }, [customerId]);
 
   const deleteCustomer = async () => {
-    if (!confirm('Are you sure you want to delete this customer? This action cannot be undone.')) return;
+    const ok = await confirm({ title: 'Delete Customer', message: 'Are you sure you want to delete this customer? This action cannot be undone.', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
 
     try {
       const token = await getToken();
@@ -607,6 +611,7 @@ export default function CustomerDetailPage() {
           // Could refresh activity or show success message
         }}
       />
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

@@ -21,6 +21,8 @@ import {
 import { Card, CardHeader, Badge, Modal, Button, Input, PageLoading, EmptyState } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 
 interface Webhook {
   id: string;
@@ -58,6 +60,7 @@ const WEBHOOK_EVENTS = [
 export default function WebhooksPage() {
   const { getToken } = useAuth();
   const { addToast } = useToast();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [loading, setLoading] = useState(true);
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -114,7 +117,8 @@ export default function WebhooksPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this webhook?")) return;
+    const ok = await confirm({ title: 'Delete Webhook', message: 'Delete this webhook?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     try {
       await initApi();
       await api.deleteWebhook(id);
@@ -420,6 +424,7 @@ export default function WebhooksPage() {
             </div>
           </div>
         </Modal>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

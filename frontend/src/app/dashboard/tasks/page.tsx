@@ -45,6 +45,8 @@ import { AITaskPrioritization } from "@/components/ai/ai-insights";
 import { TaskCard } from "@/components/tasks/task-card";
 import { Pagination } from "@/components/ui/pagination";
 import { BulkActionsBar } from "@/components/ui/bulk-actions-bar";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 import api from "@/lib/api";
 
 interface Task {
@@ -91,6 +93,7 @@ const statusIcons: Record<string, React.ElementType> = {
 export default function TasksPage() {
   const { getToken } = useAuth();
   const toast = useToast();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [customers, setCustomers] = useState<{ id: string; name: string }[]>([]);
   const [deals, setDeals] = useState<{ id: string; title: string }[]>([]);
@@ -255,7 +258,8 @@ export default function TasksPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this task?")) return;
+    const ok = await confirm({ title: 'Delete Task', message: 'Are you sure you want to delete this task?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
 
     try {
       const token = await getToken();
@@ -294,7 +298,8 @@ export default function TasksPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${selectedIds.size} tasks?`)) return;
+    const ok = await confirm({ title: 'Delete Tasks', message: `Delete ${selectedIds.size} tasks?`, variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     try {
       const token = await getToken(); api.setToken(token);
       await api.bulkDeleteTasks(Array.from(selectedIds));
@@ -598,6 +603,7 @@ export default function TasksPage() {
           </div>
         </form>
       </Modal>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

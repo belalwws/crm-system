@@ -17,9 +17,70 @@ interface ApiResponse<T = unknown> {
 
 class ApiClient {
   private token: string | null = null;
+  private refreshToken: string | null = null;
+  private refreshPromise: Promise<boolean> | null = null;
 
   setToken(token: string | null) {
     this.token = token;
+  }
+
+  setRefreshToken(rt: string | null) {
+    this.refreshToken = rt;
+    if (rt) {
+      try { localStorage.setItem('refreshToken', rt); } catch { /* SSR */ }
+    } else {
+      try { localStorage.removeItem('refreshToken'); } catch { /* SSR */ }
+    }
+  }
+
+  getRefreshToken(): string | null {
+    if (this.refreshToken) return this.refreshToken;
+    try { return localStorage.getItem('refreshToken'); } catch { return null; }
+  }
+
+  /**
+   * Attempt to refresh the access token using the stored refresh token.
+   * Returns true if succeeded, false otherwise.
+   * Uses a single in-flight promise to prevent concurrent refresh races.
+   */
+  private async attemptRefresh(): Promise<boolean> {
+    if (this.refreshPromise) return this.refreshPromise;
+
+    this.refreshPromise = (async () => {
+      const rt = this.getRefreshToken();
+      if (!rt) return false;
+
+      try {
+        const resp = await fetch(`${API_URL}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: rt }),
+        });
+
+        if (!resp.ok) {
+          this.setRefreshToken(null);
+          return false;
+        }
+
+        const data = await resp.json();
+        if (data.success && data.data?.token) {
+          this.setToken(data.data.token);
+          if (data.data.refreshToken) {
+            this.setRefreshToken(data.data.refreshToken);
+          }
+          // Persist the new access token the same way the auth flow does
+          try { localStorage.setItem('token', data.data.token); } catch { /* SSR */ }
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
   }
 
   private async request<T = unknown>(
@@ -36,7 +97,17 @@ class ApiClient {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(url, { ...options, headers });
+    let response = await fetch(url, { ...options, headers });
+
+    // If 401 and we have a refresh token, try to refresh and retry once
+    if (response.status === 401 && this.getRefreshToken() && !endpoint.includes('/auth/refresh')) {
+      const refreshed = await this.attemptRefresh();
+      if (refreshed && this.token) {
+        (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
+        response = await fetch(url, { ...options, headers });
+      }
+    }
+
     const data = await response.json();
 
     if (!response.ok) {

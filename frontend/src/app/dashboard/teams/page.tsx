@@ -5,6 +5,8 @@ import { useAuth } from '@clerk/nextjs';
 import { Plus, Search, Trash2, UsersRound, UserPlus, Crown, Shield, User, X } from 'lucide-react';
 import { Card, Badge, Modal, Input, Textarea, Button, EmptyState } from '@/components/ui';
 import { useToast } from '@/components/ui/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 import api from '@/lib/api';
 
 interface TeamMember {
@@ -37,6 +39,7 @@ const roleColors: Record<string, string> = {
 export default function TeamsPage() {
   const { getToken } = useAuth();
   const toast = useToast();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -92,7 +95,8 @@ export default function TeamsPage() {
   };
 
   const handleDeleteTeam = async (id: string) => {
-    if (!confirm('Delete this team?')) return;
+    const ok = await confirm({ title: 'Delete Team', message: 'Delete this team?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     try {
       const token = await getToken();
       api.setToken(token);
@@ -123,7 +127,8 @@ export default function TeamsPage() {
   };
 
   const handleRemoveMember = async (teamId: string, userId: string) => {
-    if (!confirm('Remove this member?')) return;
+    const ok = await confirm({ title: 'Remove Member', message: 'Remove this member?', variant: 'warning', confirmLabel: 'Remove' });
+    if (!ok) return;
     try {
       const token = await getToken();
       api.setToken(token);
@@ -268,6 +273,7 @@ export default function TeamsPage() {
           </div>
         </div>
       </Modal>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

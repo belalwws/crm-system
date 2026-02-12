@@ -13,6 +13,8 @@ import {
   X,
   Calendar as CalendarIcon
 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 
 interface Meeting {
   id: string;
@@ -39,6 +41,7 @@ interface CalendarEvent {
 
 export default function CalendarPage() {
   const { getToken } = useAuth();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +122,8 @@ export default function CalendarPage() {
   };
 
   const deleteMeeting = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this meeting?')) return;
+    const ok = await confirm({ title: 'Delete Meeting', message: 'Are you sure you want to delete this meeting?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     
     try {
       const token = await getToken();
@@ -610,6 +614,7 @@ export default function CalendarPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

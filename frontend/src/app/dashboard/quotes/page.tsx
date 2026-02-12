@@ -5,6 +5,8 @@ import { useAuth } from '@clerk/nextjs';
 import { Plus, Search, Edit, Trash2, Send, Receipt, DollarSign, Calendar, Eye, FileText } from 'lucide-react';
 import { Card, Badge, Modal, Input, Textarea, Button, EmptyState, StatusBadge } from '@/components/ui';
 import { useToast } from '@/components/ui/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 import api from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/hooks';
 
@@ -56,6 +58,7 @@ const statusColors: Record<string, string> = {
 export default function QuotesPage() {
   const { getToken } = useAuth();
   const toast = useToast();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -212,7 +215,8 @@ export default function QuotesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this quote?')) return;
+    const ok = await confirm({ title: 'Delete Quote', message: 'Delete this quote?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     try {
       const token = await getToken();
       api.setToken(token);
@@ -525,6 +529,7 @@ export default function QuotesPage() {
           </div>
         </div>
       </Modal>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

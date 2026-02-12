@@ -6,6 +6,8 @@ import { Plus, Search, Edit, Trash2, User, Building2, Mail, Phone, Linkedin } fr
 import { Card, Badge, Modal, Input, Textarea, Button, EmptyState } from '@/components/ui';
 import { Pagination } from '@/components/ui/pagination';
 import { useToast } from '@/components/ui/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 import api from '@/lib/api';
 
 interface Contact {
@@ -27,6 +29,7 @@ interface Contact {
 export default function ContactsPage() {
   const { getToken } = useAuth();
   const toast = useToast();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -132,7 +135,8 @@ export default function ContactsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this contact?')) return;
+    const ok = await confirm({ title: 'Delete Contact', message: 'Delete this contact?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     try {
       const token = await getToken();
       api.setToken(token);
@@ -274,6 +278,7 @@ export default function ContactsPage() {
           </div>
         </div>
       </Modal>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

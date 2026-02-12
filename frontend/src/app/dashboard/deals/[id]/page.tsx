@@ -26,6 +26,8 @@ import FileUpload from '@/components/documents/file-upload';
 import { ActivityFeed } from '@/components/activity/activity-timeline';
 import EmailComposer from '@/components/email/email-composer';
 import { AIDealAnalysis } from '@/components/ai/ai-insights';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 
 interface Deal {
   id: string;
@@ -67,6 +69,7 @@ export default function DealDetailPage() {
   const params = useParams();
   const router = useRouter();
   const dealId = params.id as string;
+  const { confirm, dialogProps } = useConfirmDialog();
   
   const [deal, setDeal] = useState<Deal | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -144,7 +147,8 @@ export default function DealDetailPage() {
   };
 
   const deleteDeal = async () => {
-    if (!confirm('Are you sure you want to delete this deal? This action cannot be undone.')) return;
+    const ok = await confirm({ title: 'Delete Deal', message: 'Are you sure you want to delete this deal? This action cannot be undone.', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
 
     try {
       const token = await getToken();
@@ -556,6 +560,7 @@ export default function DealDetailPage() {
           onSent={() => {}}
         />
       )}
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

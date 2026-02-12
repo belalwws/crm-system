@@ -5,6 +5,8 @@ import { useAuth } from '@clerk/nextjs';
 import { Plus, Edit, Trash2, SlidersHorizontal, Hash, Calendar, ToggleLeft, List, Type, Link2, Mail, Phone } from 'lucide-react';
 import { Card, Badge, Modal, Input, Button, EmptyState } from '@/components/ui';
 import { useToast } from '@/components/ui/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 import api from '@/lib/api';
 
 interface CustomField {
@@ -32,6 +34,7 @@ const entityLabels: Record<string, string> = {
 export default function CustomFieldsPage() {
   const { getToken } = useAuth();
   const toast = useToast();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [fields, setFields] = useState<CustomField[]>([]);
   const [loading, setLoading] = useState(true);
   const [entityFilter, setEntityFilter] = useState('');
@@ -113,7 +116,8 @@ export default function CustomFieldsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this custom field? All stored values will be lost.')) return;
+    const ok = await confirm({ title: 'Delete Custom Field', message: 'Delete this custom field? All stored values will be lost.', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     try {
       const token = await getToken();
       api.setToken(token);
@@ -284,6 +288,7 @@ export default function CustomFieldsPage() {
           </div>
         </div>
       </Modal>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

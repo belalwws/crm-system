@@ -5,6 +5,8 @@ import { Bell, Check, Trash2, CheckCheck } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import api from '@/lib/api';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 
 interface Notification {
   id: string;
@@ -18,6 +20,7 @@ interface Notification {
 
 export default function NotificationsPage() {
   const { getToken } = useAuth();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -86,7 +89,8 @@ export default function NotificationsPage() {
   };
 
   const deleteAllNotifications = async () => {
-    if (!confirm('Are you sure you want to delete all notifications?')) return;
+    const ok = await confirm({ title: 'Delete All Notifications', message: 'Are you sure you want to delete all notifications?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     try {
       const token = await getToken();
       await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/notifications`, {
@@ -266,6 +270,7 @@ export default function NotificationsPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

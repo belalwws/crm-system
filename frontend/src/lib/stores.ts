@@ -114,9 +114,6 @@ interface UIStore {
   setSidebarCollapsed: (collapsed: boolean) => void;
   globalSearch: string;
   setGlobalSearch: (search: string) => void;
-  toasts: Array<{ id: string; type: 'success' | 'error' | 'info' | 'warning'; message: string }>;
-  addToast: (type: 'success' | 'error' | 'info' | 'warning', message: string) => void;
-  removeToast: (id: string) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -125,20 +122,4 @@ export const useUIStore = create<UIStore>((set) => ({
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
   globalSearch: '',
   setGlobalSearch: (search) => set({ globalSearch: search }),
-  toasts: [],
-  addToast: (type, message) => {
-    const id = crypto.randomUUID();
-    set((state) => ({
-      toasts: [...state.toasts, { id, type, message }],
-    }));
-    // Auto-remove after 5s
-    setTimeout(() => {
-      set((state) => ({
-        toasts: state.toasts.filter((t) => t.id !== id),
-      }));
-    }, 5000);
-  },
-  removeToast: (id) => set((state) => ({
-    toasts: state.toasts.filter((t) => t.id !== id),
-  })),
 }));

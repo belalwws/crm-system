@@ -23,6 +23,8 @@ import {
 import { Card, CardHeader, Badge, Modal, Button, Input, Select, PageLoading, EmptyState } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 
 interface WorkflowRule {
   id: string;
@@ -64,6 +66,7 @@ const ACTION_TYPES = [
 export default function WorkflowsPage() {
   const { getToken } = useAuth();
   const { addToast } = useToast();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [loading, setLoading] = useState(true);
   const [rules, setRules] = useState<WorkflowRule[]>([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -141,7 +144,8 @@ export default function WorkflowsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this workflow rule?")) return;
+    const ok = await confirm({ title: 'Delete Workflow', message: 'Delete this workflow rule?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
     try {
       await initApi();
       await api.deleteWorkflowRule(id);
@@ -432,6 +436,7 @@ export default function WorkflowsPage() {
             </div>
           </div>
         </Modal>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

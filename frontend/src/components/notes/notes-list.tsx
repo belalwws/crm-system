@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Plus, Edit, Trash2, Pin, PinOff, Save, X, StickyNote } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 
 interface Note {
   id: string;
@@ -20,6 +22,7 @@ interface NotesListProps {
 
 export default function NotesList({ customerId, dealId, taskId }: NotesListProps) {
   const { getToken } = useAuth();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -112,7 +115,8 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
   };
 
   const deleteNote = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+    const ok = await confirm({ title: 'Delete Note', message: 'Are you sure you want to delete this note?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
 
     try {
       const token = await getToken();
@@ -278,6 +282,7 @@ export default function NotesList({ customerId, dealId, taskId }: NotesListProps
           ))}
         </div>
       )}
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

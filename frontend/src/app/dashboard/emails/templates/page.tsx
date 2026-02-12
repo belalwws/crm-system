@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Plus, Edit, Trash2, Save, X, FileText } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
 
 interface EmailTemplate {
   id: string;
@@ -15,6 +17,7 @@ interface EmailTemplate {
 
 export default function EmailTemplatesPage() {
   const { getToken } = useAuth();
+  const { confirm, dialogProps } = useConfirmDialog();
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -92,7 +95,8 @@ export default function EmailTemplatesPage() {
   };
 
   const deleteTemplate = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this template?')) return;
+    const ok = await confirm({ title: 'Delete Template', message: 'Are you sure you want to delete this template?', variant: 'danger', confirmLabel: 'Delete' });
+    if (!ok) return;
 
     try {
       const token = await getToken();
@@ -281,6 +285,7 @@ export default function EmailTemplatesPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }
