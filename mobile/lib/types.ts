@@ -6,6 +6,7 @@ export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   message?: string;
+  error?: string;
   count?: number;
   totalPages?: number;
   page?: number;
@@ -39,6 +40,9 @@ export interface Customer {
   address: string | null;
   website: string | null;
   industry: string | null;
+  totalValue?: number;
+  _count?: { deals: number; notes: number; tasks: number };
+  deals?: Deal[];
   createdAt: string;
   updatedAt: string;
 }
@@ -60,7 +64,7 @@ export interface Deal {
   updatedAt: string;
 }
 
-export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'TODO';
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 export type TaskType = 'CALL' | 'EMAIL' | 'MEETING' | 'FOLLOW_UP' | 'OTHER';
 
@@ -88,6 +92,8 @@ export interface Notification {
   message: string;
   link?: string;
   isRead: boolean;
+  /** @deprecated Use isRead instead */
+  read?: boolean;
   createdAt: string;
 }
 
@@ -95,6 +101,7 @@ export interface Contact {
   id: string;
   firstName: string;
   lastName: string;
+  name?: string;
   email: string | null;
   phone: string | null;
   title: string | null;
@@ -166,10 +173,12 @@ export interface Team {
 
 export interface Note {
   id: string;
+  title?: string;
   content: string;
   isPinned: boolean;
   customerId: string | null;
   dealId: string | null;
+  taskId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -235,4 +244,11 @@ export interface UserPreferences {
   taskReminders: boolean;
   weeklyReport: boolean;
   compactView: boolean;
+}
+
+export interface SearchResults {
+  customers?: Array<{ id: string; name: string; email: string; company?: string }>;
+  deals?: Array<{ id: string; title: string; value: number; stage: string }>;
+  tasks?: Array<{ id: string; title: string; status: string }>;
+  contacts?: Array<{ id: string; name?: string; email?: string; company?: string }>;
 }

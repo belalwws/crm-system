@@ -44,14 +44,15 @@ interface BadgeProps {
   color: string;
   bgColor?: string;
   size?: 'sm' | 'md';
+  style?: ViewStyle;
 }
-export function Badge({ label, color, bgColor, size = 'sm' }: BadgeProps) {
+export function Badge({ label, color, bgColor, size = 'sm', style }: BadgeProps) {
   return (
     <View style={[styles.badge, {
       backgroundColor: bgColor || color + '15',
       paddingHorizontal: size === 'sm' ? 8 : 12,
       paddingVertical: size === 'sm' ? 2 : 4,
-    }]}>
+    }, style]}>
       <Text style={[styles.badgeText, {
         color,
         fontSize: size === 'sm' ? FontSize.xs : FontSize.sm,
@@ -124,7 +125,7 @@ export function StatCard({ title, value, icon, color, onPress }: StatCardProps) 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   icon?: keyof typeof Ionicons.glyphMap;
   loading?: boolean;
@@ -138,16 +139,18 @@ export function Button({
   const colors = useThemeColors();
 
   const bgMap = {
-    primary: colors.primary,            // neutral-900 / white
-    secondary: colors.card,             // white / neutral-900
+    primary: colors.primary,
+    secondary: colors.card,
     danger: colors.danger,
     ghost: 'transparent',
+    outline: 'transparent',
   };
   const textMap = {
-    primary: colors.primaryText,        // white / neutral-900
+    primary: colors.primaryText,
     secondary: colors.text,
     danger: '#ffffff',
     ghost: colors.text,
+    outline: colors.text,
   };
   const heightMap = { sm: 34, md: 44, lg: 52 };
   const fontMap = { sm: FontSize.sm, md: FontSize.md, lg: FontSize.base };
@@ -167,7 +170,7 @@ export function Button({
         paddingHorizontal: size === 'lg' ? Spacing.xxl : Spacing.lg,
         gap: 6,
         opacity: disabled ? 0.5 : 1,
-        borderWidth: variant === 'secondary' ? 1 : 0,
+        borderWidth: variant === 'secondary' || variant === 'outline' ? 1 : 0,
         borderColor: colors.border,
       }, style]}
     >
@@ -192,15 +195,18 @@ interface InputProps {
   onChangeText: (t: string) => void;
   placeholder?: string;
   multiline?: boolean;
+  numberOfLines?: number;
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad' | 'url';
   secureTextEntry?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   icon?: keyof typeof Ionicons.glyphMap;
   error?: string;
   editable?: boolean;
+  style?: ViewStyle;
 }
 export function Input({
-  label, value, onChangeText, placeholder, multiline,
-  keyboardType, secureTextEntry, icon, error, editable = true,
+  label, value, onChangeText, placeholder, multiline, numberOfLines,
+  keyboardType, secureTextEntry, autoCapitalize, icon, error, editable = true, style,
 }: InputProps) {
   const colors = useThemeColors();
   return (
@@ -210,15 +216,15 @@ export function Input({
           {label}
         </Text>
       )}
-      <View style={{
-        flexDirection: 'row', alignItems: 'center',
+      <View style={[{
+        flexDirection: 'row', alignItems: multiline ? 'flex-start' : 'center',
         backgroundColor: colors.inputBg,
-        borderRadius: BorderRadius.lg,     // rounded-xl
+        borderRadius: BorderRadius.lg,
         borderWidth: error ? 1.5 : 1,
         borderColor: error ? colors.danger : colors.border,
         paddingHorizontal: Spacing.lg,
-        minHeight: multiline ? 100 : 48,
-      }}>
+        minHeight: multiline ? (numberOfLines ? numberOfLines * 24 + 24 : 100) : 48,
+      }, style]}>
         {icon && <Ionicons name={icon} size={18} color={colors.textTertiary} style={{ marginRight: 10 }} />}
         <TextInput
           value={value}
@@ -226,8 +232,10 @@ export function Input({
           placeholder={placeholder}
           placeholderTextColor={colors.textTertiary}
           multiline={multiline}
+          numberOfLines={numberOfLines}
           keyboardType={keyboardType}
           secureTextEntry={secureTextEntry}
+          autoCapitalize={autoCapitalize}
           editable={editable}
           style={{
             flex: 1,
@@ -415,9 +423,9 @@ export function Section({ title, action, children }: SectionProps) {
 }
 
 // ── Divider ──────────────────────────────────────────────
-export function Divider() {
+export function Divider({ style }: { style?: ViewStyle }) {
   const colors = useThemeColors();
-  return <View style={{ height: 1, backgroundColor: colors.border, marginVertical: Spacing.md }} />;
+  return <View style={[{ height: 1, backgroundColor: colors.border, marginVertical: Spacing.md }, style]} />;
 }
 
 // ── ListItem ─────────────────────────────────────────────

@@ -64,7 +64,7 @@ export const ALLOWED_FILE_TYPES = new Set([
   'image/png',
   'image/gif',
   'image/webp',
-  'image/svg+xml',
+  // SVG removed: can contain embedded JavaScript (XSS risk)
   // Archives
   'application/zip',
   'application/x-rar-compressed',
@@ -72,7 +72,8 @@ export const ALLOWED_FILE_TYPES = new Set([
 
 export const ALLOWED_EXTENSIONS = new Set([
   '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv',
-  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg',
+  '.jpg', '.jpeg', '.png', '.gif', '.webp',
+  // .svg removed: can contain embedded JavaScript (XSS risk)
   '.zip', '.rar',
 ]);
 

@@ -56,8 +56,12 @@ export const protect = async (
         }
 
         // Cryptographically verify the JWT signature using Clerk's JWKS
+        const authorizedParties = process.env.CLERK_AUTHORIZED_PARTIES
+          ? process.env.CLERK_AUTHORIZED_PARTIES.split(',').map(s => s.trim())
+          : undefined;
         const verifiedPayload = await verifyToken(token, {
           secretKey: clerkSecretKey,
+          ...(authorizedParties ? { authorizedParties } : {}),
         });
 
         const clerkUserId = verifiedPayload.sub;
@@ -77,13 +81,17 @@ export const protect = async (
         }));
 
         if (!user) {
-          const randomPassword = (await import('crypto')).randomBytes(32).toString('base64');
+          // Store a bcrypt hash of a random value — never plaintext.
+          // The sentinel prefix 'CLERK_SSO:' makes it obvious this is not a real password.
+          const bcryptLib = await import('bcryptjs');
+          const randomBytes = (await import('crypto')).randomBytes(64).toString('base64');
+          const hashedPlaceholder = await bcryptLib.hash(`CLERK_SSO:${randomBytes}`, 12);
           user = await withRetry(() => prisma.user.create({
             data: {
               id: clerkUserId,
               email: email,
               name: (verifiedPayload as any).name || (verifiedPayload as any).first_name || (verifiedPayload as any).username || 'User',
-              password: randomPassword,
+              password: hashedPlaceholder,
             },
             select: { id: true, email: true, role: true, isActive: true, name: true },
           }));

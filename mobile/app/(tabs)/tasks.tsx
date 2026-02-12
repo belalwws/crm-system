@@ -61,7 +61,7 @@ export default function TasksScreen() {
   const getBadge = (type: 'status' | 'priority', key: string) => {
     const mode = isDark ? 'dark' : 'light';
     const map = type === 'status' ? SemanticColors.status : SemanticColors.priority;
-    const s = map[key as keyof typeof map];
+    const s = (map as Record<string, { dot: string; text: Record<string, string>; bg: Record<string, string> }>)[key];
     if (!s) return { dot: '#737373', text: isDark ? '#a3a3a3' : '#525252', bg: isDark ? 'rgba(38,38,38,0.5)' : '#f5f5f5' };
     return { dot: s.dot, text: s.text[mode], bg: s.bg[mode] };
   };

@@ -75,7 +75,7 @@ export default function NotificationsScreen() {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   if (loading) return <LoadingScreen />;
 
@@ -97,13 +97,13 @@ export default function NotificationsScreen() {
         ListEmptyComponent={<EmptyState icon="notifications-off" title="No notifications" message="You're all caught up!" />}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() => !item.read && markRead(item.id)}
+            onPress={() => !item.isRead && markRead(item.id)}
             activeOpacity={0.7}
             style={{
               flexDirection: 'row', padding: Spacing.lg, marginBottom: Spacing.sm,
-              backgroundColor: item.read ? colors.card : colors.primary + '08',
+              backgroundColor: item.isRead ? colors.card : colors.primary + '08',
               borderRadius: BorderRadius.lg, borderWidth: 1,
-              borderColor: item.read ? colors.border : colors.primary + '30',
+              borderColor: item.isRead ? colors.border : colors.primary + '30',
             }}
           >
             <View style={{
@@ -114,7 +114,7 @@ export default function NotificationsScreen() {
               <Ionicons name={getIcon(item.type)} size={20} color={getIconColor(item.type)} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: FontSize.md, fontWeight: item.read ? '400' : '600', color: colors.text }}>
+              <Text style={{ fontSize: FontSize.md, fontWeight: item.isRead ? '400' : '600', color: colors.text }}>
                 {item.title}
               </Text>
               {item.message && (
@@ -126,7 +126,7 @@ export default function NotificationsScreen() {
                 {timeAgo(item.createdAt)}
               </Text>
             </View>
-            {!item.read && (
+            {!item.isRead && (
               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary, marginTop: 6 }} />
             )}
           </TouchableOpacity>

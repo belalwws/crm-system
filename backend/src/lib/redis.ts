@@ -55,8 +55,28 @@ export const initRedis = (): Redis | null => {
   }
 };
 
-// In-memory fallback cache
+// In-memory fallback cache with LRU eviction and size limit
+const MEMORY_CACHE_MAX_SIZE = 1000;
 const memoryCache = new Map<string, { value: string; expiresAt: number }>();
+
+/**
+ * Evict expired entries and enforce max size (LRU: oldest entries first)
+ */
+function evictMemoryCache(): void {
+  // Remove expired
+  const now = Date.now();
+  for (const [key, item] of memoryCache) {
+    if (item.expiresAt <= now) {
+      memoryCache.delete(key);
+    }
+  }
+  // If still over limit, remove oldest entries (Map preserves insertion order)
+  while (memoryCache.size > MEMORY_CACHE_MAX_SIZE) {
+    const firstKey = memoryCache.keys().next().value;
+    if (firstKey !== undefined) memoryCache.delete(firstKey);
+    else break;
+  }
+}
 
 /**
  * Get value from cache (Redis or in-memory fallback)
@@ -86,7 +106,8 @@ export const cacheSet = async (key: string, value: string, ttlSeconds: number = 
     if (redisAvailable && redis) {
       await redis.set(key, value, 'EX', ttlSeconds);
     } else {
-      // Fallback to memory
+      // Fallback to memory with LRU eviction
+      evictMemoryCache();
       memoryCache.set(key, {
         value,
         expiresAt: Date.now() + ttlSeconds * 1000,

@@ -98,8 +98,13 @@ export function checkLimit(resource: ResourceType) {
       next();
     } catch (error) {
       logger.error('Subscription check error:', error);
-      // Don't block on subscription check failure
-      next();
+      // Fail-closed: deny access on subscription check failure
+      res.status(503).json({
+        success: false,
+        message: 'Unable to verify subscription. Please try again later.',
+        code: 'SUBSCRIPTION_CHECK_FAILED',
+      });
+      return;
     }
   };
 }
@@ -138,7 +143,12 @@ export function checkFeature(feature: FeatureName) {
       next();
     } catch (error) {
       logger.error('Feature check error:', error);
-      next();
+      res.status(503).json({
+        success: false,
+        message: 'Unable to verify feature access. Please try again later.',
+        code: 'FEATURE_CHECK_FAILED',
+      });
+      return;
     }
   };
 }

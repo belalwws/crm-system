@@ -3,7 +3,7 @@ import Constants from 'expo-constants';
 import type {
   Customer, Deal, Task, Contact, Product, Quote, Meeting, Note,
   DashboardStats, Notification, ChatSession, UserPreferences, Activity,
-  ApiResponse, Team,
+  ApiResponse, Team, SearchResults, ChatMessage,
 } from './types';
 
 const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://crm-system-71ju.onrender.com/api';
@@ -111,10 +111,10 @@ class ApiClient {
   async deleteContact(id: string) { return this.request(`/contacts/${id}`, { method: 'DELETE' }); }
 
   // Notes
-  async getNotes(params?: { customerId?: string; dealId?: string }) {
+  async getNotes(params?: { customerId?: string; dealId?: string; taskId?: string }) {
     return this.request<Note[]>(`/notes${this.buildQuery(params || {})}`);
   }
-  async createNote(data: { content: string; customerId?: string; dealId?: string }) {
+  async createNote(data: { title?: string; content: string; customerId?: string; dealId?: string; taskId?: string }) {
     return this.request<Note>('/notes', { method: 'POST', body: JSON.stringify(data) });
   }
   async deleteNote(id: string) { return this.request(`/notes/${id}`, { method: 'DELETE' }); }
@@ -127,6 +127,7 @@ class ApiClient {
 
   // Meetings
   async getMeetings() { return this.request<Meeting[]>('/meetings'); }
+  async getMeeting(id: string) { return this.request<Meeting>(`/meetings/${id}`); }
   async getUpcomingMeetings() { return this.request<Meeting[]>('/meetings/upcoming'); }
   async createMeeting(data: Partial<Meeting>) {
     return this.request<Meeting>('/meetings', { method: 'POST', body: JSON.stringify(data) });
@@ -163,23 +164,28 @@ class ApiClient {
 
   // AI Chat
   async listChatSessions() { return this.request<ChatSession[]>('/ai/sessions'); }
-  async createChatSession(title?: string) {
-    return this.request<ChatSession>('/ai/sessions', { method: 'POST', body: JSON.stringify({ title }) });
+  async createChatSession(title?: string | { title: string }) {
+    const t = typeof title === 'object' ? title.title : title;
+    return this.request<ChatSession>('/ai/sessions', { method: 'POST', body: JSON.stringify({ title: t }) });
   }
   async getChatSession(sessionId: string) { return this.request<ChatSession>(`/ai/sessions/${sessionId}`); }
+  async getChatMessages(sessionId: string) { return this.request<ChatMessage[]>(`/ai/sessions/${sessionId}/messages`); }
   async deleteChatSession(sessionId: string) {
     return this.request(`/ai/sessions/${sessionId}`, { method: 'DELETE' });
   }
-  async sendChatMessage(sessionId: string, message: string) {
+  async sendChatMessage(sessionId: string, message: string | { content: string }) {
+    const msg = typeof message === 'object' ? message.content : message;
     return this.request(`/ai/sessions/${sessionId}/messages`, {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message: msg }),
     });
   }
 
   // AI Features
   async aiCustomerInsights(customerId: string) { return this.request(`/ai/customer-insights/${customerId}`); }
+  async getCustomerInsights(customerId: string) { return this.aiCustomerInsights(customerId); }
   async aiDealAnalysis(dealId: string) { return this.request(`/ai/deal-analysis/${dealId}`); }
+  async getDealInsights(dealId: string) { return this.aiDealAnalysis(dealId); }
   async aiPrioritizeTasks() { return this.request('/ai/prioritize-tasks'); }
   async aiDashboardInsights() { return this.request('/ai/dashboard-insights'); }
 
@@ -195,7 +201,7 @@ class ApiClient {
 
   // Search
   async globalSearch(q: string, entity?: string) {
-    return this.request(`/search${this.buildQuery({ q, entity })}`);
+    return this.request<SearchResults>(`/search${this.buildQuery({ q, entity })}`);
   }
 
   // Reports

@@ -14,12 +14,10 @@ const userSockets = new Map<string, Set<string>>();
  * Initialize Socket.IO server
  */
 export const initializeSocket = (httpServer: HTTPServer): Server => {
-  const envOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
     .split(',')
     .map(o => o.trim())
     .filter(Boolean);
-  const PRODUCTION_FRONTEND = 'https://crm-system-weld.vercel.app';
-  const allowedOrigins = [...new Set([...envOrigins, PRODUCTION_FRONTEND])];
 
   io = new Server(httpServer, {
     cors: {
@@ -107,17 +105,41 @@ export const initializeSocket = (httpServer: HTTPServer): Server => {
     // Join user's personal room
     socket.join(`user:${userId}`);
 
-    // Handle joining entity-specific rooms
-    socket.on('join:deal', (dealId: string) => {
-      socket.join(`deal:${dealId}`);
+    // Handle joining entity-specific rooms — verify ownership first
+    socket.on('join:deal', async (dealId: string) => {
+      try {
+        const deal = await prisma.deal.findFirst({
+          where: { id: dealId, ownerId: userId, deletedAt: null },
+          select: { id: true },
+        });
+        if (deal) {
+          socket.join(`deal:${dealId}`);
+        } else {
+          socket.emit('error', { message: 'Access denied to this deal' });
+        }
+      } catch {
+        socket.emit('error', { message: 'Failed to verify deal access' });
+      }
     });
 
     socket.on('leave:deal', (dealId: string) => {
       socket.leave(`deal:${dealId}`);
     });
 
-    socket.on('join:customer', (customerId: string) => {
-      socket.join(`customer:${customerId}`);
+    socket.on('join:customer', async (customerId: string) => {
+      try {
+        const customer = await prisma.customer.findFirst({
+          where: { id: customerId, ownerId: userId, deletedAt: null },
+          select: { id: true },
+        });
+        if (customer) {
+          socket.join(`customer:${customerId}`);
+        } else {
+          socket.emit('error', { message: 'Access denied to this customer' });
+        }
+      } catch {
+        socket.emit('error', { message: 'Failed to verify customer access' });
+      }
     });
 
     socket.on('leave:customer', (customerId: string) => {

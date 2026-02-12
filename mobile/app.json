@@ -41,8 +41,8 @@
       "typedRoutes": true
     },
     "extra": {
-      "clerkPublishableKey": "pk_test_aG90LXJhcHRvci01Ny5jbGVyay5hY2NvdW50cy5kZXYk",
-      "apiUrl": "https://crm-system-71ju.onrender.com/api"
+      "clerkPublishableKey": "REPLACE_WITH_ENV_VAR",
+      "apiUrl": "REPLACE_WITH_ENV_VAR"
     }
   }
 }

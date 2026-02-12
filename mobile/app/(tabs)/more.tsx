@@ -21,13 +21,13 @@ export default function MoreScreen() {
   const { signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
-  const { unreadNotifications } = useAppStore();
+  const { unreadCount } = useAppStore();
 
   const menuSections: { title: string; items: MenuItem[] }[] = [
     {
       title: 'COMMUNICATION',
       items: [
-        { icon: 'notifications', label: 'Notifications', route: '/notifications', color: AccentColors.red, badge: unreadNotifications },
+        { icon: 'notifications', label: 'Notifications', route: '/notifications', color: AccentColors.red, badge: unreadCount },
         { icon: 'chatbubbles', label: 'AI Assistant', route: '/ai-chat', color: AccentColors.violet },
         { icon: 'mail', label: 'Emails', route: '/emails', color: AccentColors.blue },
       ],
