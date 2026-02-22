@@ -42,7 +42,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       try {
         const token = await getToken();
         api.setToken(token);
-        const res = await api.createCheckout(selectedPlan);
+        const res = await api.createCheckout({ plan: selectedPlan });
         if (res.success && (res.data as any)?.url) {
           localStorage.setItem('crm_onboarding_plan_selected', selectedPlan);
           window.location.href = (res.data as any).url;

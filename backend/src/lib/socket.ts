@@ -10,6 +10,36 @@ let io: Server | null = null;
 // Map userId -> Set of socket IDs
 const userSockets = new Map<string, Set<string>>();
 
+// Rate limiting for WebSocket connections
+const connectionAttempts = new Map<string, { count: number; resetAt: number }>();
+const WS_RATE_LIMIT = { maxConnections: 10, windowMs: 60000 }; // 10 connections per minute per IP
+
+// Rate limiting for socket events
+const eventCounts = new Map<string, { count: number; resetAt: number }>();
+const WS_EVENT_LIMIT = { maxEvents: 60, windowMs: 60000 }; // 60 events per minute per user
+
+function checkConnectionRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = connectionAttempts.get(ip);
+  if (!record || now > record.resetAt) {
+    connectionAttempts.set(ip, { count: 1, resetAt: now + WS_RATE_LIMIT.windowMs });
+    return true;
+  }
+  record.count++;
+  return record.count <= WS_RATE_LIMIT.maxConnections;
+}
+
+function checkEventRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const record = eventCounts.get(userId);
+  if (!record || now > record.resetAt) {
+    eventCounts.set(userId, { count: 1, resetAt: now + WS_EVENT_LIMIT.windowMs });
+    return true;
+  }
+  record.count++;
+  return record.count <= WS_EVENT_LIMIT.maxEvents;
+}
+
 /**
  * Initialize Socket.IO server
  */
@@ -27,6 +57,15 @@ export const initializeSocket = (httpServer: HTTPServer): Server => {
     },
     pingInterval: 25000,
     pingTimeout: 10000,
+  });
+
+  // Rate limit connection attempts
+  io.use(async (socket: Socket, next) => {
+    const ip = socket.handshake.address || 'unknown';
+    if (!checkConnectionRateLimit(ip)) {
+      return next(new Error('Too many connection attempts. Please try again later.'));
+    }
+    next();
   });
 
   // Authenticate socket connections (supports both Clerk and local JWT)
@@ -107,6 +146,10 @@ export const initializeSocket = (httpServer: HTTPServer): Server => {
 
     // Handle joining entity-specific rooms — verify ownership first
     socket.on('join:deal', async (dealId: string) => {
+      if (!checkEventRateLimit(userId)) {
+        socket.emit('error', { message: 'Rate limit exceeded' });
+        return;
+      }
       try {
         const deal = await prisma.deal.findFirst({
           where: { id: dealId, ownerId: userId, deletedAt: null },
@@ -127,6 +170,10 @@ export const initializeSocket = (httpServer: HTTPServer): Server => {
     });
 
     socket.on('join:customer', async (customerId: string) => {
+      if (!checkEventRateLimit(userId)) {
+        socket.emit('error', { message: 'Rate limit exceeded' });
+        return;
+      }
       try {
         const customer = await prisma.customer.findFirst({
           where: { id: customerId, ownerId: userId, deletedAt: null },
@@ -146,8 +193,9 @@ export const initializeSocket = (httpServer: HTTPServer): Server => {
       socket.leave(`customer:${customerId}`);
     });
 
-    // Handle typing indicators
+    // Handle typing indicators (rate limited)
     socket.on('typing:start', (data: { entityType: string; entityId: string }) => {
+      if (!checkEventRateLimit(userId)) return;
       socket.to(`${data.entityType}:${data.entityId}`).emit('typing:update', {
         userId,
         isTyping: true,
@@ -155,6 +203,7 @@ export const initializeSocket = (httpServer: HTTPServer): Server => {
     });
 
     socket.on('typing:stop', (data: { entityType: string; entityId: string }) => {
+      if (!checkEventRateLimit(userId)) return;
       socket.to(`${data.entityType}:${data.entityId}`).emit('typing:update', {
         userId,
         isTyping: false,

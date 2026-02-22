@@ -16,9 +16,11 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { formatCurrency, formatRelativeTime } from "@/lib/hooks";
-import { AIDashboardInsights } from "@/components/ai/ai-insights";
 import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
+
+// Dynamic imports for heavy components
+const AIDashboardInsights = dynamic(() => import("@/components/ai/ai-insights").then(m => ({ default: m.AIDashboardInsights })), { ssr: false, loading: () => <div className="h-64 animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
 
 const AreaChartComponent = dynamic(() => import("@/components/ui/charts").then(m => ({ default: m.AreaChartComponent })), { ssr: false, loading: () => <div className="h-[300px] animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
 

@@ -5,9 +5,9 @@
 
 import { buildActionSystemPrompt } from './ai-actions';
 
-const NVIDIA_API_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+const NVIDIA_API_URL = process.env.NVIDIA_API_URL || 'https://integrate.api.nvidia.com/v1/chat/completions';
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY || '';
-const DEFAULT_MODEL = 'meta/llama-3.3-70b-instruct';
+const DEFAULT_MODEL = process.env.AI_MODEL || 'meta/llama-3.3-70b-instruct';
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';

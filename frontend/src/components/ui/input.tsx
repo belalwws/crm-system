@@ -16,7 +16,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="space-y-2">
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-neutral-400">
+          <label htmlFor={id} className="block text-sm font-medium text-neutral-600 dark:text-neutral-400">
             {label}
             {props.required && <span className="text-red-400 ml-1">*</span>}
           </label>
@@ -31,9 +31,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={id}
             className={`
-              w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl
-              text-white placeholder-neutral-500
-              focus:outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-500/20
+              w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl
+              text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500
+              focus:outline-none focus:border-blue-500 dark:focus:border-neutral-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-neutral-500/20
               transition-all duration-200
               disabled:opacity-50 disabled:cursor-not-allowed
               ${icon ? "pl-11" : ""}
@@ -63,7 +63,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="space-y-2">
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-neutral-400">
+          <label htmlFor={id} className="block text-sm font-medium text-neutral-600 dark:text-neutral-400">
             {label}
             {props.required && <span className="text-red-400 ml-1">*</span>}
           </label>
@@ -72,9 +72,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={id}
           className={`
-            w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl
-            text-white placeholder-neutral-500 resize-none
-            focus:outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-500/20
+            w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl
+            text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-500 resize-none
+            focus:outline-none focus:border-blue-500 dark:focus:border-neutral-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-neutral-500/20
             transition-all duration-200
             disabled:opacity-50 disabled:cursor-not-allowed
             ${error ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}
@@ -103,7 +103,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="space-y-2">
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-neutral-400">
+          <label htmlFor={id} className="block text-sm font-medium text-neutral-600 dark:text-neutral-400">
             {label}
             {props.required && <span className="text-red-400 ml-1">*</span>}
           </label>
@@ -112,9 +112,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={id}
           className={`
-            w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl
-            text-white appearance-none cursor-pointer
-            focus:outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-500/20
+            w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl
+            text-neutral-900 dark:text-white appearance-none cursor-pointer
+            focus:outline-none focus:border-blue-500 dark:focus:border-neutral-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-neutral-500/20
             transition-all duration-200
             disabled:opacity-50 disabled:cursor-not-allowed
             ${error ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""}

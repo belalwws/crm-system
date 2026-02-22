@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   ArrowLeft,
   DollarSign,
@@ -24,10 +25,12 @@ import {
 import NotesList from '@/components/notes/notes-list';
 import FileUpload from '@/components/documents/file-upload';
 import { ActivityFeed } from '@/components/activity/activity-timeline';
-import EmailComposer from '@/components/email/email-composer';
-import { AIDealAnalysis } from '@/components/ai/ai-insights';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
+
+// Dynamic imports for heavy components
+const EmailComposer = dynamic(() => import('@/components/email/email-composer'), { ssr: false, loading: () => null });
+const AIDealAnalysis = dynamic(() => import('@/components/ai/ai-insights').then(m => ({ default: m.AIDealAnalysis })), { ssr: false, loading: () => <div className="h-32 animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
 
 interface Deal {
   id: string;

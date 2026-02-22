@@ -8,7 +8,7 @@ interface TableProps {
 
 export function Table({ children }: TableProps) {
   return (
-    <div className="bg-neutral-900 rounded-2xl border border-neutral-800 overflow-hidden">
+    <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           {children}
@@ -24,7 +24,7 @@ interface TableHeaderProps {
 
 export function TableHeader({ children }: TableHeaderProps) {
   return (
-    <thead className="border-b border-neutral-800 bg-neutral-900/50">
+    <thead className="border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
       <tr>{children}</tr>
     </thead>
   );
@@ -57,7 +57,7 @@ interface TableBodyProps {
 }
 
 export function TableBody({ children }: TableBodyProps) {
-  return <tbody className="divide-y divide-neutral-800">{children}</tbody>;
+  return <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">{children}</tbody>;
 }
 
 interface TableRowProps {
@@ -70,7 +70,7 @@ interface TableRowProps {
 export function TableRow({ children, onClick, className = "", style }: TableRowProps) {
   return (
     <tr
-      className={`hover:bg-neutral-800/50 transition-colors ${onClick ? "cursor-pointer" : ""} ${className}`}
+      className={`hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors ${onClick ? "cursor-pointer" : ""} ${className}`}
       onClick={onClick}
       style={style}
     >

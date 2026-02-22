@@ -1,5 +1,3 @@
-"use client";
-
 import { getInitials, stringToColor } from "@/lib/hooks";
 
 interface AvatarProps {

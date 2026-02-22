@@ -38,7 +38,7 @@ export default function CreateDealScreen() {
       const res = await api.createDeal({
         title: form.title,
         value: parseFloat(form.value) || 0,
-        stage: form.stage,
+        stage: form.stage as Deal['stage'],
         probability: parseInt(form.probability) || 50,
         customerId: form.customerId || undefined,
         description: form.description,

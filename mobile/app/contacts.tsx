@@ -20,7 +20,7 @@ export default function ContactsScreen() {
   const fetchContacts = useCallback(async () => {
     try {
       const token = await getToken(); api.setToken(token);
-      const res = await api.getContacts(search ? { search } : undefined);
+      const res = await api.getContacts();
       if (res.success) setContacts(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); setRefreshing(false); }
@@ -51,9 +51,9 @@ export default function ContactsScreen() {
               marginBottom: Spacing.md, borderWidth: 1, borderColor: colors.border,
               flexDirection: 'row', alignItems: 'center',
             }}>
-              <Avatar name={item.name || item.email || '?'} size={44} color={colors.primary} />
+              <Avatar name={`${item.firstName} ${item.lastName}` || item.email || '?'} size={44} color={colors.primary} />
               <View style={{ flex: 1, marginLeft: Spacing.md }}>
-                <Text style={{ fontSize: FontSize.md, fontWeight: '600', color: colors.text }}>{item.name || 'No name'}</Text>
+                <Text style={{ fontSize: FontSize.md, fontWeight: '600', color: colors.text }}>{`${item.firstName} ${item.lastName}`.trim() || 'No name'}</Text>
                 {item.email && <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary }}>{item.email}</Text>}
                 {item.phone && <Text style={{ fontSize: FontSize.xs, color: colors.textSecondary }}>{item.phone}</Text>}
               </View>

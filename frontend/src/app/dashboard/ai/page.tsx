@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Sparkles,
   MessageSquare,
@@ -13,9 +14,12 @@ import {
   Users,
   Target,
 } from "lucide-react";
-import { AIChat } from "@/components/ai/ai-chat";
-import { AIEmailComposer } from "@/components/ai/ai-email-composer";
-import { AIDashboardInsights, AITaskPrioritization } from "@/components/ai/ai-insights";
+
+// Dynamic imports for heavy AI components
+const AIChat = dynamic(() => import("@/components/ai/ai-chat").then(m => ({ default: m.AIChat })), { ssr: false, loading: () => <div className="h-[500px] animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
+const AIEmailComposer = dynamic(() => import("@/components/ai/ai-email-composer").then(m => ({ default: m.AIEmailComposer })), { ssr: false, loading: () => <div className="h-[400px] animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
+const AIDashboardInsights = dynamic(() => import("@/components/ai/ai-insights").then(m => ({ default: m.AIDashboardInsights })), { ssr: false, loading: () => <div className="h-64 animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
+const AITaskPrioritization = dynamic(() => import("@/components/ai/ai-insights").then(m => ({ default: m.AITaskPrioritization })), { ssr: false, loading: () => <div className="h-64 animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
 
 type ActiveTool = "chat" | "email" | "insights" | "tasks" | null;
 

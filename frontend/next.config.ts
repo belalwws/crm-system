@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com https://*.clerk.accounts.dev; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev wss: ws: http://localhost:5000 https://integrate.api.nvidia.com; frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev;",
+          },
         ],
       },
     ];
@@ -31,7 +35,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "img.clerk.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.clerk.dev",
+      },
+      {
+        protocol: "https",
+        hostname: "*.clerk.accounts.dev",
       },
     ],
   },

@@ -1,5 +1,3 @@
-"use client";
-
 interface LoadingProps {
   size?: "sm" | "md" | "lg";
   text?: string;

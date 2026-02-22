@@ -36,7 +36,7 @@ export default function NotificationsPage() {
       ]);
 
       if (tokensRes.success) {
-        setTotalTokens(tokensRes.total as number || 0);
+        setTotalTokens((tokensRes as { total?: number }).total || 0);
         setPlatformStats((tokensRes as any).platformStats || {});
       }
       if (historyRes.success) {

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { protect } from '../middleware/auth';
+import { checkLimit } from '../middleware/subscription';
 import {
   chat,
   composeEmail,
@@ -29,28 +30,28 @@ router.post('/sessions', createSession);
 router.get('/sessions/:sessionId', getSession);
 router.put('/sessions/:sessionId', updateSession);
 router.delete('/sessions/:sessionId', deleteSession);
-router.post('/sessions/:sessionId/messages', sendMessage);
+router.post('/sessions/:sessionId/messages', checkLimit('aiRequests'), sendMessage);
 
 // ---- Legacy AI Endpoints (still used by insight components) ----
 // General AI Chat
-router.post('/chat', chat);
+router.post('/chat', checkLimit('aiRequests'), chat);
 
 // Email Composition
-router.post('/compose-email', composeEmail);
+router.post('/compose-email', checkLimit('aiRequests'), composeEmail);
 
 // Customer Insights
-router.get('/customer-insights/:customerId', customerInsights);
+router.get('/customer-insights/:customerId', checkLimit('aiRequests'), customerInsights);
 
 // Deal Analysis
-router.get('/deal-analysis/:dealId', dealAnalysis);
+router.get('/deal-analysis/:dealId', checkLimit('aiRequests'), dealAnalysis);
 
 // Task Prioritization
-router.get('/prioritize-tasks', prioritizeTasks);
+router.get('/prioritize-tasks', checkLimit('aiRequests'), prioritizeTasks);
 
 // Summarize
-router.post('/summarize', summarize);
+router.post('/summarize', checkLimit('aiRequests'), summarize);
 
 // Dashboard Insights
-router.get('/dashboard-insights', dashboardInsights);
+router.get('/dashboard-insights', checkLimit('aiRequests'), dashboardInsights);
 
 export default router;

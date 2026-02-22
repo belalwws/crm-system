@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
 import {
   ArrowRight,
@@ -36,18 +37,21 @@ const testimonials = [
     author: "Sarah Chen",
     role: "VP of Sales",
     company: "TechCorp",
+    image: "/Sarah Chen.png",
   },
   {
     quote: "Finally, a CRM that our team actually wants to use. No training required.",
     author: "Marcus Johnson",
     role: "CEO",
     company: "GrowthLabs",
+    image: "/Marcus Johnson.png",
   },
   {
     quote: "We switched from Salesforce and never looked back. Nexus is everything we needed.",
     author: "Elena Rodriguez",
     role: "Sales Director",
     company: "CloudNine",
+    image: "/Elena Rodriguez.png",
   },
 ];
 
@@ -160,14 +164,13 @@ export default function HomePage() {
               </div>
 
               <div className="mt-8 flex items-center gap-4 text-sm text-neutral-500 dark:text-neutral-400">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-8 h-8 rounded-full bg-neutral-200 dark:bg-neutral-700 border-2 border-white dark:border-neutral-950"
-                    />
-                  ))}
-                </div>
+                <Image
+                  src="/flowcv-loved-by-users.png"
+                  alt="Loved by users"
+                  width={180}
+                  height={40}
+                  className="h-auto w-auto"
+                />
                 <span>Join 50,000+ users</span>
               </div>
             </div>
@@ -175,41 +178,15 @@ export default function HomePage() {
             {/* Dashboard Preview */}
             <div className="relative">
               <div className="absolute inset-0 bg-neutral-200 dark:bg-neutral-800 rounded-3xl transform rotate-3" />
-              <div className="relative bg-white dark:bg-neutral-900 rounded-2xl shadow-xl p-6 border border-neutral-200 dark:border-neutral-800">
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-3 h-3 rounded-full bg-red-400" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                  <div className="w-3 h-3 rounded-full bg-green-400" />
-                </div>
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="bg-neutral-100 dark:bg-neutral-800 rounded-xl p-4">
-                    <div className="text-2xl font-medium text-neutral-900 dark:text-white">247</div>
-                    <div className="text-xs text-neutral-500 dark:text-neutral-400">Customers</div>
-                  </div>
-                  <div className="bg-neutral-100 dark:bg-neutral-800 rounded-xl p-4">
-                    <div className="text-2xl font-medium text-neutral-900 dark:text-white">$84k</div>
-                    <div className="text-xs text-neutral-500 dark:text-neutral-400">Pipeline</div>
-                  </div>
-                  <div className="bg-neutral-100 dark:bg-neutral-800 rounded-xl p-4">
-                    <div className="text-2xl font-medium text-neutral-900 dark:text-white">92%</div>
-                    <div className="text-xs text-neutral-500 dark:text-neutral-400">Win Rate</div>
-                  </div>
-                </div>
-                <div className="bg-neutral-100 dark:bg-neutral-800 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Revenue</span>
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400">This week</span>
-                  </div>
-                  <div className="flex items-end gap-2 h-24">
-                    {[45, 62, 38, 75, 55, 68, 50].map((h, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 bg-neutral-900 dark:bg-white rounded-t-sm"
-                        style={{ height: `${h}%` }}
-                      />
-                    ))}
-                  </div>
-                </div>
+              <div className="relative rounded-2xl shadow-xl overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                <Image
+                  src="/hero-section-dashboard.png"
+                  alt="Nexus CRM Dashboard Preview"
+                  width={600}
+                  height={450}
+                  className="w-full h-auto"
+                  priority
+                />
               </div>
             </div>
           </div>
@@ -373,7 +350,13 @@ export default function HomePage() {
                   &ldquo;{testimonial.quote}&rdquo;
                 </p>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700" />
+                  <Image
+                    src={testimonial.image}
+                    alt={testimonial.author}
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
                   <div>
                     <div className="font-medium text-neutral-900 dark:text-white text-sm">
                       {testimonial.author}

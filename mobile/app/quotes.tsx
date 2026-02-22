@@ -50,7 +50,7 @@ export default function QuotesScreen() {
           }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: FontSize.lg, fontWeight: '600', color: colors.text }}>{item.title || `Quote #${item.id.slice(-6)}`}</Text>
+                <Text style={{ fontSize: FontSize.lg, fontWeight: '600', color: colors.text }}>{item.quoteNumber || `Quote #${item.id.slice(-6)}`}</Text>
                 {item.customer && <Text style={{ fontSize: FontSize.sm, color: colors.textSecondary }}>{item.customer.name}</Text>}
               </View>
               <Text style={{ fontSize: FontSize.lg, fontWeight: '700', color: '#22c55e' }}>{formatCurrency(item.total || 0)}</Text>

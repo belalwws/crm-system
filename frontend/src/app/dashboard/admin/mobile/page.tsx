@@ -35,7 +35,7 @@ export default function MobileAppPage() {
       if (res.success) {
         setTokens((res.data as PushToken[]) || []);
         setTotalPages(res.totalPages || 1);
-        setTotal(res.total as number || 0);
+        setTotal((res as unknown as { total?: number }).total || 0);
         setPlatformStats((res as any).platformStats || {});
       }
     } catch {

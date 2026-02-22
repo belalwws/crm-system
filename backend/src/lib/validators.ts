@@ -10,7 +10,8 @@ export const registerSchema = z.object({
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
+    .regex(/[0-9]/, 'Password must contain at least one number')
+    .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, 'Password must contain at least one special character'),
   company: z.string().max(100).optional(),
 });
 
@@ -181,6 +182,24 @@ export const createWebhookSchema = z.object({
 });
 
 export const updateWebhookSchema = createWebhookSchema.partial();
+
+// ===========================
+// Contact Schemas
+// ===========================
+export const createContactSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(100),
+  lastName: z.string().min(1, 'Last name is required').max(100),
+  email: z.string().email('Invalid email format').max(255).optional().nullable(),
+  phone: z.string().max(30).optional().nullable(),
+  title: z.string().max(100).optional().nullable(),
+  department: z.string().max(100).optional().nullable(),
+  isPrimary: z.boolean().optional(),
+  linkedIn: z.string().url('Invalid LinkedIn URL').max(500).or(z.literal('')).optional().nullable(),
+  notes: z.string().max(5000).optional().nullable(),
+  customerId: z.string().min(1, 'Customer ID is required'),
+});
+
+export const updateContactSchema = createContactSchema.partial().omit({ customerId: true });
 
 // ===========================
 // Search & Pagination

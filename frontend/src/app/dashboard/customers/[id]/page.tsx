@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   ArrowLeft,
   Mail,
@@ -26,12 +27,14 @@ import {
 import NotesList from '@/components/notes/notes-list';
 import FileUpload from '@/components/documents/file-upload';
 import { ActivityFeed } from '@/components/activity/activity-timeline';
-import EmailComposer from '@/components/email/email-composer';
-import { AICustomerInsights } from '@/components/ai/ai-insights';
-import { AIEmailComposer } from '@/components/ai/ai-email-composer';
 import { api } from '@/lib/api';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useConfirmDialog } from '@/components/ui/use-confirm-dialog';
+
+// Dynamic imports for heavy components
+const EmailComposer = dynamic(() => import('@/components/email/email-composer'), { ssr: false, loading: () => null });
+const AICustomerInsights = dynamic(() => import('@/components/ai/ai-insights').then(m => ({ default: m.AICustomerInsights })), { ssr: false, loading: () => <div className="h-32 animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
+const AIEmailComposer = dynamic(() => import('@/components/ai/ai-email-composer').then(m => ({ default: m.AIEmailComposer })), { ssr: false, loading: () => <div className="h-32 animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
 
 function CustomerTimeline({ customerId }: { customerId: string }) {
   const { getToken } = useAuth();

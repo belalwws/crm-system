@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useId } from "react";
+import { ReactNode, useEffect, useId, useRef, useCallback } from "react";
 import { X } from "lucide-react";
 
 interface ModalProps {
@@ -21,22 +21,42 @@ const sizeClasses = {
 
 export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalProps) {
   const titleId = useId();
-  // Close on escape key
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Focus trap: cycle focus within the modal
+  const handleTabKey = useCallback((e: KeyboardEvent) => {
+    if (e.key !== "Tab" || !modalRef.current) return;
+    const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }, []);
+
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+      handleTabKey(e);
     };
 
     if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
+      document.addEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "hidden";
+      // Auto-focus the modal container
+      setTimeout(() => modalRef.current?.focus(), 50);
     }
 
     return () => {
-      document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, handleTabKey]);
 
   if (!isOpen) return null;
 
@@ -50,6 +70,8 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
       
       {/* Modal */}
       <div
+        ref={modalRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

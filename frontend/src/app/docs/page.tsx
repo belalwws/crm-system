@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import DOMPurify from 'dompurify';
 import {
   BookOpen, Search, ChevronRight, Zap, Users, Briefcase,
   ListTodo, BarChart3, Mail, Shield, Settings, Code,
@@ -416,17 +417,20 @@ export default function DocsPage() {
             <article className="prose prose-neutral dark:prose-invert prose-violet max-w-none">
               <div
                 dangerouslySetInnerHTML={{
-                  __html: currentArticle.content
-                    .replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold mt-8 mb-4">$1</h2>')
-                    .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-6 mb-3">$1</h3>')
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded text-sm">$1</code>')
-                    .replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>')
-                    .replace(/^\| (.+) \|$/gm, (match: string) => {
-                      const cells = match.split('|').filter(Boolean).map((c: string) => c.trim());
-                      return `<tr>${cells.map((c: string) => `<td class="border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-sm">${c}</td>`).join('')}</tr>`;
-                    })
-                    .replace(/\n/g, '<br />'),
+                  __html: DOMPurify.sanitize(
+                    currentArticle.content
+                      .replace(/^## (.+)$/gm, '<h2 class="text-2xl font-bold mt-8 mb-4">$1</h2>')
+                      .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-6 mb-3">$1</h3>')
+                      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded text-sm">$1</code>')
+                      .replace(/^- (.+)$/gm, '<li class="ml-4">$1</li>')
+                      .replace(/^\| (.+) \|$/gm, (match: string) => {
+                        const cells = match.split('|').filter(Boolean).map((c: string) => c.trim());
+                        return `<tr>${cells.map((c: string) => `<td class="border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-sm">${c}</td>`).join('')}</tr>`;
+                      })
+                      .replace(/\n/g, '<br />'),
+                    { ALLOWED_TAGS: ['h2', 'h3', 'strong', 'code', 'li', 'tr', 'td', 'br', 'ul', 'ol', 'table', 'thead', 'tbody', 'p', 'a', 'em', 'blockquote', 'pre'], ALLOWED_ATTR: ['class', 'href'] }
+                  ),
                 }}
               />
             </article>

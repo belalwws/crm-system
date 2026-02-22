@@ -2,6 +2,7 @@ import { Response } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../types';
 import logger from '../lib/logger';
+import { createContactSchema, updateContactSchema } from '../lib/validators';
 
 /**
  * @desc    Get all contacts for a customer
@@ -55,12 +56,13 @@ export const getContact = async (req: AuthRequest, res: Response): Promise<void>
  */
 export const createContact = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { firstName, lastName, email, phone, title, department, isPrimary, linkedIn, notes, customerId } = req.body;
-
-    if (!firstName || !lastName || !customerId) {
-      res.status(400).json({ success: false, message: 'First name, last name, and customer ID are required' });
+    const validation = createContactSchema.safeParse(req.body);
+    if (!validation.success) {
+      const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      res.status(400).json({ success: false, message: errors });
       return;
     }
+    const { firstName, lastName, email, phone, title, department, isPrimary, linkedIn, notes, customerId } = validation.data;
 
     const contact = await prisma.contact.create({
       data: {
@@ -101,7 +103,13 @@ export const updateContact = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const { firstName, lastName, email, phone, title, department, isPrimary, linkedIn, notes } = req.body;
+    const validation = updateContactSchema.safeParse(req.body);
+    if (!validation.success) {
+      const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      res.status(400).json({ success: false, message: errors });
+      return;
+    }
+    const { firstName, lastName, email, phone, title, department, isPrimary, linkedIn, notes } = validation.data;
     const contact = await prisma.contact.update({
       where: { id: req.params.id },
       data: {

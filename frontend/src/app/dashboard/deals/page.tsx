@@ -37,12 +37,15 @@ import {
   useToast,
 } from "@/components/ui";
 import { formatCurrency, formatDate, useDebounce } from "@/lib/hooks";
-import { KanbanView } from "@/components/deals/kanban-view";
+import dynamic from "next/dynamic";
 import { Pagination } from "@/components/ui/pagination";
 import { BulkActionsBar } from "@/components/ui/bulk-actions-bar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 import api from "@/lib/api";
+
+// Dynamic import for heavy Kanban component
+const KanbanView = dynamic(() => import("@/components/deals/kanban-view").then(m => ({ default: m.KanbanView })), { ssr: false, loading: () => <div className="h-[600px] animate-pulse bg-neutral-100 dark:bg-neutral-800 rounded-xl" /> });
 
 interface Customer {
   id: string;

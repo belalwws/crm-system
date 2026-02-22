@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { prisma } from '../lib/prisma';
+import prisma from '../lib/prisma';
 import { createAuditLog } from '../lib/auditLog';
 import { AuthRequest } from '../types';
 import logger from '../lib/logger';

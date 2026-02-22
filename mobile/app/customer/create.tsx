@@ -7,7 +7,7 @@ import { useThemeColors } from '@/lib/utils';
 import { Card, Button, Input } from '@/components/ui';
 import { FontSize, Spacing } from '@/lib/theme';
 
-const STATUSES = ['LEAD', 'PROSPECT', 'ACTIVE', 'INACTIVE'];
+const STATUSES = ['LEAD', 'ACTIVE', 'INACTIVE'];
 
 export default function CreateCustomerScreen() {
   const colors = useThemeColors();

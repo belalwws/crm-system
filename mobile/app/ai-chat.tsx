@@ -62,7 +62,7 @@ export default function AIChatScreen() {
 
     // Optimistic add
     const tempMsg: ChatMessage = {
-      id: 'temp-' + Date.now(), sessionId: activeSession || '', role: 'user',
+      id: 'temp-' + Date.now(), role: 'user',
       content: text, createdAt: new Date().toISOString(),
     };
     setMessages(prev => [...prev, tempMsg]);

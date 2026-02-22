@@ -2,6 +2,7 @@ import { Queue, Worker, Job } from 'bullmq';
 import logger from './logger';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const REDIS_ENABLED = process.env.REDIS_ENABLED !== 'false';
 
 // Parse Redis URL into connection options
 const parseRedisUrl = (url: string) => {
@@ -20,31 +21,44 @@ const parseRedisUrl = (url: string) => {
 
 const connection = parseRedisUrl(REDIS_URL);
 
-// ===========================
-// Email Queue
-// ===========================
-export const emailQueue = new Queue('email', {
-  connection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: { type: 'exponential', delay: 2000 },
-    removeOnComplete: { count: 100 },
-    removeOnFail: { count: 50 },
-  },
-});
+// Lazy-initialized queues (only created when Redis is available)
+let emailQueue: Queue | null = null;
+let notificationQueue: Queue | null = null;
+let queuesInitialized = false;
 
-// ===========================
-// Notification Queue
-// ===========================
-export const notificationQueue = new Queue('notification', {
-  connection,
-  defaultJobOptions: {
-    attempts: 2,
-    backoff: { type: 'fixed', delay: 1000 },
-    removeOnComplete: { count: 200 },
-    removeOnFail: { count: 50 },
-  },
-});
+/**
+ * Initialize queues only when needed
+ */
+const initQueues = () => {
+  if (queuesInitialized || !REDIS_ENABLED) return;
+  
+  try {
+    emailQueue = new Queue('email', {
+      connection,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+        removeOnComplete: { count: 100 },
+        removeOnFail: { count: 50 },
+      },
+    });
+
+    notificationQueue = new Queue('notification', {
+      connection,
+      defaultJobOptions: {
+        attempts: 2,
+        backoff: { type: 'fixed', delay: 1000 },
+        removeOnComplete: { count: 200 },
+        removeOnFail: { count: 50 },
+      },
+    });
+    
+    queuesInitialized = true;
+    logger.info('Job queues initialized');
+  } catch (err) {
+    logger.debug('Job queues unavailable (Redis not connected)');
+  }
+};
 
 // ===========================
 // Workers
@@ -57,7 +71,14 @@ let notificationWorker: Worker | null = null;
  * Call this in server startup
  */
 export const initWorkers = () => {
+  if (!REDIS_ENABLED) {
+    logger.info('Redis disabled, job queues not initialized');
+    return;
+  }
+  
   try {
+    initQueues();
+    
     emailWorker = new Worker(
       'email',
       async (job: Job) => {
@@ -137,8 +158,8 @@ export const initWorkers = () => {
 export const shutdownWorkers = async () => {
   await emailWorker?.close();
   await notificationWorker?.close();
-  await emailQueue.close();
-  await notificationQueue.close();
+  await emailQueue?.close();
+  await notificationQueue?.close();
   logger.info('Job queue workers shut down');
 };
 
@@ -147,6 +168,7 @@ export const shutdownWorkers = async () => {
  */
 export const queueEmail = async (type: string, payload: any) => {
   try {
+    if (!emailQueue) throw new Error('Queue not available');
     await emailQueue.add(type, { type, payload });
   } catch {
     // If queue unavailable, send directly
@@ -169,6 +191,7 @@ export const queueNotification = async (
   link?: string
 ) => {
   try {
+    if (!notificationQueue) throw new Error('Queue not available');
     await notificationQueue.add('create', { userId, type, title, message, link });
   } catch {
     // If queue unavailable, create directly
@@ -177,4 +200,5 @@ export const queueNotification = async (
   }
 };
 
+export { emailQueue, notificationQueue };
 export default { emailQueue, notificationQueue, initWorkers, shutdownWorkers, queueEmail, queueNotification };

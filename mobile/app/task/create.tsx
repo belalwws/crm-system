@@ -8,8 +8,8 @@ import { Card, Button, Input } from '@/components/ui';
 import { FontSize, Spacing } from '@/lib/theme';
 import type { Customer, Deal } from '@/lib/types';
 
-const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
-const STATUSES = ['TODO', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH'] as const;
+const STATUSES = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const;
 
 export default function CreateTaskScreen() {
   const colors = useThemeColors();
@@ -19,7 +19,7 @@ export default function CreateTaskScreen() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [form, setForm] = useState({
-    title: '', description: '', priority: 'MEDIUM', status: 'TODO',
+    title: '', description: '', priority: 'MEDIUM', status: 'PENDING',
     dueDate: '', customerId: '', dealId: '',
   });
 
@@ -38,8 +38,10 @@ export default function CreateTaskScreen() {
     try {
       const token = await getToken(); api.setToken(token);
       const res = await api.createTask({
-        title: form.title, description: form.description, priority: form.priority,
-        status: form.status, dueDate: form.dueDate || undefined,
+        title: form.title, description: form.description,
+        priority: form.priority as Task['priority'],
+        status: form.status as Task['status'],
+        dueDate: form.dueDate || undefined,
         customerId: form.customerId || undefined, dealId: form.dealId || undefined,
       });
       if (res.success) router.back();

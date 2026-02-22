@@ -1,6 +1,12 @@
 import { Resend } from 'resend';
 import logger from './logger';
 
+const EMAIL_FROM_WELCOME = process.env.EMAIL_FROM || 'CRM System <onboarding@resend.dev>';
+const EMAIL_FROM_NOTIFICATION = process.env.EMAIL_FROM_NOTIFICATION || 'CRM System <notifications@resend.dev>';
+const EMAIL_FROM_GENERAL = process.env.EMAIL_FROM_GENERAL || 'CRM System <mail@resend.dev>';
+const EMAIL_FROM_SECURITY = process.env.EMAIL_FROM_SECURITY || 'CRM System <security@resend.dev>';
+const EMAIL_FROM_VERIFY = process.env.EMAIL_FROM_VERIFY || 'CRM System <verify@resend.dev>';
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
@@ -16,7 +22,7 @@ const escapeHtml = (str: string): string =>
 export const sendWelcomeEmail = async (email: string, name: string): Promise<void> => {
   try {
     await resend.emails.send({
-      from: 'CRM System <onboarding@resend.dev>',
+      from: EMAIL_FROM_WELCOME,
       to: email,
       subject: 'Welcome to CRM System! 🎉',
       html: `
@@ -83,7 +89,7 @@ export const sendNotificationEmail = async (
 ): Promise<void> => {
   try {
     await resend.emails.send({
-      from: 'CRM System <notifications@resend.dev>',
+      from: EMAIL_FROM_NOTIFICATION,
       to: email,
       subject,
       html: `
@@ -111,7 +117,7 @@ export const sendEmail = async (
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     await resend.emails.send({
-      from: 'CRM System <mail@resend.dev>',
+      from: EMAIL_FROM_GENERAL,
       to,
       subject,
       html: `
@@ -154,7 +160,7 @@ export const sendPasswordResetEmail = async (
 ): Promise<void> => {
   try {
     await resend.emails.send({
-      from: 'CRM System <security@resend.dev>',
+      from: EMAIL_FROM_SECURITY,
       to: email,
       subject: 'Reset Your Password',
       html: `
@@ -207,7 +213,7 @@ export const sendVerificationEmail = async (
 ): Promise<void> => {
   try {
     await resend.emails.send({
-      from: 'CRM System <verify@resend.dev>',
+      from: EMAIL_FROM_VERIFY,
       to: email,
       subject: 'Verify Your Email Address',
       html: `

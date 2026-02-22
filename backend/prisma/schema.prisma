@@ -715,18 +715,20 @@ model UserPreferences {
 // Separate from Customer - a Customer (company) can have multiple Contacts
 // =============================================
 model Contact {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   firstName  String
   lastName   String
   email      String?
   phone      String?
   title      String?  // Job title
   department String?
-  isPrimary  Boolean  @default(false)
+  isPrimary  Boolean   @default(false)
   linkedIn   String?
   notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  // Soft Delete
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   // Relations
   customerId String
@@ -737,6 +739,8 @@ model Contact {
   @@index([customerId])
   @@index([ownerId])
   @@index([email])
+  @@index([deletedAt])
+  @@index([ownerId, deletedAt])
   @@map("contacts")
 }
 
@@ -762,6 +766,7 @@ model Product {
   // Relations
   lineItems LineItem[]
 
+  @@unique([ownerId, sku])
   @@index([ownerId])
   @@index([sku])
   @@map("products")
@@ -819,7 +824,7 @@ enum QuoteStatus {
 model LineItem {
   id          String   @id @default(cuid())
   description String?
-  quantity    Float    @default(1)
+  quantity    Decimal  @default(1) @db.Decimal(10, 2)
   unitPrice   Decimal  @default(0) @db.Decimal(12, 2)
   discount    Decimal  @default(0) @db.Decimal(12, 2)
   total       Decimal  @default(0) @db.Decimal(12, 2)

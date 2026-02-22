@@ -14,6 +14,17 @@ export interface AuthRequest extends Request {
 }
 
 /**
+ * Helper to safely get authenticated user ID.
+ * Throws 401 error if user is not authenticated.
+ */
+export function getAuthUserId(req: AuthRequest): string {
+  if (!req.user?.id) {
+    throw new Error('User not authenticated');
+  }
+  return req.user.id;
+}
+
+/**
  * User Registration Input
  */
 export interface RegisterInput {

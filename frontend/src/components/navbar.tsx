@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
+import Image from "next/image";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 
@@ -21,8 +22,7 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-neutral-900 dark:bg-white rounded" />
-          <span className="text-lg font-medium text-neutral-900 dark:text-white">Nexus</span>
+          <Image src="/logo.png" alt="Nexus Logo" width={180} height={180} className="rounded" />
         </Link>
 
         {/* Desktop Navigation */}
@@ -42,16 +42,18 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex items-center gap-2">
             <SignedOut>
-              <SignInButton mode="modal">
-                <button className="px-4 py-2 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors">
-                  Sign in
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button className="text-sm bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-medium px-4 py-2 rounded-full hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors">
-                  Get started
-                </button>
-              </SignUpButton>
+              <Link
+                href="/sign-in"
+                className="px-4 py-2 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                className="text-sm bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-medium px-4 py-2 rounded-full hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors"
+              >
+                Get started
+              </Link>
             </SignedOut>
             <SignedIn>
               <Link
@@ -89,16 +91,20 @@ export function Navbar() {
             ))}
             <div className="pt-3 mt-3 border-t border-neutral-200 dark:border-neutral-800 space-y-2">
               <SignedOut>
-                <SignInButton mode="modal">
-                  <button className="block w-full text-left px-4 py-3 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors">
-                    Sign in
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button className="w-full text-sm bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-medium px-4 py-3 rounded-full hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors">
-                    Get started
-                  </button>
-                </SignUpButton>
+                <Link
+                  href="/sign-in"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full text-left px-4 py-3 text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/sign-up"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full text-center text-sm bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-medium px-4 py-3 rounded-full hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors"
+                >
+                  Get started
+                </Link>
               </SignedOut>
               <SignedIn>
                 <Link

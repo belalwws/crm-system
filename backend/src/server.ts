@@ -17,7 +17,7 @@ import { sanitizeBody } from './middleware/sanitize';
 import { initializeSocket } from './lib/socket';
 import { initRedis } from './lib/redis';
 import { initWorkers, shutdownWorkers } from './lib/queue';
-import { apiVersionResponseHeader, apiInfo } from './lib/apiVersion';
+import { apiVersionMiddleware, apiVersionResponseHeader, apiInfo } from './lib/apiVersion';
 import { metricsMiddleware, metricsHandler } from './lib/monitoring';
 
 // Load environment variables
@@ -57,6 +57,7 @@ import teamRoutes from './routes/teamRoutes';
 import customFieldRoutes from './routes/customFieldRoutes';
 import billingRoutes from './routes/billingRoutes';
 import pushTokenRoutes from './routes/pushTokenRoutes';
+import platformAdminRoutes from './routes/platformAdminRoutes';
 
 // Initialize express app
 const app = express();
@@ -153,11 +154,12 @@ if (!csrfSecret) {
   }
   logger.warn('Running in development without CSRF secret — using insecure fallback. Do NOT use in production.');
 }
-app.use(cookieParser(csrfSecret || 'csrf-secret-dev-only'));
+const csrfSecretValue = csrfSecret || require('crypto').randomBytes(32).toString('hex');
+app.use(cookieParser(csrfSecretValue));
 
 // CSRF Protection (double-submit cookie pattern)
 const { doubleCsrfProtection, generateCsrfToken } = doubleCsrf({
-  getSecret: () => csrfSecret || 'csrf-secret-dev-only',
+  getSecret: () => csrfSecretValue,
   getSessionIdentifier: (req: Request) => req.headers['authorization'] as string || 'anonymous',
   cookieName: '__csrf',
   cookieOptions: {
@@ -182,6 +184,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     return next();
   }
+  // Skip CSRF for platform-admin routes (uses separate JWT auth)
+  if (req.path.startsWith('/api/platform-admin')) {
+    return next();
+  }
   // Skip CSRF for API requests that use Bearer tokens (SPA clients)
   // CSRF is mainly needed for cookie-based auth; Bearer tokens are immune to CSRF
   if (req.headers.authorization?.startsWith('Bearer')) {
@@ -198,7 +204,8 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // XSS Sanitization - strip malicious HTML from all request bodies
 app.use(sanitizeBody);
 
-// API Version header on all responses
+// API Version header on all responses + version detection
+app.use(apiVersionMiddleware);
 app.use(apiVersionResponseHeader);
 
 // Performance monitoring
@@ -226,14 +233,14 @@ app.get('/', async (req: Request, res: Response) => {
     res.json({
       success: true,
       message: 'CRM API is running',
-      version: '4.0.0',
+      version: process.env.API_VERSION || '4.0.0',
       database: 'PostgreSQL (connected)',
     });
   } catch {
     res.status(503).json({
       success: false,
       message: 'CRM API is degraded',
-      version: '4.0.0',
+      version: process.env.API_VERSION || '4.0.0',
       database: 'PostgreSQL (disconnected)',
     });
   }
@@ -272,6 +279,7 @@ app.use('/api/teams', teamRoutes);
 app.use('/api/custom-fields', customFieldRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/push-tokens', pushTokenRoutes);
+app.use('/api/platform-admin', platformAdminRoutes);
 
 // 404 Error handler
 app.use((req: Request, res: Response) => {
@@ -314,7 +322,7 @@ prisma.$connect()
       logger.info(`Environment: ${env.NODE_ENV}`);
       logger.info(`API URL: http://localhost:${PORT}`);
       logger.info(`WebSocket: ws://localhost:${PORT}`);
-      logger.info(`Database: PostgreSQL (Neon)`);
+      logger.info(`Database: PostgreSQL`);
       logger.info('=================================');
     });
 

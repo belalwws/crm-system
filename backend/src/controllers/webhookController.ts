@@ -2,6 +2,35 @@ import { Response } from 'express';
 import prisma from '../lib/prisma';
 import { AuthRequest } from '../types';
 import crypto from 'crypto';
+import { URL } from 'url';
+
+/**
+ * SSRF Protection: validate webhook URLs to prevent internal network access
+ */
+function isUrlSafe(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString);
+    // Must be http or https
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    const hostname = parsed.hostname.toLowerCase();
+    // Block localhost, loopback, internal IPs
+    const blockedPatterns = [
+      'localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]',
+      '169.254.', '10.', '172.16.', '172.17.', '172.18.', '172.19.',
+      '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.',
+      '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.',
+      '192.168.', 'metadata.google.internal', '100.100.100.200',
+    ];
+    for (const pattern of blockedPatterns) {
+      if (hostname === pattern || hostname.startsWith(pattern)) return false;
+    }
+    // Block .local, .internal domains
+    if (hostname.endsWith('.local') || hostname.endsWith('.internal') || hostname.endsWith('.localhost')) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * @desc    Get all webhooks
@@ -37,6 +66,11 @@ export const createWebhook = async (
     const { name, url, events, isActive } = req.body;
     if (!name || !url || !events || events.length === 0) {
       res.status(400).json({ success: false, message: 'name, url, and events are required' });
+      return;
+    }
+
+    if (!isUrlSafe(url)) {
+      res.status(400).json({ success: false, message: 'Invalid webhook URL. Internal/private network URLs are not allowed.' });
       return;
     }
 
@@ -78,6 +112,11 @@ export const updateWebhook = async (
     }
 
     const { name, url, events, isActive } = req.body;
+
+    if (url && !isUrlSafe(url)) {
+      res.status(400).json({ success: false, message: 'Invalid webhook URL. Internal/private network URLs are not allowed.' });
+      return;
+    }
 
     const webhook = await prisma.webhook.update({
       where: { id: req.params.id },

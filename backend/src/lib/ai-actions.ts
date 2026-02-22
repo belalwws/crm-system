@@ -8,6 +8,140 @@
 
 import prisma from './prisma';
 import logger from './logger';
+import { z } from 'zod';
+
+// =============================================
+// Validation Schemas for AI Actions
+// =============================================
+
+const emailSchema = z.string().email().max(255);
+const nameSchema = z.string().min(1).max(200).trim();
+const phoneSchema = z.string().max(30).optional().nullable();
+const companySchema = z.string().max(200).optional().nullable();
+const industrySchema = z.string().max(100).optional().nullable();
+const customerStatusSchema = z.enum(['LEAD', 'ACTIVE', 'INACTIVE']).optional();
+const sourceSchema = z.enum(['WEBSITE', 'REFERRAL', 'SOCIAL_MEDIA', 'COLD_CALL', 'EMAIL_CAMPAIGN', 'TRADE_SHOW', 'PARTNER', 'OTHER']).optional().nullable();
+const dealStageSchema = z.enum(['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST']).optional();
+const taskPrioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional();
+const taskStatusSchema = z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional();
+const taskTypeSchema = z.enum(['CALL', 'EMAIL', 'MEETING', 'FOLLOW_UP', 'WHATSAPP', 'OTHER']).optional();
+const limitSchema = z.number().int().min(1).max(100).optional();
+const idSchema = z.string().min(1).max(100).optional();
+const searchSchema = z.string().max(200).optional();
+
+const createCustomerActionSchema = z.object({
+  name: nameSchema,
+  email: emailSchema,
+  phone: phoneSchema,
+  company: companySchema,
+  status: customerStatusSchema,
+  source: sourceSchema,
+  industry: industrySchema,
+});
+
+const updateCustomerActionSchema = z.object({
+  id: idSchema,
+  searchName: searchSchema,
+  searchEmail: searchSchema,
+  name: z.string().min(1).max(200).optional(),
+  email: z.string().email().max(255).optional(),
+  phone: phoneSchema,
+  company: companySchema,
+  status: customerStatusSchema,
+});
+
+const deleteCustomerActionSchema = z.object({
+  id: idSchema,
+  searchName: searchSchema,
+  searchEmail: searchSchema,
+});
+
+const listCustomersActionSchema = z.object({
+  search: searchSchema,
+  status: customerStatusSchema,
+  limit: limitSchema,
+});
+
+const createDealActionSchema = z.object({
+  title: z.string().min(1).max(300),
+  value: z.number().min(0).optional(),
+  customerId: idSchema,
+  customerName: searchSchema,
+  stage: dealStageSchema,
+  probability: z.number().min(0).max(100).optional(),
+  expectedCloseDate: z.string().max(50).optional(),
+  description: z.string().max(5000).optional().nullable(),
+});
+
+const updateDealActionSchema = z.object({
+  id: idSchema,
+  searchTitle: searchSchema,
+  title: z.string().min(1).max(300).optional(),
+  value: z.number().min(0).optional(),
+  stage: dealStageSchema,
+  probability: z.number().min(0).max(100).optional(),
+  expectedCloseDate: z.string().max(50).optional(),
+});
+
+const deleteDealActionSchema = z.object({
+  id: idSchema,
+  searchTitle: searchSchema,
+});
+
+const listDealsActionSchema = z.object({
+  search: searchSchema,
+  stage: dealStageSchema,
+  limit: limitSchema,
+});
+
+const createTaskActionSchema = z.object({
+  title: z.string().min(1).max(300),
+  description: z.string().max(5000).optional().nullable(),
+  priority: taskPrioritySchema,
+  status: taskStatusSchema,
+  dueDate: z.string().max(50).optional(),
+  type: taskTypeSchema,
+  customerName: searchSchema,
+  dealTitle: searchSchema,
+});
+
+const updateTaskActionSchema = z.object({
+  id: idSchema,
+  searchTitle: searchSchema,
+  title: z.string().min(1).max(300).optional(),
+  status: taskStatusSchema,
+  priority: taskPrioritySchema,
+  dueDate: z.string().max(50).optional(),
+});
+
+const deleteTaskActionSchema = z.object({
+  id: idSchema,
+  searchTitle: searchSchema,
+});
+
+const listTasksActionSchema = z.object({
+  search: searchSchema,
+  status: taskStatusSchema,
+  priority: taskPrioritySchema,
+  limit: limitSchema,
+});
+
+// Map action names to their validation schemas
+const ACTION_SCHEMAS: Record<string, z.ZodSchema> = {
+  CREATE_CUSTOMER: createCustomerActionSchema,
+  UPDATE_CUSTOMER: updateCustomerActionSchema,
+  DELETE_CUSTOMER: deleteCustomerActionSchema,
+  LIST_CUSTOMERS: listCustomersActionSchema,
+  CREATE_DEAL: createDealActionSchema,
+  UPDATE_DEAL: updateDealActionSchema,
+  DELETE_DEAL: deleteDealActionSchema,
+  LIST_DEALS: listDealsActionSchema,
+  CREATE_TASK: createTaskActionSchema,
+  UPDATE_TASK: updateTaskActionSchema,
+  DELETE_TASK: deleteTaskActionSchema,
+  LIST_TASKS: listTasksActionSchema,
+  GET_DASHBOARD_STATS: z.object({}),
+};
 
 // =============================================
 // Action Definitions - Available CRM Operations
@@ -261,6 +395,17 @@ export async function executeAction(
   userId: string
 ): Promise<ActionResult> {
   try {
+    // Validate action params with Zod before execution
+    const schema = ACTION_SCHEMAS[action.action];
+    if (schema) {
+      const validation = schema.safeParse(action.params);
+      if (!validation.success) {
+        const errors = validation.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        return { success: false, action: action.action, message: `Invalid parameters: ${errors}` };
+      }
+      action.params = validation.data as Record<string, any>;
+    }
+
     switch (action.action) {
       // ---- CUSTOMERS ----
       case 'CREATE_CUSTOMER':

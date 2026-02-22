@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useCallback, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { Bold, Italic, Underline, List, ListOrdered, Link2, AlignLeft, AlignCenter, AlignRight, Type, Heading1, Heading2, Quote, Code } from 'lucide-react';
 
 interface RichTextEditorProps {
@@ -16,8 +17,12 @@ export function RichTextEditor({ value, onChange, placeholder = 'Write something
 
   useEffect(() => {
     if (editorRef.current && !isInternalChange.current) {
-      if (editorRef.current.innerHTML !== value) {
-        editorRef.current.innerHTML = value;
+      const sanitized = DOMPurify.sanitize(value, {
+        ALLOWED_TAGS: ['b', 'i', 'u', 'strong', 'em', 'h1', 'h2', 'h3', 'p', 'br', 'ul', 'ol', 'li', 'a', 'blockquote', 'pre', 'code', 'div', 'span'],
+        ALLOWED_ATTR: ['href', 'target', 'style', 'class'],
+      });
+      if (editorRef.current.innerHTML !== sanitized) {
+        editorRef.current.innerHTML = sanitized;
       }
     }
     isInternalChange.current = false;

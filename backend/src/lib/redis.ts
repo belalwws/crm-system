@@ -3,6 +3,7 @@ import logger from './logger';
 
 // Redis connection - falls back gracefully if unavailable
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const REDIS_ENABLED = process.env.REDIS_ENABLED !== 'false';
 
 let redis: Redis | null = null;
 let redisAvailable = false;
@@ -11,6 +12,11 @@ let redisAvailable = false;
  * Initialize Redis connection
  */
 export const initRedis = (): Redis | null => {
+  if (!REDIS_ENABLED) {
+    logger.info('Redis disabled via REDIS_ENABLED=false, using in-memory cache');
+    return null;
+  }
+  
   try {
     redis = new Redis(REDIS_URL, {
       maxRetriesPerRequest: 3,

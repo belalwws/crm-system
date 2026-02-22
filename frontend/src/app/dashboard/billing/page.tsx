@@ -79,7 +79,7 @@ export default function BillingPage() {
     try {
       const token = await getToken();
       api.setToken(token);
-      const res = await api.createCheckout(tier);
+      const res = await api.createCheckout({ plan: tier });
       if (res.success && (res.data as any)?.url) {
         window.location.href = (res.data as any).url;
       }

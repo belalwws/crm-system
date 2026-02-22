@@ -11,13 +11,14 @@ import {
 } from '../controllers/customerController';
 import { protect } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { checkLimit } from '../middleware/subscription';
 import { createCustomerSchema, updateCustomerSchema } from '../lib/validators';
 
 const router = express.Router();
 
 router.use(protect);
 
-router.route('/').get(getCustomers).post(validate(createCustomerSchema), createCustomer);
+router.route('/').get(getCustomers).post(validate(createCustomerSchema), checkLimit('customers'), createCustomer);
 router.post('/check-duplicates', checkDuplicates);
 router.post('/merge', mergeCustomers);
 

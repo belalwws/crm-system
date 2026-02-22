@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { UserButton, useUser, useAuth } from "@clerk/nextjs";
 import {
@@ -127,9 +128,7 @@ export default function DashboardLayout({
         {/* Logo */}
         <div className="h-14 flex items-center justify-between px-4 border-b border-neutral-200 dark:border-neutral-800">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-neutral-900 dark:bg-white rounded-md flex items-center justify-center">
-              <span className="text-white dark:text-neutral-900 font-bold text-xs">N</span>
-            </div>
+            <Image src="/logo.png" alt="Nexus Logo" width={28} height={28} className="rounded-md" />
             <span className="font-semibold text-neutral-900 dark:text-white">Nexus CRM</span>
           </Link>
           <button

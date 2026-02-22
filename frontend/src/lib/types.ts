@@ -8,8 +8,10 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   message?: string;
   count?: number;
+  total?: number;
   totalPages?: number;
   page?: number;
+  [key: string]: unknown;
 }
 
 // ---- User & Auth ----
