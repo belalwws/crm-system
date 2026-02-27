@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useRouter, Stack } from 'expo-router';
 import api from '@/lib/api';
 import type { Customer } from '@/lib/types';
@@ -12,7 +12,7 @@ const STATUSES = ['LEAD', 'ACTIVE', 'INACTIVE'];
 
 export default function CreateCustomerScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -23,8 +23,7 @@ export default function CreateCustomerScreen() {
     if (!form.name.trim()) { Alert.alert('Error', 'Name is required'); return; }
     setLoading(true);
     try {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.createCustomer({ ...form, status: form.status as Customer['status'] });
       if (res.success) {
         router.back();

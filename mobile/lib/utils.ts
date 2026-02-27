@@ -1,6 +1,9 @@
 import { useColorScheme } from 'react-native';
+import { useCallback } from 'react';
+import { useAuth } from '@clerk/clerk-expo';
 import { Colors, SemanticColors } from './theme';
 import { useAppStore } from './store';
+import api from './api';
 
 export function useThemeColors() {
   const systemScheme = useColorScheme();
@@ -51,6 +54,15 @@ export function formatCurrency(value: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+// Format file size
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
 // Relative time
@@ -119,4 +131,29 @@ export function getStatusColor(status: string): string {
 export function truncate(str: string, len: number = 30): string {
   if (!str) return '';
   return str.length > len ? str.slice(0, len) + '...' : str;
+}
+
+/**
+ * Hook to get an auth token that works with both Clerk and Demo mode.
+ * Returns a getAuthToken function that:
+ * 1. Tries Clerk's getToken() first
+ * 2. Falls back to demo token from Zustand store
+ * 3. Always sets the token on the API client
+ */
+export function useAuthToken() {
+  const { getToken } = useAuth();
+  const demoToken = useAppStore((s) => s.demoToken);
+
+  const getAuthToken = useCallback(async (): Promise<string | null> => {
+    let token = await getToken();
+    if (!token && demoToken) {
+      token = demoToken;
+    }
+    if (token) {
+      api.setToken(token);
+    }
+    return token;
+  }, [getToken, demoToken]);
+
+  return { getAuthToken };
 }

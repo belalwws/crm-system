@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -15,7 +15,7 @@ const PRIORITY_FILTERS = ['ALL', 'LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 export default function TasksScreen() {
   const colors = useThemeColors();
   const isDark = useIsDark();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const router = useRouter();
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -27,8 +27,7 @@ export default function TasksScreen() {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const params: any = {};
       if (search) params.search = search;
       if (statusFilter !== 'ALL') params.status = statusFilter;
@@ -37,7 +36,7 @@ export default function TasksScreen() {
       if (res.success) setTasks(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [getToken, search, statusFilter, priorityFilter]);
+  }, [getAuthToken, search, statusFilter, priorityFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchTasks(), 300);
@@ -50,7 +49,7 @@ export default function TasksScreen() {
   const toggleStatus = async (task: Task) => {
     const newStatus = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       await api.updateTask(task.id, { status: newStatus });
       setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
     } catch (err) { console.error(err); }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity, Linking } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -11,7 +11,7 @@ import type { Contact } from '@/lib/types';
 
 export default function ContactsScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -19,12 +19,12 @@ export default function ContactsScreen() {
 
   const fetchContacts = useCallback(async () => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getContacts();
       if (res.success) setContacts(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [getToken, search]);
+  }, [getAuthToken, search]);
 
   useEffect(() => { const t = setTimeout(fetchContacts, 300); return () => clearTimeout(t); }, [search]);
   useEffect(() => { fetchContacts(); }, []);

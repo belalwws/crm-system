@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { Stack } from 'expo-router';
 import api from '@/lib/api';
 import { useThemeColors, formatCurrency, formatDate } from '@/lib/utils';
@@ -10,19 +10,19 @@ import type { Quote } from '@/lib/types';
 
 export default function QuotesScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchQuotes = useCallback(async () => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getQuotes();
       if (res.success) setQuotes(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [getToken]);
+  }, [getAuthToken]);
 
   useEffect(() => { fetchQuotes(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchQuotes(); };

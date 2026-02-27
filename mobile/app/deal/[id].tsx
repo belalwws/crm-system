@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -11,7 +11,7 @@ import type { Deal, Note } from '@/lib/types';
 
 export default function DealDetailScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
@@ -24,8 +24,7 @@ export default function DealDetailScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const [dealRes, notesRes] = await Promise.all([
         api.getDeal(id!),
         api.getNotes({ dealId: id }),
@@ -38,7 +37,7 @@ export default function DealDetailScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [id, getToken]);
+  }, [id, getAuthToken]);
 
   useEffect(() => { fetchData(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchData(); };
@@ -46,8 +45,7 @@ export default function DealDetailScreen() {
   const getAiInsight = async () => {
     setInsightLoading(true);
     try {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getDealInsights(id!);
       if (res.success && res.data) setAiInsight((res.data as any).insight || (res.data as any).analysis || JSON.stringify(res.data));
     } catch (err) { console.error(err); }
@@ -58,7 +56,7 @@ export default function DealDetailScreen() {
     Alert.alert('Delete Deal', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
-        const token = await getToken(); api.setToken(token);
+        const token = await getAuthToken();
         await api.deleteDeal(id!); router.back();
       }},
     ]);

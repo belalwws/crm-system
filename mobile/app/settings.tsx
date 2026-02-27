@@ -1,17 +1,31 @@
 import React from 'react';
 import { View, Text, ScrollView, Switch, TouchableOpacity } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '@/lib/store';
 import { useThemeColors } from '@/lib/utils';
 import { Card, Section, Divider } from '@/components/ui';
 import { FontSize, Spacing, BorderRadius } from '@/lib/theme';
+import api from '@/lib/api';
 
 export default function SettingsScreen() {
   const colors = useThemeColors();
   const { signOut } = useAuth();
   const { theme, setTheme } = useAppStore();
+  const router = useRouter();
+  const demoToken = useAppStore((s) => s.demoToken);
+  const clearDemoAuth = useAppStore((s) => s.clearDemoAuth);
+
+  const handleSignOut = () => {
+    if (demoToken) {
+      api.setToken(null);
+      clearDemoAuth();
+      router.replace('/(auth)/sign-in');
+    } else {
+      signOut();
+    }
+  };
 
   const isDark = theme === 'dark';
 
@@ -67,7 +81,7 @@ export default function SettingsScreen() {
         </Section>
 
         <TouchableOpacity
-          onPress={() => signOut()}
+          onPress={handleSignOut}
           style={{
             backgroundColor: '#ef444415', borderRadius: BorderRadius.lg, padding: Spacing.lg,
             flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, marginTop: Spacing.xl,

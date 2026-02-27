@@ -39,13 +39,16 @@ export default function MoreScreen() {
         { icon: 'people', label: 'Contacts', route: '/contacts', color: AccentColors.cyan },
         { icon: 'cube', label: 'Products', route: '/products', color: AccentColors.emerald },
         { icon: 'receipt', label: 'Quotes', route: '/quotes', color: AccentColors.pink },
-        { icon: 'people-circle', label: 'Teams', route: '/teams', color: AccentColors.indigo },
+        { icon: 'document-text', label: 'Documents', route: '/documents', color: AccentColors.indigo },
+        { icon: 'people-circle', label: 'Teams', route: '/teams', color: AccentColors.teal },
       ],
     },
     {
       title: 'INSIGHTS',
       items: [
         { icon: 'bar-chart', label: 'Reports', route: '/reports', color: AccentColors.teal },
+        { icon: 'analytics', label: 'Analytics', route: '/analytics', color: AccentColors.blue },
+        { icon: 'shield-checkmark', label: 'Audit Logs', route: '/audit-logs', color: AccentColors.violet },
         { icon: 'search', label: 'Search', route: '/search', color: AccentColors.neutral },
       ],
     },

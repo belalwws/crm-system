@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -12,7 +12,7 @@ type SearchResult = { id: string; type: string; title: string; subtitle?: string
 
 export default function SearchScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -22,7 +22,7 @@ export default function SearchScreen() {
     if (!q.trim()) { setResults([]); return; }
     setLoading(true);
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.globalSearch(q);
       if (res.success && res.data) {
         const mapped: SearchResult[] = [];
@@ -34,7 +34,7 @@ export default function SearchScreen() {
       }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [getToken]);
+  }, [getAuthToken]);
 
   const onSearch = (text: string) => {
     setQuery(text);

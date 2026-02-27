@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -12,7 +12,7 @@ import type { Notification } from '@/lib/types';
 
 export default function NotificationsScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const { setNotifications: setStoreNotifs } = useAppStore();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -21,7 +21,7 @@ export default function NotificationsScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getNotifications();
       if (res.success) {
         const data = Array.isArray(res.data) ? res.data : [];
@@ -30,14 +30,14 @@ export default function NotificationsScreen() {
       }
     } catch (err) { console.error(err); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [getToken]);
+  }, [getAuthToken]);
 
   useEffect(() => { fetchData(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchData(); };
 
   const markRead = async (id: string) => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       await api.markNotificationRead(id);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     } catch (err) { console.error(err); }
@@ -45,7 +45,7 @@ export default function NotificationsScreen() {
 
   const markAllRead = async () => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       await api.markAllNotificationsRead();
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     } catch (err) { console.error(err); }

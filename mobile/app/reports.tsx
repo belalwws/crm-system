@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -10,7 +10,7 @@ import { FontSize, Spacing, BorderRadius } from '@/lib/theme';
 
 export default function ReportsScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const [funnel, setFunnel] = useState<any>(null);
   const [forecast, setForecast] = useState<any>(null);
   const [performance, setPerformance] = useState<any>(null);
@@ -19,7 +19,7 @@ export default function ReportsScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const [funnelRes, forecastRes, perfRes] = await Promise.all([
         api.getConversionFunnel(),
         api.getRevenueForecast(),
@@ -30,7 +30,7 @@ export default function ReportsScreen() {
       if (perfRes.success) setPerformance(perfRes.data);
     } catch (err) { console.error(err); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [getToken]);
+  }, [getAuthToken]);
 
   useEffect(() => { fetchData(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchData(); };

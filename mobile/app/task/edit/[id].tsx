@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import api from '@/lib/api';
 import { useThemeColors } from '@/lib/utils';
@@ -13,7 +13,7 @@ const STATUSES = ['TODO', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
 
 export default function EditTaskScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function EditTaskScreen() {
 
   useEffect(() => {
     (async () => {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getTask(id!);
       if (res.success && res.data) {
         const t = res.data;
@@ -41,7 +41,7 @@ export default function EditTaskScreen() {
     if (!form.title.trim()) { Alert.alert('Error', 'Title is required'); return; }
     setSaving(true);
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.updateTask(id!, {
         title: form.title, description: form.description, priority: form.priority as TaskPriority,
         status: form.status as TaskStatus, dueDate: form.dueDate || undefined,

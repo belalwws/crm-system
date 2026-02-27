@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -11,7 +11,7 @@ import type { Meeting } from '@/lib/types';
 
 export default function MeetingsScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const router = useRouter();
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,12 +19,12 @@ export default function MeetingsScreen() {
 
   const fetchMeetings = useCallback(async () => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getMeetings();
       if (res.success) setMeetings(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [getToken]);
+  }, [getAuthToken]);
 
   useEffect(() => { fetchMeetings(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchMeetings(); };

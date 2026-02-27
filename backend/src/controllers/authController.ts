@@ -13,6 +13,7 @@ const REFRESH_TOKEN_BYTES = 48;
 const REFRESH_TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const MAX_FAILED_LOGINS = 10;
 const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+const BCRYPT_ROUNDS = process.env.NODE_ENV === 'production' ? 12 : 4;
 
 // Password policy: min 8 chars, at least 1 uppercase, 1 lowercase, 1 digit, 1 special
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
@@ -79,7 +80,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(12);
+    const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create user
@@ -355,7 +356,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const salt = await bcrypt.genSalt(12);
+    const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     await prisma.user.update({

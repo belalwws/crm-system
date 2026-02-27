@@ -1,14 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { View, ActivityIndicator, Image, Text, useColorScheme } from 'react-native';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/clerk-expo';
+import { ClerkProvider, useAuth } from '@clerk/clerk-expo';
 import * as SecureStore from 'expo-secure-store';
-import Constants from 'expo-constants';
-import { useIsDark } from '@/lib/utils';
+import { Colors } from '@/lib/theme';
+import { useIsDark, useThemeColors } from '@/lib/utils';
 import api from '@/lib/api';
 import { useAppStore } from '@/lib/store';
+import { FontSize, FontWeight, BorderRadius } from '@/lib/theme';
 
-const CLERK_KEY = Constants.expoConfig?.extra?.clerkPublishableKey || '';
+// Read Clerk key from environment variable
+const CLERK_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || '';
 
 // Secure token cache for Clerk
 const tokenCache = {
@@ -26,50 +29,126 @@ const tokenCache = {
   },
 };
 
+// Standalone loading splash - no external hooks to avoid issues during init
+function SplashLoading() {
+  const systemScheme = useColorScheme();
+  const isDark = systemScheme === 'dark';
+  const colors = isDark ? Colors.dark : Colors.light;
+  
+  return (
+    <View style={{
+      flex: 1,
+      backgroundColor: colors.background,
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <Image
+        source={require('@/assets/logo.png')}
+        style={{ width: 120, height: 120, borderRadius: 20, marginBottom: 24 }}
+        resizeMode="contain"
+      />
+      <Text style={{
+        fontSize: 28,
+        fontWeight: '700',
+        color: colors.text,
+        marginBottom: 16,
+      }}>
+        Nexus CRM
+      </Text>
+      <ActivityIndicator size="large" color={colors.text} />
+      <Text style={{
+        fontSize: 14,
+        color: colors.textSecondary,
+        marginTop: 16,
+      }}>
+        Loading...
+      </Text>
+    </View>
+  );
+}
+
 function AuthGate() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const setToken = useAppStore((s) => s.setToken);
+  const demoToken = useAppStore((s) => s.demoToken);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Consider user "authenticated" if Clerk is signed in OR demo mode is active
+  const isAuthenticated = isSignedIn || !!demoToken;
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || isNavigating) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
-    if (isSignedIn && inAuthGroup) {
+    if (isAuthenticated && inAuthGroup) {
+      setIsNavigating(true);
       router.replace('/(tabs)');
-    } else if (!isSignedIn && !inAuthGroup) {
+      setTimeout(() => setIsNavigating(false), 500);
+    } else if (!isAuthenticated && !inAuthGroup) {
+      setIsNavigating(true);
       router.replace('/(auth)/sign-in');
+      setTimeout(() => setIsNavigating(false), 500);
     }
-  }, [isSignedIn, isLoaded, segments]);
+  }, [isAuthenticated, isLoaded, segments]);
 
-  // Set API token when signed in
+  // Set API token when signed in via Clerk
   useEffect(() => {
+    // Don't clear token if demo mode is active
+    if (demoToken) return;
+
     if (!isSignedIn) {
       api.setToken(null);
       setToken(null);
       return;
     }
+    let cancelled = false;
     (async () => {
-      const token = await getToken();
-      api.setToken(token);
-      setToken(token);
+      try {
+        const token = await getToken();
+        if (!cancelled) {
+          api.setToken(token);
+          setToken(token);
+          if (!token) {
+            console.warn('[AuthGate] getToken returned null despite isSignedIn=true');
+          }
+        }
+      } catch (err) {
+        console.error('[AuthGate] Failed to get token:', err);
+      }
     })();
-  }, [isSignedIn]);
+    return () => { cancelled = true; };
+  }, [isSignedIn, demoToken]);
+
+  // Show loading while Clerk initializes
+  if (!isLoaded) {
+    return <SplashLoading />;
+  }
 
   return <Slot />;
 }
 
 export default function RootLayout() {
-  const isDark = useIsDark();
+  const systemScheme = useColorScheme();
+  const isDark = systemScheme === 'dark';
+
+  // Show error if no Clerk key
+  if (!CLERK_KEY) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <Text style={{ fontSize: 18, color: 'red', textAlign: 'center' }}>
+          Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in .env file
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <ClerkProvider publishableKey={CLERK_KEY} tokenCache={tokenCache}>
-      <ClerkLoaded>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <AuthGate />
-      </ClerkLoaded>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <AuthGate />
     </ClerkProvider>
   );
 }

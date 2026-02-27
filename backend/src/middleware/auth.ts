@@ -85,16 +85,34 @@ export const protect = async (
           // The sentinel prefix 'CLERK_SSO:' makes it obvious this is not a real password.
           const bcryptLib = await import('bcryptjs');
           const randomBytes = (await import('crypto')).randomBytes(64).toString('base64');
-          const hashedPlaceholder = await bcryptLib.hash(`CLERK_SSO:${randomBytes}`, 12);
-          user = await withRetry(() => prisma.user.create({
-            data: {
-              id: clerkUserId,
-              email: email,
-              name: (verifiedPayload as any).name || (verifiedPayload as any).first_name || (verifiedPayload as any).username || 'User',
-              password: hashedPlaceholder,
-            },
-            select: { id: true, email: true, role: true, isActive: true, name: true },
-          }));
+          const hashedPlaceholder = await bcryptLib.hash(`CLERK_SSO:${randomBytes}`, process.env.NODE_ENV === 'production' ? 12 : 4);
+          try {
+            user = await withRetry(() => prisma.user.create({
+              data: {
+                id: clerkUserId,
+                email: email,
+                name: (verifiedPayload as any).name || (verifiedPayload as any).first_name || (verifiedPayload as any).username || 'User',
+                password: hashedPlaceholder,
+              },
+              select: { id: true, email: true, role: true, isActive: true, name: true },
+            }));
+
+            // Seed demo data for new user in background (non-blocking)
+            import('../lib/demoSeed').then(({ seedDemoDataForUser }) => {
+              seedDemoDataForUser(user!.id).catch(() => {});
+            }).catch(() => {});
+          } catch (createErr: any) {
+            // Handle race condition: another concurrent request already created this user
+            if (createErr.code === 'P2002') {
+              user = await withRetry(() => prisma.user.findFirst({
+                where: { OR: [{ id: clerkUserId }, { email: email }] },
+                select: { id: true, email: true, role: true, isActive: true, name: true },
+              }));
+              if (!user) throw createErr;
+            } else {
+              throw createErr;
+            }
+          }
         }
 
         if (!user.isActive) {

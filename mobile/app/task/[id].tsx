@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -11,7 +11,7 @@ import type { Task, Note } from '@/lib/types';
 
 export default function TaskDetailScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
@@ -22,7 +22,7 @@ export default function TaskDetailScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const [taskRes, notesRes] = await Promise.all([
         api.getTask(id!),
         api.getNotes({ taskId: id }),
@@ -31,7 +31,7 @@ export default function TaskDetailScreen() {
       if (notesRes.success) setNotes(Array.isArray(notesRes.data) ? notesRes.data : []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); setRefreshing(false); }
-  }, [id, getToken]);
+  }, [id, getAuthToken]);
 
   useEffect(() => { fetchData(); }, []);
   const onRefresh = () => { setRefreshing(true); fetchData(); };
@@ -40,7 +40,7 @@ export default function TaskDetailScreen() {
     if (!task) return;
     const newStatus = task.status === 'COMPLETED' ? 'TODO' : 'COMPLETED';
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       await api.updateTask(id!, { status: newStatus });
       setTask({ ...task, status: newStatus });
     } catch (err) { console.error(err); }
@@ -50,7 +50,7 @@ export default function TaskDetailScreen() {
     Alert.alert('Delete Task', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
-        const token = await getToken(); api.setToken(token);
+        const token = await getAuthToken();
         await api.deleteTask(id!); router.back();
       }},
     ]);

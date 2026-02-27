@@ -375,9 +375,9 @@ prisma.$connect()
       }
     });
 
-    const server = httpServer.listen(PORT, () => {
+    const server = httpServer.listen(PORT, '0.0.0.0', () => {
       logger.info('=================================');
-      logger.info(`Server running on port ${PORT}`);
+      logger.info(`Server running on port ${PORT} (bound to 0.0.0.0)`);
       logger.info(`Environment: ${env.NODE_ENV}`);
       logger.info(`API URL: http://localhost:${PORT}`);
       logger.info(`WebSocket: ws://localhost:${PORT}`);

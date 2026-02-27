@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -14,7 +14,7 @@ const STATUSES = ['ALL', 'LEAD', 'PROSPECT', 'ACTIVE', 'INACTIVE'];
 export default function CustomersScreen() {
   const colors = useThemeColors();
   const isDark = useIsDark();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const router = useRouter();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -25,8 +25,7 @@ export default function CustomersScreen() {
 
   const fetchCustomers = useCallback(async () => {
     try {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const params: any = {};
       if (search) params.search = search;
       if (statusFilter !== 'ALL') params.status = statusFilter;
@@ -40,7 +39,7 @@ export default function CustomersScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [getToken, search, statusFilter]);
+  }, [getAuthToken, search, statusFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchCustomers(), 300);

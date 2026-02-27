@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -11,7 +11,7 @@ import type { ChatSession, ChatMessage } from '@/lib/types';
 
 export default function AIChatScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const flatListRef = useRef<FlatList>(null);
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -24,12 +24,12 @@ export default function AIChatScreen() {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.listChatSessions();
       if (res.success) setSessions(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [getToken]);
+  }, [getAuthToken]);
 
   useEffect(() => { fetchSessions(); }, []);
 
@@ -37,7 +37,7 @@ export default function AIChatScreen() {
     setActiveSession(sessionId);
     setShowSessions(false);
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getChatMessages(sessionId);
       if (res.success) setMessages(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.error(err); }
@@ -45,7 +45,7 @@ export default function AIChatScreen() {
 
   const createSession = async () => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.createChatSession({ title: 'New Chat' });
       if (res.success && res.data) {
         setSessions(prev => [res.data!, ...prev]);
@@ -68,7 +68,7 @@ export default function AIChatScreen() {
     setMessages(prev => [...prev, tempMsg]);
 
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       let sessId = activeSession;
       if (!sessId) {
         const sessRes = await api.createChatSession({ title: text.substring(0, 50) });

@@ -124,7 +124,8 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
     }
 
     // Hash new password
-    const salt = await bcrypt.genSalt(12);
+    const rounds = process.env.NODE_ENV === 'production' ? 12 : 4;
+    const salt = await bcrypt.genSalt(rounds);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
     await prisma.user.update({

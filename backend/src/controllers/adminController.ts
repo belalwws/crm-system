@@ -434,7 +434,8 @@ export const inviteUser = async (req: AuthRequest, res: Response): Promise<void>
 
     // Generate a temporary password
     const tempPassword = (await import('crypto')).randomBytes(12).toString('base64url') + 'A1!';
-    const hashedPassword = await bcrypt.hash(tempPassword, 12);
+    const rounds = process.env.NODE_ENV === 'production' ? 12 : 4;
+    const hashedPassword = await bcrypt.hash(tempPassword, rounds);
 
     const user = await prisma.user.create({
       data: {

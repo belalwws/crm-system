@@ -1,21 +1,47 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useAuth, useUser } from '@clerk/clerk-expo';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '@/lib/utils';
 import { Card, Avatar, Section, Divider } from '@/components/ui';
 import { FontSize, Spacing, BorderRadius } from '@/lib/theme';
+import { useAppStore } from '@/lib/store';
+import api from '@/lib/api';
 
 export default function ProfileScreen() {
   const colors = useThemeColors();
   const { signOut } = useAuth();
   const { user } = useUser();
+  const router = useRouter();
+  const demoUser = useAppStore((s) => s.demoUser);
+  const demoToken = useAppStore((s) => s.demoToken);
+  const clearDemoAuth = useAppStore((s) => s.clearDemoAuth);
+
+  const isDemo = !!demoToken;
+
+  const handleSignOut = () => {
+    if (isDemo) {
+      api.setToken(null);
+      clearDemoAuth();
+      router.replace('/(auth)/sign-in');
+    } else {
+      signOut();
+    }
+  };
+
+  const displayName = isDemo
+    ? demoUser?.name || 'Demo User'
+    : `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Not set';
+  const displayEmail = isDemo
+    ? demoUser?.email || 'demo@nexuscrm.com'
+    : user?.primaryEmailAddress?.emailAddress || 'Not set';
+  const displayRole = isDemo ? demoUser?.role || 'ADMIN' : 'User';
 
   const info = [
-    { icon: 'person' as const, label: 'Name', value: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Not set' },
-    { icon: 'mail' as const, label: 'Email', value: user?.primaryEmailAddress?.emailAddress || 'Not set' },
-    { icon: 'calendar' as const, label: 'Joined', value: user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown' },
+    { icon: 'person' as const, label: 'Name', value: displayName },
+    { icon: 'mail' as const, label: 'Email', value: displayEmail },
+    { icon: 'shield-checkmark' as const, label: 'Role', value: displayRole },
   ];
 
   return (
@@ -23,13 +49,21 @@ export default function ProfileScreen() {
       <Stack.Screen options={{ title: 'Profile' }} />
       <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: Spacing.lg, paddingBottom: 100 }}>
         <Card style={{ padding: Spacing.xl, alignItems: 'center' }}>
-          <Avatar name={`${user?.firstName || ''} ${user?.lastName || ''}`} size={80} color={colors.primary} />
+          <Avatar name={displayName} size={80} color={colors.primary} />
           <Text style={{ fontSize: FontSize.xxl, fontWeight: '700', color: colors.text, marginTop: Spacing.md }}>
-            {user?.firstName} {user?.lastName}
+            {displayName}
           </Text>
           <Text style={{ fontSize: FontSize.md, color: colors.textSecondary }}>
-            {user?.primaryEmailAddress?.emailAddress}
+            {displayEmail}
           </Text>
+          {isDemo && (
+            <View style={{
+              marginTop: 8, backgroundColor: '#10b98120', paddingHorizontal: 12, paddingVertical: 4,
+              borderRadius: 12,
+            }}>
+              <Text style={{ fontSize: 12, color: '#10b981', fontWeight: '600' }}>Demo Mode</Text>
+            </View>
+          )}
         </Card>
 
         <Section title="Information">
@@ -55,7 +89,7 @@ export default function ProfileScreen() {
         </Section>
 
         <TouchableOpacity
-          onPress={() => signOut()}
+          onPress={handleSignOut}
           style={{
             backgroundColor: '#ef444415', borderRadius: BorderRadius.lg, padding: Spacing.lg,
             flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, marginTop: Spacing.lg,

@@ -1,18 +1,76 @@
 // API Client for CRM Mobile — mirrors web API client
-import Constants from 'expo-constants';
 import type {
   Customer, Deal, Task, Contact, Product, Quote, Meeting, Note,
   DashboardStats, Notification, ChatSession, UserPreferences, Activity,
   ApiResponse, Team, SearchResults, ChatMessage,
 } from './types';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://crm-system-71ju.onrender.com/api';
+import { Platform } from 'react-native';
+
+// Read API URL from environment variable
+// Android Emulator uses 10.0.2.2 to reach host localhost
+// Physical devices must use the LAN IP (e.g., 192.168.x.x)
+const DEFAULT_API_URL = Platform.OS === 'android'
+  ? 'http://10.0.2.2:5000/api'
+  : 'http://localhost:5000/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+
+console.log('[API] Base URL:', API_URL);
+console.log('[API] EXPO_PUBLIC_API_URL env:', process.env.EXPO_PUBLIC_API_URL);
 
 class ApiClient {
   private token: string | null = null;
 
   setToken(token: string | null) {
     this.token = token;
+  }
+
+  /** Create an AbortController that auto-aborts after `ms` */
+  private timeoutSignal(ms: number): AbortSignal {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), ms);
+    return controller.signal;
+  }
+
+  /** Quick connectivity test — does NOT require auth, 5s timeout */
+  async testConnection(): Promise<{ ok: boolean; message: string }> {
+    try {
+      const url = API_URL.replace(/\/api$/, '/');
+      const resp = await fetch(url, { method: 'GET', signal: this.timeoutSignal(5000) });
+      const data = await resp.json();
+      return { ok: true, message: data.message || 'Connected' };
+    } catch (e: any) {
+      const msg = e.name === 'AbortError' ? 'Connection timed out (5s)' : e.message;
+      return { ok: false, message: msg };
+    }
+  }
+
+  /** Demo login using backend's local JWT auth (bypasses Clerk) */
+  async demoLogin(): Promise<{
+    ok: boolean;
+    token?: string;
+    user?: { id: string; name: string; email: string; role: string };
+    message?: string;
+  }> {
+    try {
+      const resp = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'demo@nexuscrm.com', password: 'demo123456' }),
+        signal: this.timeoutSignal(15000),
+      });
+      const text = await resp.text();
+      let data: any;
+      try { data = JSON.parse(text); } catch { return { ok: false, message: 'Non-JSON response' }; }
+      if (data.success && data.data?.token) {
+        this.token = data.data.token;
+        return { ok: true, token: data.data.token, user: data.data.user };
+      }
+      return { ok: false, message: data.message || 'Login failed' };
+    } catch (e: any) {
+      const msg = e.name === 'AbortError' ? 'Login timed out — backend may be slow' : e.message;
+      return { ok: false, message: msg };
+    }
   }
 
   private async request<T = unknown>(
@@ -30,19 +88,39 @@ class ApiClient {
     }
 
     try {
-      const response = await fetch(url, { ...options, headers });
-      const data = await response.json();
+      const response = await fetch(url, { ...options, headers, signal: this.timeoutSignal(10000) });
+      const text = await response.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return { success: false, message: `Server returned non-JSON response (${response.status})` };
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
+        return {
+          success: false,
+          message: data.message || data.error || `Request failed (${response.status})`,
+        };
       }
 
-      return data;
-    } catch (error: any) {
-      if (error.message === 'Network request failed') {
-        throw new Error('No internet connection. Please check your network.');
+      // Normalize response
+      if (data.success !== undefined) {
+        return data;
       }
-      throw error;
+
+      return {
+        success: true,
+        data: data.data || data,
+      };
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        return { success: false, message: 'Request timed out (10s)' };
+      }
+      if (error.message === 'Network request failed') {
+        return { success: false, message: `Cannot reach server. Ensure the backend is running.` };
+      }
+      return { success: false, message: error.message || 'Request failed' };
     }
   }
 
@@ -208,6 +286,14 @@ class ApiClient {
   async getConversionFunnel() { return this.request('/reports/funnel'); }
   async getRevenueForecast() { return this.request('/reports/forecast'); }
   async getPerformanceMetrics(days?: number) { return this.request(`/reports/performance${days ? `?days=${days}` : ''}`); }
+  async getDashboardReport(period?: string) { return this.request(`/reports/dashboard${period ? `?period=${period}` : ''}`); }
+
+  // Documents
+  async getDocuments() { return this.request('/documents'); }
+  async deleteDocument(id: string) { return this.request(`/documents/${id}`, { method: 'DELETE' }); }
+
+  // Audit Logs
+  async getAuditLogs() { return this.request('/audit-logs'); }
 
   // Email
   async sendEmail(data: { to: string; subject: string; body: string; customerId?: string }) {

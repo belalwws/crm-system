@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import api from '@/lib/api';
 import { useThemeColors } from '@/lib/utils';
@@ -12,7 +12,7 @@ const STAGES = ['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'C
 
 export default function EditDealScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,7 @@ export default function EditDealScreen() {
 
   useEffect(() => {
     (async () => {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const [dealRes, custRes] = await Promise.all([api.getDeal(id!), api.getCustomers({})]);
       if (dealRes.success && dealRes.data) {
         const d = dealRes.data;
@@ -44,7 +44,7 @@ export default function EditDealScreen() {
     if (!form.title.trim()) { Alert.alert('Error', 'Title is required'); return; }
     setSaving(true);
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.updateDeal(id!, {
         title: form.title, value: parseFloat(form.value) || 0, stage: form.stage as DealStage,
         probability: parseInt(form.probability) || 50, customerId: form.customerId || undefined,

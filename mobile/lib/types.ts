@@ -209,14 +209,27 @@ export interface Activity {
 }
 
 export interface DashboardStats {
-  totalCustomers: number;
-  totalDeals: number;
-  totalTasks: number;
-  revenue: number;
-  pipelineValue: number;
-  pendingTasks: number;
-  monthlyRevenue: Array<{ month: string; revenue: number }>;
-  dealsByStage: Array<{ stage: string; count: number; value: number }>;
+  summary: {
+    totalCustomers: number;
+    activeCustomers: number;
+    totalDeals: number;
+    totalTasks: number;
+    pendingTasks: number;
+    totalDealValue: number;
+    wonDeals: number;
+    wonValue: number;
+    earningsThisMonth: number;
+    earningsChangePercent: number;
+    pipelineThisMonth: number;
+    pipelineChangePercent: number;
+    dealsThisMonth: number;
+    customersChangePercent: number;
+    newCustomersThisMonth: number;
+    newCustomersPercent: number;
+  };
+  dealsByStage: Array<{ _id: string; count: number; value: number }>;
+  recentTasks: Array<any>;
+  monthlyData: Array<{ month: string; value: number; count: number }>;
 }
 
 export interface ChatSession {

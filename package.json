@@ -23,5 +23,12 @@
     "full-stack",
     "clerk",
     "tailwindcss"
-  ]
+  ],
+  "dependencies": {
+    "expo": "^55.0.3"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.10",
+    "typescript": "~5.9.2"
+  }
 }

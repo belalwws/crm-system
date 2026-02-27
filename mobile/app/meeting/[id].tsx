@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -11,7 +11,7 @@ import type { Meeting } from '@/lib/types';
 
 export default function MeetingDetailScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [meeting, setMeeting] = useState<Meeting | null>(null);
@@ -19,12 +19,12 @@ export default function MeetingDetailScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getMeeting(id!);
       if (res.success && res.data) setMeeting(res.data);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  }, [id, getToken]);
+  }, [id, getAuthToken]);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -32,7 +32,7 @@ export default function MeetingDetailScreen() {
     Alert.alert('Delete Meeting', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
-        const token = await getToken(); api.setToken(token);
+        const token = await getAuthToken();
         await api.deleteMeeting(id!); router.back();
       }},
     ]);

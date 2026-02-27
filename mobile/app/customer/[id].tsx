@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity, Alert, Linking } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -11,7 +11,7 @@ import type { Customer, Deal, Note, Activity } from '@/lib/types';
 
 export default function CustomerDetailScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
@@ -25,8 +25,7 @@ export default function CustomerDetailScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const [custRes, notesRes] = await Promise.all([
         api.getCustomer(id!),
         api.getNotes({ customerId: id }),
@@ -39,7 +38,7 @@ export default function CustomerDetailScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [id, getToken]);
+  }, [id, getAuthToken]);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -48,8 +47,7 @@ export default function CustomerDetailScreen() {
   const getAiInsight = async () => {
     setInsightLoading(true);
     try {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getCustomerInsights(id!);
       if (res.success && res.data) setAiInsight((res.data as any).insight || (res.data as any).analysis || JSON.stringify(res.data));
     } catch (err) {
@@ -65,8 +63,7 @@ export default function CustomerDetailScreen() {
       {
         text: 'Delete', style: 'destructive',
         onPress: async () => {
-          const token = await getToken();
-          api.setToken(token);
+          const token = await getAuthToken();
           await api.deleteCustomer(id!);
           router.back();
         },

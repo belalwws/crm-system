@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import api from '@/lib/api';
 import { useThemeColors } from '@/lib/utils';
@@ -12,7 +12,7 @@ const STATUSES = ['LEAD', 'PROSPECT', 'ACTIVE', 'INACTIVE'];
 
 export default function EditCustomerScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -23,8 +23,7 @@ export default function EditCustomerScreen() {
 
   useEffect(() => {
     (async () => {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getCustomer(id!);
       if (res.success && res.data) {
         setForm({
@@ -41,8 +40,7 @@ export default function EditCustomerScreen() {
     if (!form.name.trim()) { Alert.alert('Error', 'Name is required'); return; }
     setSaving(true);
     try {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.updateCustomer(id!, { ...form, status: form.status as Customer['status'] });
       if (res.success) { router.back(); } else { Alert.alert('Error', res.error || 'Failed to update'); }
     } catch (err: any) {

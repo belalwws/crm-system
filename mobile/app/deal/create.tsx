@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useRouter, Stack } from 'expo-router';
 import api from '@/lib/api';
 import { useThemeColors } from '@/lib/utils';
@@ -12,7 +12,7 @@ const STAGES = ['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'C
 
 export default function CreateDealScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -22,8 +22,7 @@ export default function CreateDealScreen() {
 
   useEffect(() => {
     (async () => {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.getCustomers({});
       if (res.success) setCustomers(Array.isArray(res.data) ? res.data : []);
     })();
@@ -33,8 +32,7 @@ export default function CreateDealScreen() {
     if (!form.title.trim()) { Alert.alert('Error', 'Title is required'); return; }
     setLoading(true);
     try {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.createDeal({
         title: form.title,
         value: parseFloat(form.value) || 0,

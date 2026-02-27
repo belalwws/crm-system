@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import api from '@/lib/api';
 import { useThemeColors } from '@/lib/utils';
@@ -9,7 +9,7 @@ import { Spacing } from '@/lib/theme';
 
 export default function CreateNoteScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const router = useRouter();
   const params = useLocalSearchParams<{ customerId?: string; dealId?: string; taskId?: string }>();
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,7 @@ export default function CreateNoteScreen() {
     if (!form.content.trim()) { Alert.alert('Error', 'Content is required'); return; }
     setLoading(true);
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.createNote({
         title: form.title, content: form.content,
         customerId: params.customerId || undefined,

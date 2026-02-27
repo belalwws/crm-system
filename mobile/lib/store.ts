@@ -2,10 +2,23 @@
 import { create } from 'zustand';
 import type { Notification, DashboardStats } from './types';
 
+interface DemoUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 interface AppState {
   // Auth
   token: string | null;
   setToken: (token: string | null) => void;
+
+  // Demo auth (local JWT, bypasses Clerk)
+  demoToken: string | null;
+  demoUser: DemoUser | null;
+  setDemoAuth: (token: string | null, user: DemoUser | null) => void;
+  clearDemoAuth: () => void;
 
   // Notifications
   notifications: Notification[];
@@ -31,10 +44,17 @@ export const useAppStore = create<AppState>((set) => ({
   token: null,
   setToken: (token) => set({ token }),
 
+  demoToken: null,
+  demoUser: null,
+  setDemoAuth: (demoToken, demoUser) => set({ demoToken, demoUser }),
+  clearDemoAuth: () => set({ demoToken: null, demoUser: null }),
+
   notifications: [],
   unreadCount: 0,
-  setNotifications: (notifications) =>
-    set({ notifications, unreadCount: notifications.filter((n) => !n.isRead).length }),
+  setNotifications: (notifications) => {
+    const mapped = notifications.map((n: any) => ({ ...n, isRead: n.isRead ?? n.read ?? false }));
+    set({ notifications: mapped, unreadCount: mapped.filter((n) => !n.isRead).length });
+  },
   markRead: (id) =>
     set((state) => {
       const notifications = state.notifications.map((n) =>

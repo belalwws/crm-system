@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import api from '@/lib/api';
@@ -14,7 +14,7 @@ const STAGES = ['ALL', 'LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_W
 export default function DealsScreen() {
   const colors = useThemeColors();
   const isDark = useIsDark();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const router = useRouter();
 
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -25,8 +25,7 @@ export default function DealsScreen() {
 
   const fetchDeals = useCallback(async () => {
     try {
-      const token = await getToken();
-      api.setToken(token);
+      const token = await getAuthToken();
       const params: any = {};
       if (search) params.search = search;
       if (stageFilter !== 'ALL') params.stage = stageFilter;
@@ -40,7 +39,7 @@ export default function DealsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [getToken, search, stageFilter]);
+  }, [getAuthToken, search, stageFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchDeals(), 300);

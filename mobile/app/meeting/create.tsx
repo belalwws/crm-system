@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, Alert } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuthToken } from '@/lib/utils';
 import { useRouter, Stack } from 'expo-router';
 import api from '@/lib/api';
 import { useThemeColors } from '@/lib/utils';
@@ -9,7 +9,7 @@ import { Spacing } from '@/lib/theme';
 
 export default function CreateMeetingScreen() {
   const colors = useThemeColors();
-  const { getToken } = useAuth();
+  const { getAuthToken } = useAuthToken();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -21,7 +21,7 @@ export default function CreateMeetingScreen() {
     if (!form.startTime.trim()) { Alert.alert('Error', 'Start time is required'); return; }
     setLoading(true);
     try {
-      const token = await getToken(); api.setToken(token);
+      const token = await getAuthToken();
       const res = await api.createMeeting({
         title: form.title, description: form.description, location: form.location,
         startTime: new Date(form.startTime).toISOString(),
