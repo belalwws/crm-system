@@ -7,16 +7,10 @@ import type {
 
 import { Platform } from 'react-native';
 
-// Read API URL from environment variable
-// Android Emulator uses 10.0.2.2 to reach host localhost
-// Physical devices must use the LAN IP (e.g., 192.168.x.x)
-const DEFAULT_API_URL = Platform.OS === 'android'
-  ? 'http://10.0.2.2:5000/api'
-  : 'http://localhost:5000/api';
-const API_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+// Use deployed Render backend to avoid local networking complexity
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://crm-system-71ju.onrender.com/api';
 
 console.log('[API] Base URL:', API_URL);
-console.log('[API] EXPO_PUBLIC_API_URL env:', process.env.EXPO_PUBLIC_API_URL);
 
 class ApiClient {
   private token: string | null = null;

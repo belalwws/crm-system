@@ -201,6 +201,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   if (req.headers.authorization?.startsWith('Bearer')) {
     return next();
   }
+  // Skip CSRF when there is no CSRF cookie at all (mobile apps, API clients)
+  // These clients never use cookie-based auth so CSRF is irrelevant
+  if (!req.cookies?.['__csrf'] && !req.signedCookies?.['__csrf']) {
+    return next();
+  }
   // Apply CSRF for cookie-based auth
   doubleCsrfProtection(req, res, next);
 });
