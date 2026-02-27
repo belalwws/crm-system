@@ -9,7 +9,7 @@ import cookieParser from 'cookie-parser';
 import { doubleCsrf } from 'csrf-csrf';
 import { createServer } from 'http';
 import path from 'path';
-import prisma from './lib/prisma';
+import prisma, { startKeepAlive, stopKeepAlive } from './lib/prisma';
 import logger from './lib/logger';
 import { validateEnv } from './lib/validateEnv';
 import { protect } from './middleware/auth';
@@ -184,8 +184,16 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     return next();
   }
+  // Skip CSRF for auth routes (login, register, refresh use their own token mechanisms)
+  if (req.path.startsWith('/api/auth')) {
+    return next();
+  }
   // Skip CSRF for platform-admin routes (uses separate JWT auth)
   if (req.path.startsWith('/api/platform-admin')) {
+    return next();
+  }
+  // Skip CSRF for billing webhook (Stripe signature verification)
+  if (req.path === '/api/billing/webhook') {
     return next();
   }
   // Skip CSRF for API requests that use Bearer tokens (SPA clients)
@@ -226,17 +234,44 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Serve uploaded files (authenticated)
 app.use('/uploads', protect, express.static(path.join(__dirname, '../uploads')));
 
-// Health check route (includes DB check)
+// Health check route (lightweight — no DB query to avoid Neon cold-start latency)
+let lastDbCheck = 0;
+let lastDbOk = true;
+let dbCheckPromise: Promise<boolean> | null = null;
+const DB_CHECK_INTERVAL = 30_000; // re-check DB every 30s
+
+async function checkDbHealth(): Promise<boolean> {
+  // Deduplicate: if a check is already in-flight, reuse the same promise
+  if (dbCheckPromise) return dbCheckPromise;
+  dbCheckPromise = (async () => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      lastDbOk = true;
+    } catch {
+      lastDbOk = false;
+    }
+    lastDbCheck = Date.now();
+    dbCheckPromise = null;
+    return lastDbOk;
+  })();
+  return dbCheckPromise;
+}
+
 app.get('/', async (req: Request, res: Response) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
+  const now = Date.now();
+  // Only ping DB once every 30 seconds to avoid slow cold-start queries
+  if (now - lastDbCheck > DB_CHECK_INTERVAL) {
+    await checkDbHealth();
+  }
+
+  if (lastDbOk) {
     res.json({
       success: true,
       message: 'CRM API is running',
       version: process.env.API_VERSION || '4.0.0',
       database: 'PostgreSQL (connected)',
     });
-  } catch {
+  } else {
     res.status(503).json({
       success: false,
       message: 'CRM API is degraded',
@@ -306,6 +341,9 @@ prisma.$connect()
   .then(() => {
     logger.info('PostgreSQL Connected Successfully');
 
+    // Start keepalive to prevent Neon from closing idle connections
+    startKeepAlive();
+
     // Initialize Redis cache (optional — graceful fallback)
     initRedis();
 
@@ -315,6 +353,27 @@ prisma.$connect()
     // Create HTTP server and attach Socket.IO
     const httpServer = createServer(app);
     const io = initializeSocket(httpServer);
+
+    // Handle port-in-use errors before calling listen
+    let retryCount = 0;
+    const MAX_PORT_RETRIES = 5;
+    httpServer.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        retryCount++;
+        if (retryCount > MAX_PORT_RETRIES) {
+          logger.error(`Port ${PORT} still in use after ${MAX_PORT_RETRIES} retries. Exiting.`);
+          process.exit(1);
+        }
+        logger.error(`Port ${PORT} is already in use. Retry ${retryCount}/${MAX_PORT_RETRIES} in 3s...`);
+        setTimeout(() => {
+          httpServer.close();
+          httpServer.listen(PORT);
+        }, 3000);
+      } else {
+        logger.error('Server error:', err);
+        process.exit(1);
+      }
+    });
 
     const server = httpServer.listen(PORT, () => {
       logger.info('=================================');
@@ -329,6 +388,7 @@ prisma.$connect()
     // Graceful shutdown
     const shutdown = async (signal: string) => {
       logger.info(`${signal} received. Starting graceful shutdown...`);
+      stopKeepAlive();
       io.close();
       await shutdownWorkers();
       server.close(async () => {
@@ -337,15 +397,19 @@ prisma.$connect()
         logger.info('Database disconnected');
         process.exit(0);
       });
-      // Force exit after 10s
+      // Force exit after 5s
       setTimeout(() => {
-        logger.error('Forced exit after 10s timeout');
+        logger.error('Forced exit after 5s timeout');
         process.exit(1);
-      }, 10000);
+      }, 5000);
     };
 
     process.on('SIGINT', () => shutdown('SIGINT'));
     process.on('SIGTERM', () => shutdown('SIGTERM'));
+    // Nodemon uses SIGUSR2 for restarts
+    process.once('SIGUSR2', () => {
+      shutdown('SIGUSR2').then(() => process.kill(process.pid, 'SIGUSR2'));
+    });
   })
   .catch((error) => {
     logger.error('PostgreSQL Connection Error:', error);

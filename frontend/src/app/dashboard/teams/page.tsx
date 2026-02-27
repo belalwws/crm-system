@@ -37,7 +37,7 @@ const roleColors: Record<string, string> = {
 };
 
 export default function TeamsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const toast = useToast();
   const { confirm, dialogProps } = useConfirmDialog();
   const [teams, setTeams] = useState<Team[]>([]);
@@ -52,9 +52,11 @@ export default function TeamsPage() {
   const [memberForm, setMemberForm] = useState({ userId: '', role: 'MEMBER' });
 
   const fetchTeams = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       setLoading(true);
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const res = await api.getTeams();
       setTeams((res.data as Team[]) || []);
@@ -63,18 +65,20 @@ export default function TeamsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   const fetchUsers = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const res = await api.getUsers({ limit: 200 });
       setAllUsers(((res.data as any[]) || []).map((u: any) => ({ id: u.id, name: u.name, email: u.email })));
     } catch { /* ignore */ }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
-  useEffect(() => { fetchTeams(); fetchUsers(); }, [fetchTeams, fetchUsers]);
+  useEffect(() => { if (isLoaded && isSignedIn) { fetchTeams(); fetchUsers(); } }, [isLoaded, isSignedIn, fetchTeams, fetchUsers]);
 
   const handleCreateTeam = async () => {
     if (!teamForm.name) { toast.error('Team name is required'); return; }

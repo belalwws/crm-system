@@ -76,7 +76,7 @@ const stages = [
 const stageOptions = stages.map((s) => ({ value: s.value, label: s.label }));
 
 export default function DealsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const toast = useToast();
   const { confirm, dialogProps } = useConfirmDialog();
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -105,8 +105,10 @@ export default function DealsPage() {
   });
 
   const fetchDeals = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       const params = new URLSearchParams({ page: String(page), limit: "20" });
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (stageFilter !== "all") params.set("stage", stageFilter);
@@ -125,11 +127,13 @@ export default function DealsPage() {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getToken, page, debouncedSearch, stageFilter]);
+  }, [getToken, page, debouncedSearch, stageFilter, isSignedIn]);
 
   const fetchCustomers = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/customers`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -140,12 +144,14 @@ export default function DealsPage() {
     } catch (error) {
       console.error("Error fetching customers:", error);
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
-    fetchDeals();
-    fetchCustomers();
-  }, [fetchDeals, fetchCustomers]);
+    if (isLoaded && isSignedIn) {
+      fetchDeals();
+      fetchCustomers();
+    }
+  }, [isLoaded, isSignedIn, fetchDeals, fetchCustomers]);
 
   const resetForm = () => {
     setFormData({
@@ -201,6 +207,7 @@ export default function DealsPage() {
           ...formData,
           value: parseFloat(formData.value) || 0,
           probability: parseInt(formData.probability) || 10,
+          expectedCloseDate: formData.expectedCloseDate || null,
         }),
       });
 

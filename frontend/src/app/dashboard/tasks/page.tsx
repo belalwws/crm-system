@@ -91,7 +91,7 @@ const statusIcons: Record<string, React.ElementType> = {
 };
 
 export default function TasksPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const toast = useToast();
   const { confirm, dialogProps } = useConfirmDialog();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -122,8 +122,10 @@ export default function TasksPage() {
   });
 
   const fetchTasks = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       const params = new URLSearchParams({ page: String(page), limit: "20" });
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (statusFilter !== "all") params.set("status", statusFilter);
@@ -143,11 +145,13 @@ export default function TasksPage() {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getToken, page, debouncedSearch, statusFilter, priorityFilter]);
+  }, [getToken, page, debouncedSearch, statusFilter, priorityFilter, isSignedIn]);
 
   const fetchCustomersAndDeals = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       const [customersRes, dealsRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/customers`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -163,12 +167,14 @@ export default function TasksPage() {
     } catch (error) {
       console.error("Error fetching data:", error);
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
-    fetchTasks();
-    fetchCustomersAndDeals();
-  }, [fetchTasks, fetchCustomersAndDeals]);
+    if (isLoaded && isSignedIn) {
+      fetchTasks();
+      fetchCustomersAndDeals();
+    }
+  }, [isLoaded, isSignedIn, fetchTasks, fetchCustomersAndDeals]);
 
   const resetForm = () => {
     setFormData({
@@ -217,7 +223,12 @@ export default function TasksPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          dueDate: formData.dueDate || null,
+          customerId: formData.customerId || null,
+          dealId: formData.dealId || null,
+        }),
       });
 
       const data = await response.json();

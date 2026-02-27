@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import { useThemeColors } from '@/lib/utils';
 import { Card, Button, Input } from '@/components/ui';
 import { FontSize, Spacing } from '@/lib/theme';
-import type { Customer, Deal } from '@/lib/types';
+import type { Customer, Deal, TaskPriority, TaskStatus } from '@/lib/types';
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH'] as const;
 const STATUSES = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const;
@@ -39,8 +39,8 @@ export default function CreateTaskScreen() {
       const token = await getToken(); api.setToken(token);
       const res = await api.createTask({
         title: form.title, description: form.description,
-        priority: form.priority as Task['priority'],
-        status: form.status as Task['status'],
+        priority: form.priority as TaskPriority,
+        status: form.status as TaskStatus,
         dueDate: form.dueDate || undefined,
         customerId: form.customerId || undefined, dealId: form.dealId || undefined,
       });

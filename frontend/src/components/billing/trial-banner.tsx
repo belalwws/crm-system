@@ -7,14 +7,16 @@ import api from '@/lib/api';
 import { Clock, AlertTriangle, X } from 'lucide-react';
 
 export function TrialBanner() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const [visible, setVisible] = useState(false);
   const [daysLeft, setDaysLeft] = useState(0);
   const [dismissed, setDismissed] = useState(false);
 
   const checkTrial = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const res = await api.getSubscription();
       if (res.success && res.data) {
@@ -29,9 +31,9 @@ export function TrialBanner() {
     } catch {
       // silent
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
-  useEffect(() => { checkTrial(); }, [checkTrial]);
+  useEffect(() => { if (isLoaded && isSignedIn) checkTrial(); }, [checkTrial, isLoaded, isSignedIn]);
 
   if (!visible || dismissed) return null;
 

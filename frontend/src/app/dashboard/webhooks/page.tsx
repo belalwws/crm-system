@@ -58,7 +58,7 @@ const WEBHOOK_EVENTS = [
 ];
 
 export default function WebhooksPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const { addToast } = useToast();
   const { confirm, dialogProps } = useConfirmDialog();
   const [loading, setLoading] = useState(true);
@@ -76,10 +76,11 @@ export default function WebhooksPage() {
   const [saving, setSaving] = useState(false);
 
   const initApi = useCallback(async () => {
+    if (!isSignedIn) return null;
     const token = await getToken();
     if (token) api.setToken(token);
     return token;
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   const fetchWebhooks = useCallback(async () => {
     setLoading(true);
@@ -95,8 +96,8 @@ export default function WebhooksPage() {
   }, [initApi]);
 
   useEffect(() => {
-    fetchWebhooks();
-  }, [fetchWebhooks]);
+    if (isLoaded && isSignedIn) fetchWebhooks();
+  }, [isLoaded, isSignedIn, fetchWebhooks]);
 
   const handleCreate = async () => {
     if (!formUrl.trim() || formEvents.length === 0) return;

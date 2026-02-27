@@ -49,7 +49,7 @@ export default function DealDetailScreen() {
       const token = await getToken();
       api.setToken(token);
       const res = await api.getDealInsights(id!);
-      if (res.success && res.data) setAiInsight(res.data.insight || res.data.analysis || JSON.stringify(res.data));
+      if (res.success && res.data) setAiInsight((res.data as any).insight || (res.data as any).analysis || JSON.stringify(res.data));
     } catch (err) { console.error(err); }
     finally { setInsightLoading(false); }
   };

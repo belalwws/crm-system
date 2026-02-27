@@ -290,7 +290,7 @@ function RecentTasks({ tasks, loading }: { tasks: RecentTask[]; loading: boolean
 }
 
 export default function DashboardPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const { user } = useUser();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
@@ -300,9 +300,11 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       setError(null);
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const [statsData, dealsData, tasksData] = await Promise.all([
         api.getDashboardStats(),
@@ -329,11 +331,13 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (isLoaded && isSignedIn) {
+      fetchData();
+    }
+  }, [fetchData, isLoaded, isSignedIn]);
 
   const firstName = user?.firstName || "there";
 

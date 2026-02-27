@@ -49,7 +49,7 @@ const ENTITY_ICONS: Record<string, React.ElementType> = {
 };
 
 export default function AuditLogsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [page, setPage] = useState(1);
@@ -61,10 +61,11 @@ export default function AuditLogsPage() {
   const [action, setAction] = useState("");
 
   const initApi = useCallback(async () => {
+    if (!isSignedIn) return null;
     const token = await getToken();
     if (token) api.setToken(token);
     return token;
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -85,8 +86,8 @@ export default function AuditLogsPage() {
   }, [initApi, page, entityType, action]);
 
   useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
+    if (isLoaded && isSignedIn) fetchLogs();
+  }, [isLoaded, isSignedIn, fetchLogs]);
 
   const formatChanges = (changes: any) => {
     if (!changes || typeof changes !== "object") return null;

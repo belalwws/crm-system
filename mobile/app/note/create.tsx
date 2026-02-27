@@ -38,7 +38,7 @@ export default function CreateNoteScreen() {
       <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={{ padding: Spacing.lg, paddingBottom: 100 }} keyboardShouldPersistTaps="handled">
         <Card style={{ padding: Spacing.lg, gap: Spacing.md }}>
           <Input label="Title" placeholder="Note title (optional)" value={form.title} onChangeText={v => setForm(p => ({ ...p, title: v }))} />
-          <Input label="Content *" placeholder="Write your note..." value={form.content} onChangeText={v => setForm(p => ({ ...p, content: v }))} multiline numberOfLines={8} style={{ minHeight: 200, textAlignVertical: 'top' }} />
+          <Input label="Content *" placeholder="Write your note..." value={form.content} onChangeText={v => setForm(p => ({ ...p, content: v }))} multiline numberOfLines={8} style={{ minHeight: 200 }} />
         </Card>
         <Button title={loading ? 'Saving...' : 'Save Note'} onPress={handleSave} disabled={loading} style={{ marginTop: Spacing.lg }} />
       </ScrollView>

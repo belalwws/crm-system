@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { useThemeColors } from '@/lib/utils';
 import { Card, Button, Input, LoadingScreen } from '@/components/ui';
 import { FontSize, Spacing } from '@/lib/theme';
+import type { TaskPriority, TaskStatus } from '@/lib/types';
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 const STATUSES = ['TODO', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
@@ -42,8 +43,8 @@ export default function EditTaskScreen() {
     try {
       const token = await getToken(); api.setToken(token);
       const res = await api.updateTask(id!, {
-        title: form.title, description: form.description, priority: form.priority,
-        status: form.status, dueDate: form.dueDate || undefined,
+        title: form.title, description: form.description, priority: form.priority as TaskPriority,
+        status: form.status as TaskStatus, dueDate: form.dueDate || undefined,
       });
       if (res.success) router.back(); else Alert.alert('Error', res.error || 'Failed');
     } catch (err: any) { Alert.alert('Error', err.message); }

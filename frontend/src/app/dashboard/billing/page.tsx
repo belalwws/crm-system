@@ -25,10 +25,11 @@ interface Subscription {
 }
 
 interface PlanInfo {
+  id?: string;
   name: string;
   tier: string;
   price: number;
-  priceId: string;
+  priceId?: string;
   features: string[];
   limits: Record<string, number>;
 }
@@ -48,7 +49,7 @@ const tierColors: Record<string, string> = {
 };
 
 export default function BillingPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<PlanInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,23 +57,40 @@ export default function BillingPage() {
   const [portalLoading, setPortalLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const [subRes, planRes] = await Promise.all([
         api.getSubscription(),
         api.getPlans(),
       ]);
       if (subRes.success) setSubscription(subRes.data as Subscription);
-      if (planRes.success) setPlans((planRes.data as PlanInfo[]) || []);
+      if (planRes.success) {
+        const raw = (planRes.data as any[]) || [];
+        setPlans(raw.map((p: any) => ({
+          ...p,
+          tier: p.tier || p.id || p.name?.toUpperCase() || '',
+          price: p.price ?? p.priceMonthly ?? 0,
+          features: p.features || [],
+          limits: p.limits || {
+            customers: p.customers ?? 0,
+            deals: p.deals ?? 0,
+            users: p.users ?? 0,
+            storage: p.storageMB ?? 0,
+            aiRequests: p.aiRequests ?? 0,
+          },
+        })));
+      }
     } catch {
       // silent
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (isLoaded && isSignedIn) fetchData(); }, [fetchData, isLoaded, isSignedIn]);
 
   const handleUpgrade = async (tier: string) => {
     setUpgrading(tier);

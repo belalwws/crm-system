@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { 
   ChevronLeft, 
@@ -40,7 +40,7 @@ interface CalendarEvent {
 }
 
 export default function CalendarPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const { confirm, dialogProps } = useConfirmDialog();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -59,10 +59,13 @@ export default function CalendarPage() {
     endTime: '',
   });
 
-  const fetchEvents = async () => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchEvents = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       setLoading(true);
       const token = await getToken();
+      if (!token) return;
       
       // Get first and last day of visible calendar
       const year = currentDate.getFullYear();
@@ -88,11 +91,11 @@ export default function CalendarPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getToken, currentDate, isSignedIn]);
 
   useEffect(() => {
-    fetchEvents();
-  }, [currentDate]);
+    if (isLoaded && isSignedIn) fetchEvents();
+  }, [isLoaded, isSignedIn, fetchEvents]);
 
   const createMeeting = async () => {
     if (!newMeeting.title || !newMeeting.startTime || !newMeeting.endTime) return;

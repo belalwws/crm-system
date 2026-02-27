@@ -72,7 +72,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const { user } = useUser();
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -85,8 +85,10 @@ export default function DashboardLayout({
   }, []);
 
   const fetchRole = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const res = await api.getProfile() as { success: boolean; data?: { role?: string } };
       if (res.success && res.data?.role) {
@@ -95,11 +97,13 @@ export default function DashboardLayout({
     } catch {
       // silently fail
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
-    fetchRole();
-  }, [fetchRole]);
+    if (isLoaded && isSignedIn) {
+      fetchRole();
+    }
+  }, [fetchRole, isLoaded, isSignedIn]);
 
   const allNavItems = [
     ...navigation,

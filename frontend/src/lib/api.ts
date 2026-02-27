@@ -93,6 +93,14 @@ class ApiClient {
       ...options.headers,
     };
 
+    // Fallback: try loading token from localStorage if not set in memory
+    if (!this.token) {
+      try {
+        const stored = localStorage.getItem('token');
+        if (stored) this.token = stored;
+      } catch { /* SSR */ }
+    }
+
     if (this.token) {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.token}`;
     }
@@ -111,6 +119,10 @@ class ApiClient {
     const data = await response.json();
 
     if (!response.ok) {
+      // If 401 with no token set, return silently (Clerk not yet initialized)
+      if (response.status === 401 && !this.token) {
+        return { success: false, message: data.message || 'Not authenticated' } as ApiResponse<T>;
+      }
       throw new Error(data.message || 'Something went wrong');
     }
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSignUp } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, Eye, EyeOff, Loader2, Mail, Lock, User, Rocket, Check, Star } from "lucide-react";
 
 const benefits = [
@@ -96,9 +97,8 @@ export default function SignUpPage() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-md border-b border-neutral-200/50 dark:border-neutral-800/50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-neutral-900 to-neutral-700 dark:from-white dark:to-neutral-300 rounded-lg shadow-sm group-hover:shadow-md transition-shadow" />
-            <span className="text-lg font-bold text-neutral-900 dark:text-white">Nexus</span>
+          <Link href="/" className="flex items-center group">
+            <Image src="/logo.png" alt="Nexus Logo" width={200} height={200} className="rounded-lg shadow-sm group-hover:shadow-md transition-shadow" />
           </Link>
           <Link
             href="/"
@@ -135,6 +135,10 @@ export default function SignUpPage() {
                   <span className="text-neutral-700 dark:text-neutral-300">{benefit}</span>
                 </div>
               ))}
+            </div>
+
+            <div className="mb-8">
+              <Image src="/flowcv-loved-by-users.png" alt="Loved by users" width={400} height={60} className="w-full max-w-[400px]" />
             </div>
 
             <div className="p-6 bg-white dark:bg-neutral-900 rounded-2xl shadow-xl shadow-neutral-200/50 dark:shadow-neutral-950/50 border border-neutral-200/50 dark:border-neutral-800/50">

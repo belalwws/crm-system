@@ -18,7 +18,12 @@ export const getAuditLogs = async (
       startDate, endDate,
     } = req.query as Record<string, string>;
 
-    const where: any = { userId: req.user?.id };
+    const role = req.user?.role;
+    const where: any = {};
+    // ADMIN and MANAGER see all logs; regular users see only their own
+    if (role !== 'ADMIN' && role !== 'MANAGER') {
+      where.userId = req.user?.id;
+    }
     if (entityType) where.entityType = entityType;
     if (entityId) where.entityId = entityId;
     if (action) where.action = action;
@@ -68,12 +73,14 @@ export const getEntityAuditTrail = async (
   try {
     const { entityType, entityId } = req.params;
 
+    const role = req.user?.role;
+    const entityWhere: any = { entityType, entityId };
+    if (role !== 'ADMIN' && role !== 'MANAGER') {
+      entityWhere.userId = req.user?.id;
+    }
+
     const logs = await prisma.auditLog.findMany({
-      where: {
-        userId: req.user?.id,
-        entityType,
-        entityId,
-      },
+      where: entityWhere,
       orderBy: { createdAt: 'desc' },
       take: 100,
       include: {

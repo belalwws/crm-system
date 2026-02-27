@@ -18,7 +18,7 @@ interface Notification {
 }
 
 export function NotificationBell() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -26,8 +26,10 @@ export function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchNotifications = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const res = await api.getNotifications();
       const data = res.data as { notifications?: Notification[]; unreadCount?: number } | Notification[];
@@ -41,13 +43,14 @@ export function NotificationBell() {
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
-  }, [fetchNotifications]);
+  }, [fetchNotifications, isLoaded, isSignedIn]);
 
   // Real-time notification updates via Socket.IO
   const handleRealtimeNotification = useCallback((notification: Notification) => {

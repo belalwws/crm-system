@@ -27,7 +27,7 @@ interface Contact {
 }
 
 export default function ContactsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const toast = useToast();
   const { confirm, dialogProps } = useConfirmDialog();
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -46,9 +46,11 @@ export default function ContactsPage() {
   });
 
   const fetchContacts = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       setLoading(true);
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const res = await api.getContacts();
       setContacts((res.data as Contact[]) || []);
@@ -57,23 +59,27 @@ export default function ContactsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   const fetchCustomers = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const res = await api.getCustomers({ limit: 200 });
       setCustomers(((res.data as any[]) || []).map((c: any) => ({ id: c.id, name: c.name })));
     } catch {
       // ignore
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
-    fetchContacts();
-    fetchCustomers();
-  }, [fetchContacts, fetchCustomers]);
+    if (isLoaded && isSignedIn) {
+      fetchContacts();
+      fetchCustomers();
+    }
+  }, [isLoaded, isSignedIn, fetchContacts, fetchCustomers]);
 
   const filtered = contacts.filter(c => {
     if (!search) return true;

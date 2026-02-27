@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { 
   File, 
@@ -50,7 +50,7 @@ const formatFileSize = (bytes: number) => {
 };
 
 export default function DocumentsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const { confirm, dialogProps } = useConfirmDialog();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,10 +58,12 @@ export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       setLoading(true);
       const token = await getToken();
+      if (!token) return;
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/documents`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -75,11 +77,12 @@ export default function DocumentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
-    fetchDocuments();
-  }, []);
+    if (isLoaded && isSignedIn) fetchDocuments();
+  }, [isLoaded, isSignedIn, fetchDocuments]);
 
   const deleteDocument = async (id: string) => {
     const ok = await confirm({ title: 'Delete Document', message: 'Are you sure you want to delete this document?', variant: 'danger', confirmLabel: 'Delete' });

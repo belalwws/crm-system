@@ -64,7 +64,7 @@ const ACTION_TYPES = [
 ];
 
 export default function WorkflowsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const { addToast } = useToast();
   const { confirm, dialogProps } = useConfirmDialog();
   const [loading, setLoading] = useState(true);
@@ -82,10 +82,11 @@ export default function WorkflowsPage() {
   const [saving, setSaving] = useState(false);
 
   const initApi = useCallback(async () => {
+    if (!isSignedIn) return null;
     const token = await getToken();
     if (token) api.setToken(token);
     return token;
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   const fetchRules = useCallback(async () => {
     setLoading(true);
@@ -101,8 +102,8 @@ export default function WorkflowsPage() {
   }, [initApi]);
 
   useEffect(() => {
-    fetchRules();
-  }, [fetchRules]);
+    if (isLoaded && isSignedIn) fetchRules();
+  }, [isLoaded, isSignedIn, fetchRules]);
 
   const handleCreate = async () => {
     if (!formName.trim()) return;

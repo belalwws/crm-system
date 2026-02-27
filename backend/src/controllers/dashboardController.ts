@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import prisma from '../lib/prisma';
+import prisma, { withRetry } from '../lib/prisma';
 import { AuthRequest } from '../types';
 
 /**
@@ -39,7 +39,7 @@ export const getDashboardStats = async (
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    // Get counts in parallel
+    // Get counts in parallel (wrapped in withRetry for Neon cold starts)
     const [
       totalCustomers,
       activeCustomers,
@@ -59,7 +59,7 @@ export const getDashboardStats = async (
       wonDealsLastMonth,
       // Monthly deal data for chart
       monthlyDeals,
-    ] = await Promise.all([
+    ] = await withRetry(() => Promise.all([
       prisma.customer.count({ where: { ownerId: userId, deletedAt: null } }),
       prisma.customer.count({ where: { ownerId: userId, status: 'ACTIVE', deletedAt: null } }),
       prisma.deal.count({ where: { ownerId: userId, deletedAt: null } }),
@@ -124,14 +124,14 @@ export const getDashboardStats = async (
         where: { ownerId: userId, createdAt: { gte: startOfYear } },
         select: { createdAt: true, value: true, stage: true },
       }),
-    ]);
+    ]));
 
     // Get won deals stats (total)
-    const wonDealsStats = await prisma.deal.aggregate({
+    const wonDealsStats = await withRetry(() => prisma.deal.aggregate({
       where: { ownerId: userId, stage: 'CLOSED_WON' },
       _count: { id: true },
       _sum: { value: true },
-    });
+    }));
 
     // Format deals by stage
     const formattedDealsByStage = dealsByStage.map((s) => ({

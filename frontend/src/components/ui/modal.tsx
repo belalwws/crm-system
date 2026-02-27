@@ -22,6 +22,8 @@ const sizeClasses = {
 export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalProps) {
   const titleId = useId();
   const modalRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   // Focus trap: cycle focus within the modal
   const handleTabKey = useCallback((e: KeyboardEvent) => {
@@ -41,22 +43,28 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }: ModalPr
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
       handleTabKey(e);
     };
 
     if (isOpen) {
       document.addEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "hidden";
-      // Auto-focus the modal container
-      setTimeout(() => modalRef.current?.focus(), 50);
     }
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "";
     };
-  }, [isOpen, onClose, handleTabKey]);
+  }, [isOpen, handleTabKey]);
+
+  // Auto-focus modal only when it first opens
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => modalRef.current?.focus(), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

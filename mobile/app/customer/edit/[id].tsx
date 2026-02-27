@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { useThemeColors } from '@/lib/utils';
 import { Card, Button, Input, LoadingScreen } from '@/components/ui';
 import { FontSize, Spacing } from '@/lib/theme';
+import type { Customer } from '@/lib/types';
 
 const STATUSES = ['LEAD', 'PROSPECT', 'ACTIVE', 'INACTIVE'];
 
@@ -42,7 +43,7 @@ export default function EditCustomerScreen() {
     try {
       const token = await getToken();
       api.setToken(token);
-      const res = await api.updateCustomer(id!, form);
+      const res = await api.updateCustomer(id!, { ...form, status: form.status as Customer['status'] });
       if (res.success) { router.back(); } else { Alert.alert('Error', res.error || 'Failed to update'); }
     } catch (err: any) {
       Alert.alert('Error', err.message);

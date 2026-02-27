@@ -63,7 +63,7 @@ interface PerformanceMetrics {
 }
 
 export default function ReportsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"funnel" | "aging" | "forecast" | "performance">("funnel");
   const [funnel, setFunnel] = useState<FunnelStage[]>([]);
@@ -73,10 +73,11 @@ export default function ReportsPage() {
   const [days, setDays] = useState(30);
 
   const initApi = useCallback(async () => {
+    if (!isSignedIn) return null;
     const token = await getToken();
     if (token) api.setToken(token);
     return token;
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -89,10 +90,12 @@ export default function ReportsPage() {
         setFunnel((res.data as FunnelStage[]) || []);
       } else if (activeTab === "aging") {
         const res = await api.getDealAging();
-        setAging((res.data as any) || { deals: [], summary: {} });
+        const ad = (res.data as any) || {};
+        setAging({ deals: ad.deals || [], summary: ad.summary || {} });
       } else if (activeTab === "forecast") {
         const res = await api.getRevenueForecast();
-        setForecast((res.data as any) || { months: [], totalWeighted: 0, totalUnweighted: 0, wonThisQuarter: 0 });
+        const fd = (res.data as any) || {};
+        setForecast({ months: fd.months || [], totalWeighted: fd.totalWeighted || 0, totalUnweighted: fd.totalUnweighted || 0, wonThisQuarter: fd.wonThisQuarter || 0 });
       } else if (activeTab === "performance") {
         const res = await api.getPerformanceMetrics(days);
         setPerformance((res.data as PerformanceMetrics) || null);
@@ -105,8 +108,8 @@ export default function ReportsPage() {
   }, [initApi, activeTab, days]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (isLoaded && isSignedIn) fetchData();
+  }, [isLoaded, isSignedIn, fetchData]);
 
   const tabs = [
     { id: "funnel" as const, label: "Conversion Funnel", icon: Target },

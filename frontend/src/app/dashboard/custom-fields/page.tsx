@@ -32,7 +32,7 @@ const entityLabels: Record<string, string> = {
 };
 
 export default function CustomFieldsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const toast = useToast();
   const { confirm, dialogProps } = useConfirmDialog();
   const [fields, setFields] = useState<CustomField[]>([]);
@@ -48,9 +48,11 @@ export default function CustomFieldsPage() {
   });
 
   const fetchFields = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       setLoading(true);
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const res = await api.getCustomFields(entityFilter || undefined);
       setFields((res.data as CustomField[]) || []);
@@ -59,9 +61,9 @@ export default function CustomFieldsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, entityFilter]);
+  }, [getToken, entityFilter, isSignedIn]);
 
-  useEffect(() => { fetchFields(); }, [fetchFields]);
+  useEffect(() => { if (isLoaded && isSignedIn) fetchFields(); }, [isLoaded, isSignedIn, fetchFields]);
 
   const resetForm = () => {
     setForm({ name: '', label: '', fieldType: 'TEXT', entity: 'customer', isRequired: false, options: '', defaultValue: '', sortOrder: 0 });

@@ -56,7 +56,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function QuotesPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const toast = useToast();
   const { confirm, dialogProps } = useConfirmDialog();
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -96,9 +96,11 @@ export default function QuotesPage() {
   };
 
   const fetchQuotes = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       setLoading(true);
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const params = new URLSearchParams();
       if (search) params.set('search', search);
@@ -110,11 +112,13 @@ export default function QuotesPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, search, statusFilter]);
+  }, [getToken, search, statusFilter, isSignedIn]);
 
   const fetchDeps = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const [custRes, dealRes, prodRes] = await Promise.all([
         api.getCustomers({ limit: 200 }),
@@ -125,9 +129,9 @@ export default function QuotesPage() {
       setDeals(((dealRes.data as any[]) || []).map((d: any) => ({ id: d.id, title: d.title })));
       setProducts((prodRes.data as Product[]) || []);
     } catch { /* ignore */ }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
-  useEffect(() => { fetchQuotes(); fetchDeps(); }, [fetchQuotes, fetchDeps]);
+  useEffect(() => { if (isLoaded && isSignedIn) { fetchQuotes(); fetchDeps(); } }, [isLoaded, isSignedIn, fetchQuotes, fetchDeps]);
 
   const resetForm = () => {
     setForm({ title: '', customerId: '', dealId: '', discount: 0, discountType: 'PERCENTAGE', tax: 0, validUntil: '', notes: '', terms: '' });

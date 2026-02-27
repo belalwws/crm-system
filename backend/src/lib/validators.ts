@@ -1,5 +1,29 @@
 import { z } from 'zod';
 
+/**
+ * Helper: Create a Zod enum that accepts both lowercase-hyphenated (frontend)
+ * and UPPERCASE_UNDERSCORED (mobile/Prisma) values, normalising to the latter.
+ *
+ * Examples of accepted input → output:
+ *   "lead"       → "LEAD"
+ *   "closed-won" → "CLOSED_WON"
+ *   "in-progress" → "IN_PROGRESS"
+ *   "LEAD"       → "LEAD"
+ */
+function flexEnum<T extends string>(values: readonly [T, ...T[]]) {
+  return z.string().transform((val) => val.toUpperCase().replace(/-/g, '_'))
+    .pipe(z.enum(values));
+}
+
+/**
+ * Helper: Optional date string that also accepts empty string (treated as undefined).
+ */
+const optionalDateString = z.union([
+  z.literal('').transform(() => undefined),
+  z.string().datetime(),
+  z.string().pipe(z.coerce.date()).transform((d) => d.toISOString()),
+]).optional().nullable();
+
 // ===========================
 // Auth Schemas
 // ===========================
@@ -29,8 +53,8 @@ export const createCustomerSchema = z.object({
   phone: z.string().max(30).optional().nullable(),
   company: z.string().max(200).optional().nullable(),
   address: z.string().max(500).optional().nullable(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'LEAD']).optional(),
-  source: z.enum(['WEBSITE', 'REFERRAL', 'SOCIAL_MEDIA', 'COLD_CALL', 'EMAIL_CAMPAIGN', 'TRADE_SHOW', 'PARTNER', 'OTHER']).optional().nullable(),
+  status: flexEnum(['ACTIVE', 'INACTIVE', 'LEAD'] as const).optional(),
+  source: flexEnum(['WEBSITE', 'REFERRAL', 'SOCIAL_MEDIA', 'COLD_CALL', 'EMAIL_CAMPAIGN', 'TRADE_SHOW', 'PARTNER', 'OTHER'] as const).optional().nullable(),
   industry: z.string().max(100).optional().nullable(),
   website: z.string().url('Invalid URL').or(z.literal('')).optional().nullable(),
   tags: z.array(z.string().max(50)).max(20).optional(),
@@ -39,6 +63,11 @@ export const createCustomerSchema = z.object({
 
 export const updateCustomerSchema = createCustomerSchema.partial();
 
+/**
+ * Helper: Optional string that converts empty string to null.
+ */
+const optionalId = z.string().transform((val) => val === '' ? null : val).pipe(z.string().min(1).nullable()).optional().nullable();
+
 // ===========================
 // Deal Schemas
 // ===========================
@@ -46,9 +75,9 @@ export const createDealSchema = z.object({
   title: z.string().min(1, 'Deal title is required').max(300),
   description: z.string().max(5000).optional().nullable(),
   value: z.number().min(0, 'Value must be non-negative').optional(),
-  stage: z.enum(['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST']).optional(),
+  stage: flexEnum(['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'] as const).optional(),
   probability: z.number().min(0).max(100).optional(),
-  expectedCloseDate: z.string().datetime().or(z.string().pipe(z.coerce.date())).optional().nullable(),
+  expectedCloseDate: optionalDateString,
   lostReason: z.string().max(1000).optional().nullable(),
   notesText: z.string().max(5000).optional().nullable(),
   customerId: z.string().min(1, 'Customer ID is required'),
@@ -64,12 +93,12 @@ export const updateDealSchema = createDealSchema.partial().omit({ customerId: tr
 export const createTaskSchema = z.object({
   title: z.string().min(1, 'Task title is required').max(300),
   description: z.string().max(5000).optional().nullable(),
-  type: z.enum(['CALL', 'EMAIL', 'MEETING', 'FOLLOW_UP', 'WHATSAPP', 'OTHER']).optional(),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
-  status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']).optional(),
-  dueDate: z.string().datetime().or(z.string().pipe(z.coerce.date())).optional().nullable(),
-  customerId: z.string().optional().nullable(),
-  dealId: z.string().optional().nullable(),
+  type: flexEnum(['CALL', 'EMAIL', 'MEETING', 'FOLLOW_UP', 'WHATSAPP', 'OTHER'] as const).optional(),
+  priority: flexEnum(['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const).optional(),
+  status: flexEnum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'] as const).optional(),
+  dueDate: optionalDateString,
+  customerId: optionalId,
+  dealId: optionalId,
   assignedToId: z.string().optional(),
 });
 
@@ -98,9 +127,9 @@ export const emailTemplateSchema = z.object({
 // ===========================
 export const createNoteSchema = z.object({
   content: z.string().min(1, 'Note content is required').max(10000),
-  customerId: z.string().optional().nullable(),
-  dealId: z.string().optional().nullable(),
-  taskId: z.string().optional().nullable(),
+  customerId: optionalId,
+  dealId: optionalId,
+  taskId: optionalId,
   pinned: z.boolean().optional(),
   mentions: z.array(z.string()).optional(),
 });
@@ -110,16 +139,21 @@ export const updateNoteSchema = createNoteSchema.partial();
 // ===========================
 // Meeting Schemas
 // ===========================
+const dateString = z.union([
+  z.string().datetime(),
+  z.string().pipe(z.coerce.date()).transform((d) => d.toISOString()),
+]);
+
 export const createMeetingSchema = z.object({
   title: z.string().min(1, 'Meeting title is required').max(300),
   description: z.string().max(5000).optional().nullable(),
   location: z.string().max(500).optional().nullable(),
-  startTime: z.string().datetime().or(z.string().pipe(z.coerce.date())),
-  endTime: z.string().datetime().or(z.string().pipe(z.coerce.date())),
+  startTime: dateString,
+  endTime: dateString,
   reminder: z.number().int().min(0).optional().nullable(),
   outcome: z.string().max(5000).optional().nullable(),
-  customerId: z.string().optional().nullable(),
-  dealId: z.string().optional().nullable(),
+  customerId: optionalId,
+  dealId: optionalId,
 }).refine(
   (data) => new Date(data.endTime) > new Date(data.startTime),
   { message: 'End time must be after start time', path: ['endTime'] }
@@ -129,12 +163,12 @@ export const updateMeetingSchema = z.object({
   title: z.string().min(1).max(300).optional(),
   description: z.string().max(5000).optional().nullable(),
   location: z.string().max(500).optional().nullable(),
-  startTime: z.string().datetime().or(z.string().pipe(z.coerce.date())).optional(),
-  endTime: z.string().datetime().or(z.string().pipe(z.coerce.date())).optional(),
+  startTime: dateString.optional(),
+  endTime: dateString.optional(),
   reminder: z.number().int().min(0).optional().nullable(),
   outcome: z.string().max(5000).optional().nullable(),
-  customerId: z.string().optional().nullable(),
-  dealId: z.string().optional().nullable(),
+  customerId: optionalId,
+  dealId: optionalId,
 });
 
 // ===========================

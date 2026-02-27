@@ -68,7 +68,7 @@ const statusOptions = [
 ];
 
 export default function CustomersPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const toast = useToast();
   const { confirm, dialogProps } = useConfirmDialog();
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -96,8 +96,10 @@ export default function CustomersPage() {
   });
 
   const fetchCustomers = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       const params = new URLSearchParams({ page: String(page), limit: "20" });
       if (debouncedSearch) params.set("search", debouncedSearch);
       if (statusFilter !== "all") params.set("status", statusFilter);
@@ -121,11 +123,11 @@ export default function CustomersPage() {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getToken, page, debouncedSearch, statusFilter]);
+  }, [getToken, page, debouncedSearch, statusFilter, isSignedIn]);
 
   useEffect(() => {
-    fetchCustomers();
-  }, [fetchCustomers]);
+    if (isLoaded && isSignedIn) fetchCustomers();
+  }, [isLoaded, isSignedIn, fetchCustomers]);
 
   const resetForm = () => {
     setFormData({ name: "", email: "", phone: "", company: "", status: "lead", notes: "" });

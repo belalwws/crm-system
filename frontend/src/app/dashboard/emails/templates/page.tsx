@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Plus, Edit, Trash2, Save, X, FileText } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -16,7 +16,7 @@ interface EmailTemplate {
 }
 
 export default function EmailTemplatesPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const { confirm, dialogProps } = useConfirmDialog();
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,10 +28,12 @@ export default function EmailTemplatesPage() {
     body: '',
   });
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       setLoading(true);
       const token = await getToken();
+      if (!token) return;
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/emails/templates`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -45,11 +47,12 @@ export default function EmailTemplatesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
-    fetchTemplates();
-  }, []);
+    if (isLoaded && isSignedIn) fetchTemplates();
+  }, [isLoaded, isSignedIn, fetchTemplates]);
 
   const openCreateModal = () => {
     setEditingTemplate(null);

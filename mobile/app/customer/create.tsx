@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Alert } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { useRouter, Stack } from 'expo-router';
 import api from '@/lib/api';
+import type { Customer } from '@/lib/types';
 import { useThemeColors } from '@/lib/utils';
 import { Card, Button, Input } from '@/components/ui';
 import { FontSize, Spacing } from '@/lib/theme';
@@ -24,7 +25,7 @@ export default function CreateCustomerScreen() {
     try {
       const token = await getToken();
       api.setToken(token);
-      const res = await api.createCustomer(form);
+      const res = await api.createCustomer({ ...form, status: form.status as Customer['status'] });
       if (res.success) {
         router.back();
       } else {

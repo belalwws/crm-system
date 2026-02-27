@@ -40,7 +40,7 @@ interface UserProfile {
 
 export default function SettingsPage() {
   const { user } = useUser();
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'appearance' | 'email'>('profile');
   const [saved, setSaved] = useState(false);
@@ -73,8 +73,10 @@ export default function SettingsPage() {
   });
 
   const fetchProfile = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const [profileRes, prefsRes] = await Promise.all([
         api.getProfile() as Promise<{ success: boolean; data?: UserProfile }>,
@@ -109,11 +111,11 @@ export default function SettingsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (isLoaded && isSignedIn) fetchProfile();
+  }, [isLoaded, isSignedIn, fetchProfile]);
 
   const handleSaveProfile = async () => {
     setSaving(true);

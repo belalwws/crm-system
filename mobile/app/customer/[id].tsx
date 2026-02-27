@@ -51,7 +51,7 @@ export default function CustomerDetailScreen() {
       const token = await getToken();
       api.setToken(token);
       const res = await api.getCustomerInsights(id!);
-      if (res.success && res.data) setAiInsight(res.data.insight || res.data.analysis || JSON.stringify(res.data));
+      if (res.success && res.data) setAiInsight((res.data as any).insight || (res.data as any).analysis || JSON.stringify(res.data));
     } catch (err) {
       console.error('AI insight error:', err);
     } finally {

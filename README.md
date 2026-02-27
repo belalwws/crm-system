@@ -1,374 +1,556 @@
-# Nexus CRM — Enterprise Customer Relationship Management
+﻿# Enterprise CRM System
 
-<div align="center">
-
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-000?style=for-the-badge&logo=next.js&logoColor=white)
-![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-
-**A modern, enterprise-grade CRM platform with AI-powered insights, real-time collaboration, and a beautiful dark-mode-first UI.**
-
-[Features](#features) · [Tech Stack](#tech-stack) · [Getting Started](#getting-started) · [Architecture](#architecture) · [API Reference](#api-reference)
-
-</div>
+A full-stack, multi-tenant CRM platform built with **Next.js 16**, **Express.js**, and **PostgreSQL**. Includes an AI assistant, sales pipeline, automation workflows, Stripe billing, real-time notifications, and a React Native mobile app.
 
 ---
 
-## Features
+## Table of Contents
 
-### Core CRM
-- **Customer Management** — Full CRUD, status tracking (Lead / Active / Inactive), tagging, notes, contact history
-- **Deal Pipeline** — Kanban board + list view, 6-stage pipeline, value & probability tracking, expected close dates
-- **Task Management** — Multi-type tasks (Call, Email, Meeting, Follow-up), priority levels, status board, overdue alerts
-- **Quotes & Products** — Create quotes with line items, discount/tax support, PDF-ready, link to deals
-
-### Enterprise Features
-- **AI Insights (Nexus AI)** — Powered by NVIDIA NIM (Llama 3.3 70B) for dashboard insights, task prioritization, email composition
-- **Real-time Notifications** — Socket.IO push notifications with in-app notification center
-- **Email Templates** — Create, edit, and manage reusable email templates
-- **Document Management** — Upload and attach files to customers/deals
-- **Calendar & Meetings** — Schedule and track meetings linked to customers and deals
-- **Activity Timeline** — Full audit trail of all CRM interactions per customer/deal
-- **Workflow Automation** — Rule-based triggers with configurable conditions and actions
-- **Webhooks** — Event-driven external integrations
-- **Audit Logs** — Complete platform-wide action logging
-- **Bulk Operations** — Bulk delete, status updates, and stage changes
-
-### Admin & Platform
-- **Admin Panel** — User management with role changes, invite system, platform settings
-- **Role-Based Access** — Admin / Manager / User roles with granular permissions
-- **Analytics Dashboard** — Revenue overview, pipeline stats, customer growth charts
-- **Reports** — Conversion funnel, deal aging, revenue forecast, activity heatmap
-- **Search** — Global search across customers, deals, and tasks
-- **Export** — CSV export for customers, deals, and tasks
-- **i18n** — English and Arabic language support with RTL layout
-- **Dark / Light Mode** — System-aware theme with manual toggle
-
-### Developer Experience
-- **Fully Typed** — End-to-end TypeScript with shared types across frontend and backend
-- **29 Prisma Models** — Comprehensive relational data model
-- **~130 API Endpoints** — RESTful API with consistent response format
-- **Shared UI Components** — StatCard, Pagination, ConfirmDialog, StatusBadges, and 20+ primitives
-- **Test Suite** — Jest + React Testing Library for controllers, middleware, and components
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [Project Structure](#project-structure)
+- [API Overview](#api-overview)
+- [Mobile App](#mobile-app)
+- [Security](#security)
+- [Billing Plans](#billing-plans)
+- [Running Tests](#running-tests)
 
 ---
 
 ## Tech Stack
 
-### Frontend
-| Technology | Purpose |
-|---|---|
-| **Next.js 16** | React meta-framework with App Router |
-| **React 19** | UI library |
-| **TypeScript 5** | Static type safety |
-| **Tailwind CSS 4** | Utility-first styling |
-| **Clerk** | Authentication & user management |
-| **Zustand** | Lightweight state management |
-| **Lucide React** | Icon library |
-| **Recharts** | Chart & data visualization |
-
 ### Backend
-| Technology | Purpose |
+| Layer | Technology |
 |---|---|
-| **Node.js + Express 4** | HTTP server & REST API |
-| **TypeScript 5** | Static type safety |
-| **Prisma 5** | ORM with type-safe queries |
-| **PostgreSQL** | Relational database (Neon serverless) |
-| **Socket.IO** | Real-time WebSocket communication |
-| **Redis (ioredis)** | Caching with in-memory fallback |
-| **BullMQ** | Background job queue |
-| **Clerk SDK** | JWT verification & user sync |
-| **Resend** | Transactional email delivery |
-| **Multer** | File upload handling |
+| Runtime | Node.js + TypeScript |
+| Framework | Express.js |
+| Database | PostgreSQL 16 |
+| ORM | Prisma |
+| Auth | JWT + Clerk |
+| Real-time | Socket.io |
+| Job Queue | BullMQ + Redis |
+| Email | Resend |
+| Payments | Stripe |
+| AI | NVIDIA NIM API |
+| File Upload | Multer |
+| Logging | Winston |
+| Validation | Zod + express-validator |
+| Security | Helmet, CSRF, Rate Limiting, DOMPurify |
 
----
+### Frontend
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| UI | React 19 + Tailwind CSS v4 |
+| Auth | Clerk |
+| State | Zustand |
+| Charts | Recharts |
+| Drag & Drop | dnd-kit (Kanban board) |
+| i18n | next-intl |
+| Theme | next-themes (Dark / Light) |
+| Real-time | Socket.io client |
 
-## Getting Started
+### Mobile
+| Layer | Technology |
+|---|---|
+| Framework | React Native + Expo |
+| State | Zustand |
+| Navigation | Expo Router |
 
-### Prerequisites
-- **Node.js** v18+ — [Download](https://nodejs.org/)
-- **PostgreSQL** database (local or [Neon](https://neon.tech/) serverless)
-- **Clerk** account — [clerk.com](https://clerk.com/) (free tier)
-- (Optional) **Redis** for caching — falls back to in-memory if unavailable
-
-### 1. Clone & Install
-
-```bash
-git clone https://github.com/belalwws/crm-system.git
-cd crm-system
-
-# Backend
-cd backend
-npm install
-cp .env.example .env    # Configure your variables
-
-# Frontend
-cd ../frontend
-npm install --legacy-peer-deps
-cp .env.example .env    # Configure your variables
-```
-
-### 2. Configure Environment
-
-**Backend** (`backend/.env`):
-```env
-DATABASE_URL="postgresql://user:password@host:5432/crm?sslmode=require"
-CLERK_SECRET_KEY="sk_test_..."
-CLERK_PUBLISHABLE_KEY="pk_test_..."
-FRONTEND_URL="http://localhost:3000"
-REDIS_URL="redis://localhost:6379"          # Optional
-RESEND_API_KEY="re_..."                     # Optional, for emails
-NVIDIA_API_KEY="nvapi-..."                  # Optional, for AI features
-```
-
-**Frontend** (`frontend/.env`):
-```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
-CLERK_SECRET_KEY="sk_test_..."
-NEXT_PUBLIC_API_URL="http://localhost:5000/api"
-```
-
-### 3. Set Up Database
-
-```bash
-cd backend
-npx prisma db push      # Create tables
-npx prisma generate     # Generate client
-```
-
-### 4. Run Development Servers
-
-```bash
-# Terminal 1 — Backend
-cd backend
-npm run dev              # http://localhost:5000
-
-# Terminal 2 — Frontend
-cd frontend
-npm run dev              # http://localhost:3000
-```
+### Infrastructure
+| Component | Technology |
+|---|---|
+| Containerization | Docker + Docker Compose |
+| DB | PostgreSQL 16 Alpine |
+| Cache / Queue | Redis |
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                        Nexus CRM                                 │
-└──────────────────────────────────────────────────────────────────┘
-
-┌────────────────────┐           ┌──────────────────────┐
-│     Frontend       │           │      Backend         │
-│  Next.js 16 (App)  │  ◄─────► │  Express + Node.js   │
-│  React 19 + TS     │   REST   │  TypeScript          │
-│  Tailwind CSS 4    │   API    │  Clerk JWT verify     │
-│  Clerk Auth        │          │  Socket.IO            │
-└────────────────────┘           └──────────┬───────────┘
-                                            │
-                              ┌─────────────┼─────────────┐
-                              ▼             ▼             ▼
-                     ┌──────────────┐ ┌──────────┐ ┌──────────┐
-                     │  PostgreSQL  │ │  Redis   │ │ NVIDIA   │
-                     │  (Prisma)    │ │  Cache   │ │ NIM API  │
-                     └──────────────┘ └──────────┘ └──────────┘
++---------------------------------------------------------+
+|                        Clients                          |
+|   Next.js Web App (port 3000)  |  Expo Mobile App      |
++------------------------+--------------------------------+
+                         | HTTP / WebSocket
++------------------------v--------------------------------+
+|             Express.js REST API (port 5000)             |
+|    Auth  |  RBAC  |  Rate Limit  |  CSRF  |  Validate   |
++--------+------------------------------------------+----+
+         |                                          |
++--------v---------+                   +------------v-----+
+|   PostgreSQL      |                   |  Redis + BullMQ  |
+|   (Prisma ORM)    |                   |   (Job Queues)   |
++------------------+                   +------------------+
 ```
 
-### Project Structure
+**Multi-tenant**: Every record is scoped to the authenticated user via `ownerId`. Users only ever see their own data  enforced at the database query level.
+
+---
+
+## Features
+
+### Authentication & Authorization
+- Email/password registration with email verification link
+- Clerk SSO integration (Google, GitHub, etc.)
+- JWT access tokens + rotating refresh tokens (stored hashed in DB)
+- Account lockout after repeated failed login attempts
+- Password reset via email
+- Role-based access control  **ADMIN**, **MANAGER**, **USER**
+- Middleware-level permission enforcement on every protected route
+
+### Customer Management
+- Full CRUD with soft delete and restore
+- Statuses: `LEAD`, `ACTIVE`, `INACTIVE`
+- Lead sources: Website, Referral, Social Media, Cold Call, Email Campaign, Trade Show, Partner
+- Tags, industry, website, address, phone fields
+- Duplicate detection and merge
+- Multiple contacts per customer (company  contacts model)
+- Custom fields per entity
+- Saved views with filters, sorting, and column visibility
+- Bulk operations (update status, delete, export, reassign)
+
+### Sales Pipeline (Deals)
+- Kanban drag-and-drop board powered by dnd-kit
+- 6 pipeline stages: `LEAD  QUALIFIED  PROPOSAL  NEGOTIATION  CLOSED WON  CLOSED LOST`
+- Deal value, probability, expected close date, lost reason
+- Per-deal timeline, notes, tasks, emails, documents, meetings
+- Revenue forecasting reports
+
+### Tasks
+- Types: Call, Email, Meeting, Follow-up, WhatsApp, Other
+- Priorities: Low, Medium, High, Urgent
+- Statuses: Pending, In Progress, Completed, Cancelled
+- Assign to any user; link to a customer or deal
+- Due-date reminders and overdue notifications
+
+### Contacts
+- Separate contact records linked to customer companies
+- Job title, department, LinkedIn, primary-contact flag
+- Soft delete with restore
+
+### Products & Quotes
+- Product catalog with SKU, unit price, currency, category
+- Quote builder with line items (quantity, unit price, per-line discount)
+- Quote-level discount (percentage or fixed) and tax calculation
+- Statuses: Draft, Sent, Accepted, Rejected, Expired
+- Auto-generated sequential quote numbers
+- Link quotes to deals
+
+### Email System
+- Send emails from within deals or customer profiles
+- Reusable email templates with categories
+- Email log with statuses: Sent, Failed, Bounced, Opened, Replied
+- Open/reply timestamp tracking
+- Per-user default CC, reply-to, and email signature settings
+
+### Meetings & Calendar
+- Schedule meetings linked to customers and deals
+- Location, description, start/end time, before-meeting reminder
+- Outcome recording after the meeting
+- Calendar view in the dashboard
+
+### Notes
+- Notes on customers, deals, and tasks
+- Pin notes to the top
+- @mentions support
+
+### Timeline
+- Unified activity timeline per customer and deal
+- Event types: Note, Call, Email Sent/Received, Meeting, WhatsApp, Stage Change, Status Change, Task Created/Completed, File Uploaded, Deal Won/Lost, Mention, System
+
+### Documents
+- File upload (Multer) attached to customers and deals
+- Name, type, size, category stored; soft delete
+
+### Notifications
+- In-app notifications with real-time delivery via Socket.io
+- Types: Task Due, Task Assigned, Task Overdue, Deal Won/Lost, Deal Stage Changed, New Customer, Duplicate Detected, Workflow Triggered, Reminder, System
+- Mobile push notifications via Expo push tokens
+- Per-user preferences for email and push channels
+
+### AI Assistant
+- Conversational AI powered by NVIDIA NIM API
+- Persistent chat sessions with full history
+- Pinnable sessions
+- AI can execute CRM actions: create customer, update deal, create task, etc.
+- Action type + result stored per message for full traceability
+- Daily AI request quota by subscription plan
+
+### Workflow Automation
+- Trigger-based rules (no code)
+- Triggers: Deal Stage Changed, Deal Created/Updated, Task Overdue, Customer Status Changed/Created
+- JSON-based conditions (field / operator / value)
+- Actions: Create Task, Send Email, Change Stage, etc.
+- Execution logs (success/failed) with details
+- Enable/disable without deleting
+
+### Assignment Rules
+- Auto-assign new customers to team members
+- Methods: round-robin or load-balanced
+- Condition-based matching (source, region, etc.)
+
+### Webhooks
+- Register HTTP endpoints for event-driven integrations
+- Supported events: `deal.created`, `deal.won`, `customer.created`, etc.
+- HMAC secret for payload signature verification
+- Delivery logs with HTTP status, response, fail counter
+
+### Teams
+- Create teams and invite members
+- Team roles: Owner, Admin, Member
+
+### Custom Fields
+- Define extra fields on Customers, Deals, Tasks, or Contacts
+- Types: Text, Number, Date, Boolean, Select, Multi-Select, URL, Email, Phone
+- Required flag, default value, display order
+- Values stored and loaded alongside each entity
+
+### Reports & Analytics
+- Dashboard KPIs: new customers, open deals, total revenue, win rate
+- Deal pipeline funnel chart
+- Revenue over time (Recharts area/bar)
+- Sales performance by stage and lead source
+- Task completion statistics
+- All data exportable
+
+### Search
+- Global search across customers, deals, tasks, contacts, notes, documents
+- Results classified by entity type
+
+### Export & Import
+- Export to CSV or Excel per entity
+- Bulk import via CSV with row-level validation and error report
+
+### Bulk Operations
+- Select multiple records: update status, delete, restore, reassign, export
+
+### Audit Logs
+- Immutable log of every CREATE, UPDATE, DELETE, RESTORE, MERGE, STAGE_CHANGE
+- Stores JSON diff of old and new values, IP address, user-agent
+- Filterable by entity, user, action, and date range
+- Admin-only access
+
+### Billing (Stripe)
+- 4 plan tiers: Free, Starter, Professional, Enterprise
+- Stripe Checkout + Customer Portal
+- Subscription states: Trialing, Active, Past Due, Canceled, Unpaid, Paused
+- Usage quotas enforced per endpoint in middleware
+- Stripe webhook handling (checkout.completed, subscription updated, invoice events)
+
+### Admin Panel
+- User management: list, activate/deactivate, change role
+- Platform-wide statistics and usage overview
+- System settings: company name, default currency, timezone, max allowed users
+- Broadcast push notifications (target by plan, user, or device platform)
+
+### UI/UX
+- Light and dark mode (next-themes)
+- Fully responsive layout
+- Drag-and-drop Kanban for the deals pipeline
+- Saved views for quick filtering per entity
+- Onboarding flow for new users
+- Skeleton loading states and error boundaries
+- Display density setting (comfortable / compact)
+- Public pages: landing, pricing, features, blog, docs, changelog
+
+### Internationalization
+- next-intl with locale routing
+- Language switchable at runtime
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 20+
+- Docker & Docker Compose
+- Clerk account
+- Stripe account
+- Resend account (email)
+- NVIDIA API key (AI features)
+
+### 1. Clone & Install Dependencies
+
+```bash
+git clone <repo-url>
+cd crm
+
+cd backend && npm install && cd ..
+cd frontend && npm install && cd ..
+cd mobile && npm install && cd ..
+```
+
+### 2. Configure Environment Variables
+
+See the [Environment Variables](#environment-variables) section below.
+
+### 3. Start with Docker Compose
+
+```bash
+docker-compose up --build
+```
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:5000 |
+| PostgreSQL | localhost:5432 |
+
+### 4. Development Mode (without Docker)
+
+```bash
+# Terminal 1  Backend
+cd backend
+npx prisma migrate dev
+npm run dev
+
+# Terminal 2  Frontend
+cd frontend
+npm run dev
+
+# Terminal 3  Mobile
+cd mobile
+npx expo start
+```
+
+---
+
+## Environment Variables
+
+### Backend (`backend/.env`)
+
+```env
+DATABASE_URL=postgresql://crm:changeme@localhost:5432/crm
+
+# JWT
+JWT_SECRET=your_jwt_secret_at_least_32_chars
+
+# Clerk
+CLERK_SECRET_KEY=sk_...
+CLERK_PUBLISHABLE_KEY=pk_...
+
+# Email
+RESEND_API_KEY=re_...
+EMAIL_FROM=noreply@yourdomain.com
+
+# Stripe
+STRIPE_SECRET_KEY=sk_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_STARTER_PRICE_ID=price_...
+STRIPE_PROFESSIONAL_PRICE_ID=price_...
+STRIPE_ENTERPRISE_PRICE_ID=price_...
+
+# AI
+NVIDIA_API_KEY=nvapi-...
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# App
+PORT=5000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+```
+
+### Frontend (`frontend/.env.local`)
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+CLERK_SECRET_KEY=sk_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_...
+
+NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
+```
+
+---
+
+## Project Structure
 
 ```
 crm/
-├── backend/
-│   ├── prisma/
-│   │   └── schema.prisma          # 29 data models
-│   ├── src/
-│   │   ├── controllers/           # 27 controllers (~130 endpoints)
-│   │   │   ├── authController.ts
-│   │   │   ├── customerController.ts
-│   │   │   ├── dealController.ts
-│   │   │   ├── taskController.ts
-│   │   │   ├── dashboardController.ts
-│   │   │   ├── aiController.ts
-│   │   │   ├── notificationController.ts
-│   │   │   ├── documentController.ts
-│   │   │   ├── emailController.ts
-│   │   │   ├── workflowController.ts
-│   │   │   └── ...
-│   │   ├── middleware/
-│   │   │   └── auth.ts            # Clerk JWT verification
-│   │   ├── routes/                # Route definitions
-│   │   ├── lib/
-│   │   │   ├── prisma.ts          # Prisma client
-│   │   │   └── email.ts           # Resend integration
-│   │   ├── types/
-│   │   └── server.ts              # Entry point + Socket.IO
-│   └── uploads/                   # File upload storage
-│
-├── frontend/
-│   ├── src/
-│   │   ├── app/                   # Next.js App Router pages
-│   │   │   ├── dashboard/
-│   │   │   │   ├── page.tsx       # Main dashboard
-│   │   │   │   ├── customers/     # Customer management
-│   │   │   │   ├── deals/         # Deal pipeline
-│   │   │   │   ├── tasks/         # Task management
-│   │   │   │   ├── calendar/      # Meeting calendar
-│   │   │   │   ├── documents/     # File management
-│   │   │   │   ├── emails/        # Email templates
-│   │   │   │   ├── analytics/     # Analytics & reports
-│   │   │   │   ├── notifications/ # Notification center
-│   │   │   │   ├── settings/      # User preferences
-│   │   │   │   └── admin/         # Admin panel
-│   │   │   ├── sign-in/
-│   │   │   └── sign-up/
-│   │   ├── components/
-│   │   │   ├── ui/                # Shared UI primitives
-│   │   │   ├── ai/                # AI insight components
-│   │   │   ├── deals/             # Deal-specific components
-│   │   │   ├── tasks/             # Task-specific components
-│   │   │   ├── activity/          # Activity timeline
-│   │   │   ├── documents/         # File upload
-│   │   │   ├── email/             # Email compose
-│   │   │   ├── notifications/     # Notification dropdown
-│   │   │   └── search/            # Global search
-│   │   ├── lib/
-│   │   │   ├── api.ts             # Typed API client
-│   │   │   ├── types.ts           # Shared TypeScript types
-│   │   │   ├── hooks.ts           # Custom hooks & formatters
-│   │   │   └── stores.ts          # Zustand stores
-│   │   └── i18n/                  # Internationalization
-│   │       ├── index.ts
-│   │       └── messages/
-│   │           ├── en.json
-│   │           └── ar.json
-│   └── public/
-│
-├── README.md
-├── SETUP_GUIDE.md
-├── ARCHITECTURE_EXPLAINED.md
-├── QUICK_START.md
-└── TROUBLESHOOTING.md
+ backend/
+    prisma/
+       schema.prisma        # 30+ models
+       migrations/
+    src/
+        server.ts
+        controllers/         # One controller per domain
+        routes/              # One route file per domain
+        middleware/          # auth, rbac, subscription, sanitize, validate
+        lib/                 # mailer, socket, queue, logger, stripe, etc.
+        types/
+ frontend/
+    src/
+        app/
+           dashboard/
+              customers/
+              deals/           # Kanban pipeline
+              tasks/
+              contacts/
+              products/
+              quotes/
+              emails/
+              documents/
+              meetings/
+              calendar/
+              reports/
+              analytics/
+              ai/              # AI chat
+              workflows/
+              webhooks/
+              teams/
+              custom-fields/
+              audit-logs/
+              billing/
+              notifications/
+              settings/
+           sign-in/
+           sign-up/
+           (public landing pages)
+        components/
+        lib/
+        i18n/
+ mobile/
+    app/                     # Expo Router screens
+        contacts.tsx
+        deals.tsx
+        emails.tsx
+        meetings.tsx
+        notifications.tsx
+        products.tsx
+        quotes.tsx
+        reports.tsx
+        search.tsx
+        settings.tsx
+        teams.tsx
+        ai-chat.tsx
+ docker-compose.yml
 ```
 
 ---
 
-## API Reference
+## API Overview
 
-All endpoints are prefixed with `/api` and require a valid Clerk JWT token via `Authorization: Bearer <token>` header.
+All routes are prefixed `/api`. Protected routes require `Authorization: Bearer <token>`.
 
-### Authentication
-```
-POST   /api/auth/register         Register / sync user from Clerk
-GET    /api/auth/me               Get current user profile
-```
-
-### Customers
-```
-GET    /api/customers             List customers (paginated, filterable)
-GET    /api/customers/:id         Get customer details
-POST   /api/customers             Create customer
-PUT    /api/customers/:id         Update customer
-DELETE /api/customers/:id         Delete customer
-```
-
-### Deals
-```
-GET    /api/deals                 List deals (paginated, filterable)
-GET    /api/deals/:id             Get deal details
-POST   /api/deals                 Create deal
-PUT    /api/deals/:id             Update deal
-DELETE /api/deals/:id             Delete deal
-```
-
-### Tasks
-```
-GET    /api/tasks                 List tasks (paginated, filterable)
-POST   /api/tasks                 Create task
-PUT    /api/tasks/:id             Update task
-DELETE /api/tasks/:id             Delete task
-```
-
-### Dashboard & Analytics
-```
-GET    /api/dashboard/stats       Dashboard statistics & monthly data
-GET    /api/dashboard/activities  Recent activities feed
-```
-
-### Notifications
-```
-GET    /api/notifications         List notifications
-POST   /api/notifications/mark-all-read    Mark all as read
-PATCH  /api/notifications/:id/read         Mark one as read
-DELETE /api/notifications/:id              Delete notification
-```
-
-### Additional Endpoints
-```
-/api/documents       Document upload & management
-/api/emails          Email template CRUD
-/api/meetings        Meeting scheduling
-/api/notes           Note management
-/api/activities      Activity timeline
-/api/admin/*         Admin user & settings management
-/api/ai/*            AI insights & chat
-/api/search          Global search
-/api/export          CSV export
-/api/bulk/*          Bulk operations
-/api/webhooks        Webhook management
-/api/workflows       Workflow automation
-/api/reports         Report generation
-```
+| Domain | Base Path | Notes |
+|---|---|---|
+| Auth | `/api/auth` | register, login, logout, refresh, verify-email, forgot/reset-password |
+| Customers | `/api/customers` | CRUD, merge, bulk, export, import |
+| Deals | `/api/deals` | CRUD, stage updates, bulk, export |
+| Tasks | `/api/tasks` | CRUD, bulk, complete |
+| Contacts | `/api/contacts` | CRUD per customer |
+| Products | `/api/products` | catalog CRUD |
+| Quotes | `/api/quotes` | CRUD, send, accept, reject |
+| Emails | `/api/emails` | send, templates, logs |
+| Documents | `/api/documents` | upload, list, delete |
+| Meetings | `/api/meetings` | CRUD, calendar feed |
+| Notes | `/api/notes` | CRUD, pin |
+| Timeline | `/api/timeline` | per-entity events |
+| Activities | `/api/activities` | feed |
+| Notifications | `/api/notifications` | list, mark-read, preferences |
+| AI | `/api/ai` | chat, sessions, action execution |
+| Workflows | `/api/workflows` | rules CRUD, execution logs |
+| Webhooks | `/api/webhooks` | CRUD, delivery logs |
+| Teams | `/api/teams` | CRUD, members |
+| Custom Fields | `/api/custom-fields` | schema CRUD, values |
+| Reports | `/api/reports` | dashboard, pipeline, revenue, tasks |
+| Search | `/api/search` | global full-text search |
+| Export | `/api/export` | CSV/Excel |
+| Bulk | `/api/bulk` | multi-record operations |
+| Audit Logs | `/api/audit-logs` | immutable history |
+| Billing | `/api/billing` | Stripe checkout, portal, usage, webhook |
+| Admin | `/api/admin` | users, settings, system stats |
+| Platform Admin | `/api/platform-admin` | cross-tenant management, push broadcast |
+| Profile | `/api/profile` | update, avatar, preferences |
+| Push Tokens | `/api/push-tokens` | register/revoke (mobile) |
 
 ---
 
-## Scripts
+## Mobile App
 
-### Backend
+The Expo app connects to the same backend. Available screens:
+
+- Dashboard KPIs
+- Customers & Contacts
+- Deals pipeline
+- Tasks with quick-complete
+- Email composer
+- Meeting scheduler
+- AI chat assistant
+- Notifications inbox
+- Quotes & Products
+- Team management
+- Reports
+- Global search
+- Profile & Settings
+
+---
+
+## Security
+
+| Mechanism | Implementation |
+|---|---|
+| Password hashing | bcryptjs |
+| Session tokens | JWT access + hashed refresh tokens in DB |
+| Account lockout | N failed logins  locked until timestamp |
+| CSRF protection | Double-submit cookie pattern (`csrf-csrf`) |
+| Rate limiting | `express-rate-limit` per IP |
+| Input sanitization | DOMPurify on all user content |
+| SQL injection | Prisma parameterized queries |
+| HTTP headers | Helmet |
+| CORS | Configured origin whitelist |
+| Webhook integrity | HMAC SHA-256 payload signature |
+| Audit trail | Immutable log for all data mutations |
+| RBAC | Role checks enforced in middleware |
+
+---
+
+## Billing Plans
+
+| Feature | Free | Starter | Professional | Enterprise |
+|---|---|---|---|---|
+| Customers | 50 | 500 | Unlimited | Unlimited |
+| Deals | 10 | 100 | Unlimited | Unlimited |
+| Team members | 1 | 3 | 10 | Unlimited |
+| AI requests / day | 10 | 50 | 200 | Unlimited |
+| Storage | 100 MB | 1 GB | 10 GB | Unlimited |
+| Workflow rules |  | 5 | 25 | Unlimited |
+| Webhooks |  |  | Yes | Yes |
+| Audit logs |  |  | Yes | Yes |
+| Custom fields |  | 5 | 20 | Unlimited |
+| Priority support |  |  |  | Yes |
+
+---
+
+## Running Tests
+
 ```bash
-npm run dev          # Start with ts-node-dev (hot reload)
-npm run build        # Compile TypeScript
-npm start            # Run compiled output
-npm test             # Run Jest test suite
+# Backend
+cd backend
+npm test
+npm run test:coverage
+
+# Frontend
+cd frontend
+npm test
+npm run test:coverage
 ```
-
-### Frontend
-```bash
-npm run dev          # Start Next.js dev server
-npm run build        # Production build
-npm start            # Start production server
-npm test             # Run Jest + RTL tests
-npm run lint         # ESLint check
-```
-
----
-
-## Deployment
-
-### Backend — Railway / Render / Fly.io
-1. Set all environment variables from `.env.example`
-2. Build command: `npm run build`
-3. Start command: `npm start`
-4. Ensure PostgreSQL connection (Neon recommended for serverless)
-
-### Frontend — Vercel
-1. Connect GitHub repository
-2. Framework preset: **Next.js**
-3. Set environment variables
-4. Install command: `npm install --legacy-peer-deps`
-5. Deploy
 
 ---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-<div align="center">
-
-Built with TypeScript, Next.js, PostgreSQL, and Prisma
-
-</div>
+MIT

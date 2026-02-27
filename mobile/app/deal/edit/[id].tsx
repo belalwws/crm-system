@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import { useThemeColors } from '@/lib/utils';
 import { Card, Button, Input, LoadingScreen } from '@/components/ui';
 import { FontSize, Spacing } from '@/lib/theme';
-import type { Customer } from '@/lib/types';
+import type { Customer, DealStage } from '@/lib/types';
 
 const STAGES = ['LEAD', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'];
 
@@ -46,7 +46,7 @@ export default function EditDealScreen() {
     try {
       const token = await getToken(); api.setToken(token);
       const res = await api.updateDeal(id!, {
-        title: form.title, value: parseFloat(form.value) || 0, stage: form.stage,
+        title: form.title, value: parseFloat(form.value) || 0, stage: form.stage as DealStage,
         probability: parseInt(form.probability) || 50, customerId: form.customerId || undefined,
         description: form.description, expectedCloseDate: form.expectedCloseDate || undefined,
       });

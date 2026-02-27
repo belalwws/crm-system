@@ -7,12 +7,10 @@ import {
   getActivityHeatmap,
 } from '../controllers/reportController';
 import { protect } from '../middleware/auth';
-import { requireRole } from '../middleware/rbac';
 import { cacheMiddleware } from '../lib/redis';
 
 const router = express.Router();
 router.use(protect);
-router.use(requireRole('ADMIN', 'MANAGER'));
 
 router.get('/funnel', cacheMiddleware('report-funnel', 300), getConversionFunnel);
 router.get('/aging', cacheMiddleware('report-aging', 300), getDealAging);

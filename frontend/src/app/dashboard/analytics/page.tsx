@@ -43,15 +43,17 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("month");
 
   const fetchAnalytics = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       setLoading(true);
       const token = await getToken();
+      if (!token) return;
       // Fetch dashboard stats which contains most of the analytics data
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/dashboard/stats?period=${period}`,
@@ -116,11 +118,11 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, period]);
+  }, [getToken, period, isSignedIn]);
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [fetchAnalytics]);
+    if (isLoaded && isSignedIn) fetchAnalytics();
+  }, [isLoaded, isSignedIn, fetchAnalytics]);
 
   if (loading) {
     return <PageLoading />;

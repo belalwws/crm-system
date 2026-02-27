@@ -14,6 +14,7 @@ declare global {
 const prismaClientSingleton = () => {
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    datasourceUrl: process.env.DATABASE_URL,
   });
 };
 
@@ -21,6 +22,35 @@ export const prisma = global.prisma ?? prismaClientSingleton();
 
 if (process.env.NODE_ENV !== 'production') {
   global.prisma = prisma;
+}
+
+// --- Keepalive: prevent Neon from closing idle connections ---
+const KEEPALIVE_INTERVAL_MS = 4 * 60 * 1000; // 4 minutes
+let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
+
+export function startKeepAlive() {
+  if (keepaliveTimer) return;
+  keepaliveTimer = setInterval(async () => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+    } catch (err) {
+      logger.warn('Keepalive ping failed, attempting reconnect...', err);
+      try {
+        await prisma.$disconnect();
+        await prisma.$connect();
+        logger.info('Prisma reconnected after keepalive failure');
+      } catch {
+        logger.error('Prisma reconnect failed during keepalive');
+      }
+    }
+  }, KEEPALIVE_INTERVAL_MS);
+}
+
+export function stopKeepAlive() {
+  if (keepaliveTimer) {
+    clearInterval(keepaliveTimer);
+    keepaliveTimer = null;
+  }
 }
 
 /**
@@ -40,8 +70,11 @@ export async function withRetry<T>(
       const isConnectionError = 
         error?.message?.includes("Can't reach database") ||
         error?.message?.includes("Connection") ||
+        error?.message?.includes("Closed") ||
         error?.code === 'P1001' ||
-        error?.code === 'P1002';
+        error?.code === 'P1002' ||
+        error?.code === 'P1017' ||
+        error?.code === 'P2024';
       
       if (isLastAttempt || !isConnectionError) {
         throw error;

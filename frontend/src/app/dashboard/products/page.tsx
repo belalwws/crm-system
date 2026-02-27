@@ -23,7 +23,7 @@ interface Product {
 }
 
 export default function ProductsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const toast = useToast();
   const { confirm, dialogProps } = useConfirmDialog();
   const [products, setProducts] = useState<Product[]>([]);
@@ -40,9 +40,11 @@ export default function ProductsPage() {
   });
 
   const fetchProducts = useCallback(async () => {
+    if (!isSignedIn) return;
     try {
       setLoading(true);
       const token = await getToken();
+      if (!token) return;
       api.setToken(token);
       const params = new URLSearchParams();
       if (search) params.set('search', search);
@@ -54,9 +56,9 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [getToken, search, categoryFilter]);
+  }, [getToken, search, categoryFilter, isSignedIn]);
 
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  useEffect(() => { if (isLoaded && isSignedIn) fetchProducts(); }, [isLoaded, isSignedIn, fetchProducts]);
 
   const categories = [...new Set(products.filter(p => p.category).map(p => p.category!))];
 
