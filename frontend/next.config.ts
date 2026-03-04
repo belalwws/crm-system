@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com https://*.clerk.accounts.dev; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev wss: ws: http://localhost:5000 https://integrate.api.nvidia.com; frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com https://*.clerk.accounts.dev https://*.clerk.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev wss: ws: http://localhost:5000 https://integrate.api.nvidia.com https://*.onrender.com; frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev; worker-src 'self' blob:;",
           },
         ],
       },
