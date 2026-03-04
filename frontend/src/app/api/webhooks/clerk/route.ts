@@ -3,7 +3,14 @@ import { headers } from 'next/headers';
 import { WebhookEvent } from '@clerk/nextjs/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialize Resend to avoid build-time errors
+const getResend = () => {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    return null;
+  }
+  return new Resend(apiKey);
+};
 
 export async function POST(req: Request) {
   // Get the headers
@@ -58,7 +65,11 @@ export async function POST(req: Request) {
     if (email) {
       try {
         // Send welcome email
-        await resend.emails.send({
+        const resend = getResend();
+        if (!resend) {
+          console.log('Resend API key not configured, skipping welcome email');
+        } else {
+          await resend.emails.send({
           from: 'CRM System <onboarding@resend.dev>',
           to: email,
           subject: 'Welcome to CRM System! 🎉',
@@ -108,8 +119,9 @@ export async function POST(req: Request) {
             </body>
             </html>
           `,
-        });
-        console.log(`✉️ Welcome email sent to ${email}`);
+          });
+          console.log(`✉️ Welcome email sent to ${email}`);
+        }
       } catch (error) {
         console.error('Failed to send welcome email:', error);
       }
