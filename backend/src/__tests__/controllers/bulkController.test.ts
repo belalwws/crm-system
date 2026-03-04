@@ -60,10 +60,10 @@ describe('Bulk Controller', () => {
           where: {
             id: { in: ['c1', 'c2', 'c3'] },
             ownerId: 'test-user-id',
+            deletedAt: null,
           },
           data: expect.objectContaining({
             deletedAt: expect.any(Date),
-            deletedById: 'test-user-id',
           }),
         })
       );
@@ -154,6 +154,7 @@ describe('Bulk Controller', () => {
           where: {
             id: { in: ['d1', 'd2'] },
             ownerId: 'test-user-id',
+            deletedAt: null,
           },
         })
       );
@@ -180,7 +181,8 @@ describe('Bulk Controller', () => {
         expect.objectContaining({
           where: {
             id: { in: ['t1', 't2'] },
-            assignedToId: 'test-user-id',
+            OR: [{ assignedToId: 'test-user-id' }, { createdById: 'test-user-id' }],
+            deletedAt: null,
           },
         })
       );

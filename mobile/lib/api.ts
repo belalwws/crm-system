@@ -7,8 +7,8 @@ import type {
 
 import { Platform } from 'react-native';
 
-// Use deployed Render backend to avoid local networking complexity
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://crm-system-71ju.onrender.com/api';
+// Render deployed backend — hardcoded to avoid Metro env cache issues
+const API_URL = 'https://crm-system-71ju.onrender.com/api';
 
 console.log('[API] Base URL:', API_URL);
 

@@ -21,10 +21,14 @@ const mockPrisma = {
   },
 };
 
+// Mock withRetry to just execute the function directly
+const mockWithRetry = jest.fn(<T>(fn: () => Promise<T>) => fn());
+
 jest.mock('../../lib/prisma', () => ({
   __esModule: true,
   default: mockPrisma,
   prisma: mockPrisma,
+  withRetry: mockWithRetry,
 }));
 
 import * as dashboardController from '../../controllers/dashboardController';

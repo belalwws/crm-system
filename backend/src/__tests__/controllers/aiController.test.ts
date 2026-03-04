@@ -17,13 +17,21 @@ const mockPrisma = {
   customer: {
     findMany: jest.fn(),
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    count: jest.fn(),
   },
   deal: {
     findMany: jest.fn(),
     findUnique: jest.fn(),
+    count: jest.fn(),
+    aggregate: jest.fn(),
   },
   task: {
     findMany: jest.fn(),
+    count: jest.fn(),
+  },
+  activity: {
+    findFirst: jest.fn(),
   },
 };
 
@@ -73,9 +81,14 @@ describe('AI Controller', () => {
     it('should process chat message and return AI response', async () => {
       mockRequest.body = { message: 'Hello AI', sessionId: 's1' };
 
+      mockPrisma.customer.count.mockResolvedValue(10);
+      mockPrisma.deal.count.mockResolvedValue(5);
+      mockPrisma.task.count.mockResolvedValue(3);
+
       (aiLib.aiChat as jest.Mock).mockResolvedValue({
-        response: 'Hello! How can I help?',
-        actions: [],
+        content: 'Hello! How can I help?',
+        model: 'meta/llama-3.3-70b-instruct',
+        usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
       });
 
       await aiController.chat(
@@ -106,14 +119,21 @@ describe('AI Controller', () => {
   describe('composeEmail', () => {
     it('should compose an email using AI', async () => {
       mockRequest.body = {
-        prompt: 'Write a follow-up email',
+        purpose: 'Write a follow-up email',
         customerId: 'c1',
         tone: 'professional',
       };
 
+      mockPrisma.customer.findFirst.mockResolvedValue({
+        id: 'c1',
+        name: 'Test Customer',
+        company: 'Test Corp',
+        deals: [],
+      });
+
       (aiLib.aiComposeEmail as jest.Mock).mockResolvedValue({
-        subject: 'Follow-up',
-        body: 'Dear Customer...',
+        content: 'Dear Customer...',
+        model: 'meta/llama-3.3-70b-instruct',
       });
 
       await aiController.composeEmail(
@@ -126,7 +146,7 @@ describe('AI Controller', () => {
         expect.objectContaining({
           success: true,
           data: expect.objectContaining({
-            subject: 'Follow-up',
+            email: 'Dear Customer...',
           }),
         })
       );
@@ -135,12 +155,15 @@ describe('AI Controller', () => {
 
   describe('dashboardInsights', () => {
     it('should return AI-generated dashboard insights', async () => {
-      const mockInsights = {
-        summary: 'Your sales are trending up',
-        recommendations: ['Focus on qualified leads'],
-      };
+      mockPrisma.customer.count.mockResolvedValue(10);
+      mockPrisma.deal.count.mockResolvedValue(5);
+      mockPrisma.task.count.mockResolvedValue(3);
+      mockPrisma.deal.aggregate.mockResolvedValue({ _sum: { value: 100000 } });
 
-      (aiLib.aiDashboardInsights as jest.Mock).mockResolvedValue(mockInsights);
+      (aiLib.aiDashboardInsights as jest.Mock).mockResolvedValue({
+        content: 'Your sales are trending up',
+        model: 'meta/llama-3.3-70b-instruct',
+      });
 
       await aiController.dashboardInsights(
         mockRequest as AuthRequest,
@@ -151,7 +174,9 @@ describe('AI Controller', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          data: mockInsights,
+          data: expect.objectContaining({
+            insights: 'Your sales are trending up',
+          }),
         })
       );
     });
@@ -165,18 +190,20 @@ describe('AI Controller', () => {
         id: 'c1',
         name: 'Test Customer',
         email: 'test@example.com',
+        company: 'Test Corp',
+        status: 'ACTIVE',
         deals: [],
         tasks: [],
+        notes: [],
       };
 
-      const mockAnalysis = {
-        score: 85,
-        summary: 'High-value customer',
-        recommendations: ['Upsell opportunity'],
-      };
+      mockPrisma.customer.findFirst.mockResolvedValue(mockCustomer);
+      mockPrisma.activity.findFirst.mockResolvedValue(null);
 
-      mockPrisma.customer.findUnique.mockResolvedValue(mockCustomer);
-      (aiLib.aiCustomerInsights as jest.Mock).mockResolvedValue(mockAnalysis);
+      (aiLib.aiCustomerInsights as jest.Mock).mockResolvedValue({
+        content: 'High-value customer with growth potential',
+        model: 'meta/llama-3.3-70b-instruct',
+      });
 
       await aiController.customerInsights(
         mockRequest as AuthRequest,
@@ -187,7 +214,9 @@ describe('AI Controller', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          data: mockAnalysis,
+          data: expect.objectContaining({
+            insights: 'High-value customer with growth potential',
+          }),
         })
       );
     });

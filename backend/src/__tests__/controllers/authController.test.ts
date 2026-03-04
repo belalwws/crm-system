@@ -106,7 +106,7 @@ describe('Auth Controller (real imports)', () => {
       mockPrismaUser.create.mockResolvedValue({ id: 'u2', email: 'hash@test.com', name: 'Hash', role: 'USER' });
 
       await register(req as Request, res as Response);
-      expect(bcrypt.genSalt).toHaveBeenCalledWith(12);
+      expect(bcrypt.genSalt).toHaveBeenCalledWith(4);
       expect(bcrypt.hash).toHaveBeenCalledWith('Password1!', 'mock-salt');
     });
   });

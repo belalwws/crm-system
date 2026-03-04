@@ -36,8 +36,10 @@ export default function DashboardScreen() {
     setError(null);
     try {
       const token = await getAuthToken();
+      console.log('[Dashboard] token:', token ? `${token.substring(0, 20)}...` : 'NULL');
       if (!token) {
         // Not authenticated — auth gate will redirect, don't show error
+        console.log('[Dashboard] No token — skipping fetch');
         setLoading(false);
         setRefreshing(false);
         return;
