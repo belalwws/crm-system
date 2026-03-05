@@ -1,3 +1,7 @@
+// Force all pages to render dynamically so ClerkProvider never runs
+// during static prerender (build time) with a placeholder key.
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
