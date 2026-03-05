@@ -1,7 +1,13 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+
+  // Fix: silence "multiple lockfiles" / workspace-root warning in monorepos
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
 
   // Security headers
   async headers() {

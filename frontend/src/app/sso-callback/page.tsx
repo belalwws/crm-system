@@ -1,11 +1,9 @@
-"use client";
+// Server component - forces dynamic rendering so Clerk authentication
+// callback is never called during static prerender (build time).
+export const dynamic = 'force-dynamic';
 
-import { AuthenticateWithRedirectCallback } from "@clerk/nextjs";
+import SSOCallbackPage from './sso-callback-client';
 
-export default function SSOCallbackPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950">
-      <AuthenticateWithRedirectCallback />
-    </div>
-  );
+export default function SSOCallbackServerPage() {
+  return <SSOCallbackPage />;
 }
